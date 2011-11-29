@@ -1737,6 +1737,17 @@
 		</licenses>
 	</library>
 	<library>
+		<file-name>portal/gnudiff.jar</file-name>
+		<version></version>
+		<project-name>GNU Diff for Jav</project-name>
+		<project-url>http://www.bmsi.com/java/#diff</project-url>
+		<licenses>
+			<license>
+				<license-name>GNU General Public License</license-name>
+			</license>
+		</licenses>
+	</library>
+	<library>
 		<file-name>portal/groovy.jar</file-name>
 		<version>1.7.5</version>
 		<project-name>Groovy</project-name>
