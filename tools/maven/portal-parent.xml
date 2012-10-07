@@ -2,26 +2,18 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.liferay.portal</groupId>
+	<groupId>br.com.simpleconsulting.portal</groupId>
 	<artifactId>portal-parent</artifactId>
 	<packaging>pom</packaging>
 	<name>Liferay Portal Parent</name>
 	<version>@version@</version>
 	<description>Liferay Portal Parent</description>
-	<url>http://www.liferay.com</url>
+	<url>http://www.simpleconsulting.com.br</url>
 	<organization>
-		<name>Liferay, Inc.</name>
-		<url>http://www.liferay.com</url>
+		<name>Simple Consulting</name>
+		<url>http://www.simpleconsulting.com.br</url>
 	</organization>
 	<developers>
-		<developer>
-			<id>brian.chan</id>
-			<name>Brian Chan</name>
-		</developer>
-		<developer>
-			<id>mika.koivisto</id>
-			<name>Mika Koivisto</name>
-		</developer>
 		<developer>
 			<id>thiago.moreira</id>
 			<name>Thiago Moreira</name>
@@ -35,23 +27,19 @@
 		</license>
 	</licenses>
 	<scm>
-		<url>https://github.com/liferay/liferay-portal</url>
-		<connection>scm:git:git@github.com:liferay/liferay-portal.git</connection>
+		<url>https://github.com/tmoreira2020/liferay-portal</url>
+		<connection>scm:git:git@github.com/tmoreira2020/liferay-portal.git</connection>
 	</scm>
-	<issueManagement>
-		<system>JIRA</system>
-		<url>http://issues.liferay.com/browse/LPS</url>
-	</issueManagement>
 	<distributionManagement>
 		<repository>
-			<id>sonatype-staging</id>
-			<name>Sonatype Staging Repository</name>
-			<url>http://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+			<id>cloudbees-private</id>
+			<name>Cloudbees Private Repository</name>
+			<url>https://repository-tmoreira2020.forge.cloudbees.com/private/</url>
 		</repository>
 		<snapshotRepository>
-			<id>sonatype-snapshot</id>
-			<name>Sonatype Snapshot Repository</name>
-			<url>http://oss.sonatype.org/content/repositories/snapshots</url>
+			<id>cloudbees-snapshot</id>
+			<name>Cloudbees Snapshot Repository</name>
+			<url>https://repository-tmoreira2020.forge.cloudbees.com/snapshot/</url>
 		</snapshotRepository>
 	</distributionManagement>
 </project>
