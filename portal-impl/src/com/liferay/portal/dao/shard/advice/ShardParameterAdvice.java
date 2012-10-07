@@ -27,34 +27,47 @@ import org.aopalliance.intercept.MethodInvocation;
  * @author Michael Young
  * @author Alexander Chow
  * @author Shuyang Zhou
+ * @author Thiago Moreira
  */
 public class ShardParameterAdvice implements MethodInterceptor {
 
 	public Object invoke(MethodInvocation methodInvocation) throws Throwable {
 		Object[] arguments = methodInvocation.getArguments();
 
-		long companyId = (Long)arguments[0];
-
-		Shard shard = ShardLocalServiceUtil.getShard(
-			Company.class.getName(), companyId);
-
-		String shardName = shard.getName();
-
-		if (_log.isInfoEnabled()) {
-			_log.info(
-				"Setting service to shard " + shardName + " for " +
-					methodInvocation.toString());
-		}
-
 		Object returnValue = null;
 
-		_shardAdvice.pushCompanyService(shardName);
+		if (arguments[0] instanceof Company || arguments[0] instanceof Long) {
+			long companyId = 0;
 
-		try {
-			returnValue = methodInvocation.proceed();
+			if (arguments[0] instanceof Company) {
+				companyId = ((Company)arguments[0]).getCompanyId();
+			}
+			else {
+				companyId = (Long)arguments[0];
+			}
+
+			Shard shard = ShardLocalServiceUtil.getShard(
+				Company.class.getName(), companyId);
+
+			String shardName = shard.getName();
+
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					"Setting service to shard " + shardName + " for " +
+						methodInvocation.toString());
+			}
+
+			_shardAdvice.pushCompanyService(shardName);
+
+			try {
+				returnValue = methodInvocation.proceed();
+			}
+			finally {
+				_shardAdvice.popCompanyService();
+			}
 		}
-		finally {
-			_shardAdvice.popCompanyService();
+		else {
+			returnValue = methodInvocation.proceed();
 		}
 
 		return returnValue;
