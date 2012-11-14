@@ -7,8 +7,11 @@
 
 	<target name="all">
 		<antcall target="clean" />
+		<ant dir="${project.dir}" antfile="build-dist.xml" target="unzip-tomcat" inheritAll="false" />
 		<antcall target="start" />
 		<antcall target="deploy" />
+		<ant dir="${project.dir}" antfile="build-dist.xml" target="zip-portal-war" inheritAll="false" />
+		<ant dir="${project.dir}" antfile="build-maven.xml" target="deploy-snapshot-artifacts" inheritAll="false" />
 	</target>
 
 	<target name="clean">

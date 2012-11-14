@@ -98,6 +98,8 @@
 							<then>
 								<exec dir="." executable="${maven.executable}" failonerror="true">
 									<arg value="${mvn.goal.sign-and-deploy}" />
+									<arg line="-s ${settings.path}/settings.xml" />
+									<arg value="-Dsettings.security=${settings.path}/settings-security.xml" />
 									<arg value="-DartifactId=${artifact.id}" />
 									<arg value="-Dfile=dist/${artifact.id}.${packaging}" />
 									<arg value="-Dgpg.executable=${gpg.executable}" />
@@ -116,6 +118,8 @@
 							<else>
 								<exec dir="." executable="${maven.executable}" failonerror="true">
 									<arg value="${mvn.goal.sign-and-deploy}" />
+									<arg line="-s ${settings.path}/settings.xml" />
+									<arg value="-Dsettings.security=${settings.path}/settings-security.xml" />
 									<arg value="-DartifactId=${artifact.id}" />
 									<arg value="-Dclassifiers=tlddoc" />
 									<arg value="-Dfile=dist/${artifact.id}.${packaging}" />
@@ -139,6 +143,8 @@
 					<else>
 						<exec dir="." executable="${maven.executable}" failonerror="true">
 							<arg value="${mvn.goal.sign-and-deploy}" />
+							<arg line="-s ${settings.path}/settings.xml" />
+							<arg value="-Dsettings.security=${settings.path}/settings-security.xml" />
 							<arg value="-DartifactId=${artifact.id}" />
 							<arg value="-Dfile=dist/${artifact.id}.${packaging}" />
 							<arg value="-Dgpg.executable=${gpg.executable}" />
@@ -165,6 +171,8 @@
 							<then>
 								<exec dir="." executable="${maven.executable}" failonerror="true">
 									<arg value="${mvn.goal.deploy-file}" />
+									<arg line="-s ${settings.path}/settings.xml" />
+									<arg value="-Dsettings.security=${settings.path}/settings-security.xml" />
 									<arg value="-DartifactId=${artifact.id}" />
 									<arg value="-Dfile=dist/${artifact.id}.${packaging}" />
 									<arg value="-DgroupId=br.com.simpleconsulting.portal" />
@@ -180,6 +188,8 @@
 							<else>
 								<exec dir="." executable="${maven.executable}" failonerror="true">
 									<arg value="${mvn.goal.deploy-file}" />
+									<arg line="-s ${settings.path}/settings.xml" />
+									<arg value="-Dsettings.security=${settings.path}/settings-security.xml" />
 									<arg value="-DartifactId=${artifact.id}" />
 									<arg value="-Dclassifiers=tlddoc" />
 									<arg value="-Dfile=dist/${artifact.id}.${packaging}" />
@@ -200,6 +210,8 @@
 					<else>
 						<exec dir="." executable="${maven.executable}" failonerror="true">
 							<arg value="${mvn.goal.deploy-file}" />
+							<arg line="-s ${settings.path}/settings.xml" />
+							<arg value="-Dsettings.security=${settings.path}/settings-security.xml" />
 							<arg value="-DartifactId=${artifact.id}" />
 							<arg value="-Dfile=dist/${artifact.id}.${packaging}" />
 							<arg value="-DgroupId=br.com.simpleconsulting.portal" />
@@ -270,6 +282,8 @@
 			<then>
 				<exec dir="." executable="${maven.executable}" failonerror="true">
 					<arg value="${mvn.goal.install-file}" />
+					<arg line="-s ${settings.path}/settings.xml" />
+					<arg value="-Dsettings.security=${settings.path}/settings-security.xml" />
 					<arg value="-DartifactId=${artifact.id}" />
 					<arg value="-Dfile=dist/${artifact.id}.${packaging}" />
 					<arg value="-DgroupId=br.com.simpleconsulting.portal" />
@@ -285,6 +299,8 @@
 					<then>
 						<exec dir="." executable="${maven.executable}" failonerror="true">
 							<arg value="${mvn.goal.install-file}" />
+							<arg line="-s ${settings.path}/settings.xml" />
+							<arg value="-Dsettings.security=${settings.path}/settings-security.xml" />
 							<arg value="-DartifactId=${artifact.id}" />
 							<arg value="-Dclassifier=tlddoc" />
 							<arg value="-Dfile=dist/${artifact.id}-tlddoc.${packaging}" />
@@ -299,6 +315,8 @@
 			<else>
 				<exec dir="." executable="${maven.executable}" failonerror="true">
 					<arg value="${mvn.goal.install-file}" />
+					<arg line="-s ${settings.path}/settings.xml" />
+					<arg value="-Dsettings.security=${settings.path}/settings-security.xml" />
 					<arg value="-DartifactId=${artifact.id}" />
 					<arg value="-Dfile=dist/${artifact.id}.${packaging}" />
 					<arg value="-DgroupId=br.com.simpleconsulting.portal" />

@@ -20,21 +20,6 @@
 	<property name="maven.executable" value="mvn${maven.extension}" />
 
 	<target name="deploy-artifacts">
-		<if>
-			<equals arg1="${gpg.keyname}" arg2="" />
-			<then>
-				<fail>
-.
-
-Set the properties "gpg.keyname" and "gpg.passphrase" in
-release.${user.name}.properties.
-
-See http://www.sonatype.com/people/2010/01/how-to-generate-pgp-signatures-with-maven
-for GPG setup instructions.
-				</fail>
-			</then>
-		</if>
-
 		<tstamp>
 			<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
 		</tstamp>
@@ -149,6 +134,7 @@ Run "ant -f build-dist.xml all zip-portal-war" to generate that file.
 				<filter token="repository.id" value="${lp.maven.repository.id}" />
 				<filter token="repository.url" value="${lp.maven.repository.url}" />
 				<filter token="version" value="${lp.maven.version}" />
+				<filter token="settings.path" value="${lp.maven.settings.path}" />
 			</filterset>
 		</copy>
 
