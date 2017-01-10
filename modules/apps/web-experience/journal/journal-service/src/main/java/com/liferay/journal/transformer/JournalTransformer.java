@@ -253,6 +253,8 @@ public class JournalTransformer {
 			Template template = getTemplate(
 				templateId, tokens, languageId, document, script, langType);
 
+			_prepareTemplate(themeDisplay, template);
+
 			if (contextObjects != null) {
 				template.putAll(contextObjects);
 			}
@@ -274,7 +276,8 @@ public class JournalTransformer {
 					}
 
 					if (portletRequestModel != null) {
-						template.put("request", portletRequestModel.toMap());
+						template.put(
+							"requestModel", portletRequestModel.toMap());
 
 						if (langType.equals(TemplateConstants.LANG_TYPE_XSL)) {
 							Document requestDocument = SAXReaderUtil.read(
@@ -290,7 +293,8 @@ public class JournalTransformer {
 						Element requestElement = rootElement.element("request");
 
 						template.put(
-							"request", insertRequestVariables(requestElement));
+							"requestElement",
+							insertRequestVariables(requestElement));
 
 						if (langType.equals(TemplateConstants.LANG_TYPE_XSL)) {
 							template.put("xmlRequest", requestElement.asXML());
@@ -685,6 +689,16 @@ public class JournalTransformer {
 		else {
 			template.processTemplate(unsyncStringWriter);
 		}
+	}
+
+	private void _prepareTemplate(ThemeDisplay themeDisplay, Template template)
+		throws Exception {
+
+		if (themeDisplay == null) {
+			return;
+		}
+
+		template.prepare(themeDisplay.getRequest());
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
