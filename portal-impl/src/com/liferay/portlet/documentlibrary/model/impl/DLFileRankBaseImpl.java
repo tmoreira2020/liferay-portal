@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.documentlibrary.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.documentlibrary.model.DLFileRank;
-import com.liferay.portlet.documentlibrary.service.DLFileRankLocalServiceUtil;
+import com.liferay.document.library.kernel.model.DLFileRank;
+import com.liferay.document.library.kernel.service.DLFileRankLocalServiceUtil;
 
 /**
  * The extended model base implementation for the DLFileRank service. Represents a row in the &quot;DLFileRank&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.documentlibrary.service.DLFileRankLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see DLFileRankImpl
- * @see com.liferay.portlet.documentlibrary.model.DLFileRank
+ * @see DLFileRank
  * @generated
  */
+@ProviderType
 public abstract class DLFileRankBaseImpl extends DLFileRankModelImpl
 	implements DLFileRank {
 	/*
@@ -39,7 +40,7 @@ public abstract class DLFileRankBaseImpl extends DLFileRankModelImpl
 	 * Never modify or reference this class directly. All methods that expect a document library file rank model instance should use the {@link DLFileRank} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			DLFileRankLocalServiceUtil.addDLFileRank(this);
 		}

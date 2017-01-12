@@ -14,11 +14,14 @@
 
 package com.liferay.portlet.asset.model.impl;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.asset.kernel.model.AssetCategory;
+
+import com.liferay.portal.kernel.model.CacheModel;
+import com.liferay.portal.kernel.util.HashUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.CacheModel;
-
-import com.liferay.portlet.asset.model.AssetCategory;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -34,11 +37,36 @@ import java.util.Date;
  * @see AssetCategory
  * @generated
  */
+@ProviderType
 public class AssetCategoryCacheModel implements CacheModel<AssetCategory>,
 	Externalizable {
 	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof AssetCategoryCacheModel)) {
+			return false;
+		}
+
+		AssetCategoryCacheModel assetCategoryCacheModel = (AssetCategoryCacheModel)obj;
+
+		if (categoryId == assetCategoryCacheModel.categoryId) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return HashUtil.hash(0, categoryId);
+	}
+
+	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(31);
+		StringBundler sb = new StringBundler(33);
 
 		sb.append("{uuid=");
 		sb.append(uuid);
@@ -70,6 +98,8 @@ public class AssetCategoryCacheModel implements CacheModel<AssetCategory>,
 		sb.append(description);
 		sb.append(", vocabularyId=");
 		sb.append(vocabularyId);
+		sb.append(", lastPublishDate=");
+		sb.append(lastPublishDate);
 		sb.append("}");
 
 		return sb.toString();
@@ -139,6 +169,13 @@ public class AssetCategoryCacheModel implements CacheModel<AssetCategory>,
 
 		assetCategoryImpl.setVocabularyId(vocabularyId);
 
+		if (lastPublishDate == Long.MIN_VALUE) {
+			assetCategoryImpl.setLastPublishDate(null);
+		}
+		else {
+			assetCategoryImpl.setLastPublishDate(new Date(lastPublishDate));
+		}
+
 		assetCategoryImpl.resetOriginalValues();
 
 		return assetCategoryImpl;
@@ -147,20 +184,29 @@ public class AssetCategoryCacheModel implements CacheModel<AssetCategory>,
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		uuid = objectInput.readUTF();
+
 		categoryId = objectInput.readLong();
+
 		groupId = objectInput.readLong();
+
 		companyId = objectInput.readLong();
+
 		userId = objectInput.readLong();
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
+
 		parentCategoryId = objectInput.readLong();
+
 		leftCategoryId = objectInput.readLong();
+
 		rightCategoryId = objectInput.readLong();
 		name = objectInput.readUTF();
 		title = objectInput.readUTF();
 		description = objectInput.readUTF();
+
 		vocabularyId = objectInput.readLong();
+		lastPublishDate = objectInput.readLong();
 	}
 
 	@Override
@@ -174,8 +220,11 @@ public class AssetCategoryCacheModel implements CacheModel<AssetCategory>,
 		}
 
 		objectOutput.writeLong(categoryId);
+
 		objectOutput.writeLong(groupId);
+
 		objectOutput.writeLong(companyId);
+
 		objectOutput.writeLong(userId);
 
 		if (userName == null) {
@@ -187,8 +236,11 @@ public class AssetCategoryCacheModel implements CacheModel<AssetCategory>,
 
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
+
 		objectOutput.writeLong(parentCategoryId);
+
 		objectOutput.writeLong(leftCategoryId);
+
 		objectOutput.writeLong(rightCategoryId);
 
 		if (name == null) {
@@ -213,6 +265,7 @@ public class AssetCategoryCacheModel implements CacheModel<AssetCategory>,
 		}
 
 		objectOutput.writeLong(vocabularyId);
+		objectOutput.writeLong(lastPublishDate);
 	}
 
 	public String uuid;
@@ -230,4 +283,5 @@ public class AssetCategoryCacheModel implements CacheModel<AssetCategory>,
 	public String title;
 	public String description;
 	public long vocabularyId;
+	public long lastPublishDate;
 }

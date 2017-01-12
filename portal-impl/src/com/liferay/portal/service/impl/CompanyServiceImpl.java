@@ -15,25 +15,28 @@
 package com.liferay.portal.service.impl;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceMode;
+import com.liferay.portal.kernel.model.Account;
+import com.liferay.portal.kernel.model.Address;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.EmailAddress;
+import com.liferay.portal.kernel.model.Phone;
+import com.liferay.portal.kernel.model.RoleConstants;
+import com.liferay.portal.kernel.model.Website;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.util.UnicodeProperties;
-import com.liferay.portal.model.Account;
-import com.liferay.portal.model.Address;
-import com.liferay.portal.model.Company;
-import com.liferay.portal.model.EmailAddress;
-import com.liferay.portal.model.Phone;
-import com.liferay.portal.model.RoleConstants;
-import com.liferay.portal.model.Website;
-import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.service.base.CompanyServiceBaseImpl;
-import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
+import com.liferay.portal.util.PrefsPropsUtil;
+import com.liferay.ratings.kernel.transformer.RatingsDataTransformerUtil;
+import com.liferay.users.admin.kernel.util.UsersAdminUtil;
 
 import java.io.InputStream;
 
 import java.util.List;
+
+import javax.portlet.PortletPreferences;
 
 /**
  * Provides the local service for accessing, adding, checking, and updating
@@ -52,43 +55,36 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * @param  webId the company's web domain
 	 * @param  virtualHost the company's virtual host name
 	 * @param  mx the company's mail domain
-	 * @param  shardName the company's shard
 	 * @param  system whether the company is the very first company (i.e., the
 	 * @param  maxUsers the max number of company users (optionally
 	 *         <code>0</code>)
 	 * @param  active whether the company is active
 	 * @return the company
-	 * @throws PortalException if the web domain, virtual host name, or mail
-	 *         domain was invalid or if the user was not a universal
-	 *         administrator
-	 * @throws SystemException if a system exception occurred
 	 */
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
 	public Company addCompany(
-			String webId, String virtualHost, String mx, String shardName,
-			boolean system, int maxUsers, boolean active)
-		throws PortalException, SystemException {
+			String webId, String virtualHost, String mx, boolean system,
+			int maxUsers, boolean active)
+		throws PortalException {
 
 		PermissionChecker permissionChecker = getPermissionChecker();
 
 		if (!permissionChecker.isOmniadmin()) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
 		}
 
 		return companyLocalService.addCompany(
-			webId, virtualHost, mx, shardName, system, maxUsers, active);
+			webId, virtualHost, mx, system, maxUsers, active);
 	}
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
-	public Company deleteCompany(long companyId)
-		throws PortalException, SystemException {
-
+	public Company deleteCompany(long companyId) throws PortalException {
 		PermissionChecker permissionChecker = getPermissionChecker();
 
 		if (!permissionChecker.isOmniadmin()) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
 		}
 
 		return companyLocalService.deleteCompany(companyId);
@@ -97,16 +93,10 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	/**
 	 * Deletes the company's logo.
 	 *
-	 * @param  companyId the primary key of the company
-	 * @throws PortalException if the company with the primary key could not be
-	 *         found or if the company's logo could not be found or if the user
-	 *         was not an administrator
-	 * @throws SystemException if a system exception occurred
+	 * @param companyId the primary key of the company
 	 */
 	@Override
-	public void deleteLogo(long companyId)
-		throws PortalException, SystemException {
-
+	public void deleteLogo(long companyId) throws PortalException {
 		if (!roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
 
@@ -121,14 +111,9 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 *
 	 * @param  companyId the primary key of the company
 	 * @return Returns the company with the primary key
-	 * @throws PortalException if a company with the primary key could not be
-	 *         found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public Company getCompanyById(long companyId)
-		throws PortalException, SystemException {
-
+	public Company getCompanyById(long companyId) throws PortalException {
 		return companyLocalService.getCompanyById(companyId);
 	}
 
@@ -137,13 +122,9 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 *
 	 * @param  logoId the ID of the company's logo
 	 * @return Returns the company with the logo
-	 * @throws PortalException if the company with the logo could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public Company getCompanyByLogoId(long logoId)
-		throws PortalException, SystemException {
-
+	public Company getCompanyByLogoId(long logoId) throws PortalException {
 		return companyLocalService.getCompanyByLogoId(logoId);
 	}
 
@@ -152,14 +133,9 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 *
 	 * @param  mx the company's mail domain
 	 * @return Returns the company with the mail domain
-	 * @throws PortalException if the company with the mail domain could not be
-	 *         found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public Company getCompanyByMx(String mx)
-		throws PortalException, SystemException {
-
+	public Company getCompanyByMx(String mx) throws PortalException {
 		return companyLocalService.getCompanyByMx(mx);
 	}
 
@@ -168,14 +144,10 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 *
 	 * @param  virtualHost the company's virtual host name
 	 * @return Returns the company with the virtual host name
-	 * @throws PortalException if the company with the virtual host name could
-	 *         not be found or if the virtual host was not associated with a
-	 *         company
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public Company getCompanyByVirtualHost(String virtualHost)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		return companyLocalService.getCompanyByVirtualHost(virtualHost);
 	}
@@ -185,14 +157,9 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 *
 	 * @param  webId the company's web domain
 	 * @return Returns the company with the web domain
-	 * @throws PortalException if the company with the web domain could not be
-	 *         found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public Company getCompanyByWebId(String webId)
-		throws PortalException, SystemException {
-
+	public Company getCompanyByWebId(String webId) throws PortalException {
 		return companyLocalService.getCompanyByWebId(webId);
 	}
 
@@ -201,17 +168,15 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 *
 	 * This method is called by {@link
 	 * com.liferay.portlet.portalsettings.action.EditLDAPServerAction} remotely
-	 * through {@link com.liferay.portal.service.CompanyService}.
+	 * through {@link com.liferay.portal.kernel.service.CompanyService}.
 	 *
-	 * @param  companyId the primary key of the company
-	 * @param  keys the company's preferences keys to be remove
-	 * @throws PortalException if the user was not an administrator
-	 * @throws SystemException if a system exception occurred
+	 * @param companyId the primary key of the company
+	 * @param keys the company's preferences keys to be remove
 	 */
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
 	public void removePreferences(long companyId, String[] keys)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
@@ -232,21 +197,17 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 *         <code>0</code>)
 	 * @param  active whether the company is active
 	 * @return the company with the primary key
-	 * @throws PortalException if a company with the primary key could not be
-	 *         found or if the new information was invalid or if the user was
-	 *         not a universal administrator
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public Company updateCompany(
 			long companyId, String virtualHost, String mx, int maxUsers,
 			boolean active)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		PermissionChecker permissionChecker = getPermissionChecker();
 
 		if (!permissionChecker.isOmniadmin()) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
 		}
 
 		return companyLocalService.updateCompany(
@@ -278,10 +239,6 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * @param  type the company's account type (optionally <code>null</code>)
 	 * @param  size the company's account size (optionally <code>null</code>)
 	 * @return the the company with the primary key
-	 * @throws PortalException if a company with the primary key could not be
-	 *         found or if the new information was invalid or if the user was
-	 *         not an administrator
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public Company updateCompany(
@@ -289,7 +246,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			boolean logo, byte[] logoBytes, String name, String legalName,
 			String legalId, String legalType, String sicCode,
 			String tickerSymbol, String industry, String type, String size)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
@@ -335,10 +292,6 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * @param  websites the company's websites
 	 * @param  properties the company's properties
 	 * @return the company with the primary key
-	 * @throws PortalException the company with the primary key could not be
-	 *         found or if the new information was invalid or if the user was
-	 *         not an administrator
-	 * @throws SystemException if a system exception occurred
 	 */
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
@@ -350,7 +303,10 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			String languageId, String timeZoneId, List<Address> addresses,
 			List<EmailAddress> emailAddresses, List<Phone> phones,
 			List<Website> websites, UnicodeProperties properties)
-		throws PortalException, SystemException {
+		throws PortalException {
+
+		PortletPreferences oldCompanyPortletPreferences =
+			PrefsPropsUtil.getPreferences(companyId);
 
 		Company company = updateCompany(
 			companyId, virtualHost, mx, homeURL, logo, logoBytes, name,
@@ -360,6 +316,9 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 		updateDisplay(company.getCompanyId(), languageId, timeZoneId);
 
 		updatePreferences(company.getCompanyId(), properties);
+
+		RatingsDataTransformerUtil.transformCompanyRatingsData(
+			companyId, oldCompanyPortletPreferences, properties);
 
 		UsersAdminUtil.updateAddresses(
 			Account.class.getName(), company.getAccountId(), addresses);
@@ -402,10 +361,6 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * @param      size the company's account size (optionally
 	 *             <code>null</code>)
 	 * @return     the the company with the primary key
-	 * @throws     PortalException if a company with the primary key could not
-	 *             be found or if the new information was invalid or if the user
-	 *             was not an administrator
-	 * @throws     SystemException if a system exception occurred
 	 * @deprecated As of 7.0.0, replaced by {@link #updateCompany(long, String,
 	 *             String, String, boolean, byte[], String, String, String,
 	 *             String, String, String, String, String, String)}
@@ -417,7 +372,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			String name, String legalName, String legalId, String legalType,
 			String sicCode, String tickerSymbol, String industry, String type,
 			String size)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		return updateCompany(
 			companyId, virtualHost, mx, homeURL, true, null, name, legalName,
@@ -457,15 +412,10 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * @param      websites the company's websites
 	 * @param      properties the company's properties
 	 * @return     the company with the primary key
-	 * @throws     PortalException the company with the primary key could not be
-	 *             found or if the new information was invalid or if the user
-	 *             was not an administrator
-	 * @throws     SystemException if a system exception occurred
 	 * @deprecated As of 7.0.0, replaced by {@link #updateCompany(long, String,
 	 *             String, String, boolean, byte[], String, String, String,
 	 *             String, String, String, String, String, String, String,
-	 *             String, java.util.List, java.util.List, java.util.List,
-	 *             java.util.List, UnicodeProperties)}
+	 *             String, List, List, List, List, UnicodeProperties)}
 	 */
 	@Deprecated
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
@@ -478,7 +428,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			List<Address> addresses, List<EmailAddress> emailAddresses,
 			List<Phone> phones, List<Website> websites,
 			UnicodeProperties properties)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		return updateCompany(
 			companyId, virtualHost, mx, homeURL, name, legalName, legalId,
@@ -490,17 +440,14 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	/**
 	 * Update the company's display.
 	 *
-	 * @param  companyId the primary key of the company
-	 * @param  languageId the ID of the company's default user's language
-	 * @param  timeZoneId the ID of the company's default user's time zone
-	 * @throws PortalException if the company's default user could not be found
-	 *         or if the user was not an administrator
-	 * @throws SystemException if a system exception occurred
+	 * @param companyId the primary key of the company
+	 * @param languageId the ID of the company's default user's language
+	 * @param timeZoneId the ID of the company's default user's time zone
 	 */
 	@Override
 	public void updateDisplay(
 			long companyId, String languageId, String timeZoneId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
@@ -517,14 +464,10 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * @param  companyId the primary key of the company
 	 * @param  bytes the bytes of the company's logo image
 	 * @return the company with the primary key
-	 * @throws PortalException if the company's logo ID could not be found or if
-	 *         the logo's image was corrupted or if the user was an
-	 *         administrator
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public Company updateLogo(long companyId, byte[] bytes)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
@@ -541,15 +484,11 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * @param  companyId the primary key of the company
 	 * @param  inputStream the input stream of the company's logo image
 	 * @return the company with the primary key
-	 * @throws PortalException if the company's logo ID could not be found or if
-	 *         the logo's image was corrupted or if the user was an
-	 *         administrator
-	 * @throws SystemException if a system exception occurred
 	 */
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
 	public Company updateLogo(long companyId, InputStream inputStream)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
@@ -564,16 +503,13 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 * Updates the company's preferences. The company's default properties are
 	 * found in portal.properties.
 	 *
-	 * @param  companyId the primary key of the company
-	 * @param  properties the company's properties. See {@link
-	 *         com.liferay.portal.kernel.util.UnicodeProperties}
-	 * @throws PortalException if the user was not an administrator
-	 * @throws SystemException if a system exception occurred
+	 * @param companyId the primary key of the company
+	 * @param properties the company's properties. See {@link UnicodeProperties}
 	 */
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
 	public void updatePreferences(long companyId, UnicodeProperties properties)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {
@@ -587,22 +523,20 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	/**
 	 * Updates the company's security properties.
 	 *
-	 * @param  companyId the primary key of the company
-	 * @param  authType the company's method of authenticating users
-	 * @param  autoLogin whether to allow users to select the "remember me"
-	 *         feature
-	 * @param  sendPassword whether to allow users to ask the company to send
-	 *         their passwords
-	 * @param  strangers whether to allow strangers to create accounts to
-	 *         register themselves in the company
-	 * @param  strangersWithMx whether to allow strangers to create accounts
-	 *         with email addresses that match the company mail suffix
-	 * @param  strangersVerify whether to require strangers who create accounts
-	 *         to be verified via email
-	 * @param  siteLogo whether to to allow site administrators to use their own
-	 *         logo instead of the enterprise logo
-	 * @throws PortalException if the user was not an administrator
-	 * @throws SystemException if a system exception occurred
+	 * @param companyId the primary key of the company
+	 * @param authType the company's method of authenticating users
+	 * @param autoLogin whether to allow users to select the "remember me"
+	 *        feature
+	 * @param sendPassword whether to allow users to ask the company to send
+	 *        their passwords
+	 * @param strangers whether to allow strangers to create accounts to
+	 *        register themselves in the company
+	 * @param strangersWithMx whether to allow strangers to create accounts with
+	 *        email addresses that match the company mail suffix
+	 * @param strangersVerify whether to require strangers who create accounts
+	 *        to be verified via email
+	 * @param siteLogo whether to to allow site administrators to use their own
+	 *        logo instead of the enterprise logo
 	 */
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
@@ -610,7 +544,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			long companyId, String authType, boolean autoLogin,
 			boolean sendPassword, boolean strangers, boolean strangersWithMx,
 			boolean strangersVerify, boolean siteLogo)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!roleLocalService.hasUserRole(
 				getUserId(), companyId, RoleConstants.ADMINISTRATOR, true)) {

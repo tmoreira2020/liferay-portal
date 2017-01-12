@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.ResourcePermission;
-import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.ResourcePermission;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalServiceUtil;
 
 /**
  * The extended model base implementation for the ResourcePermission service. Represents a row in the &quot;ResourcePermission&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see ResourcePermissionImpl
- * @see com.liferay.portal.model.ResourcePermission
+ * @see ResourcePermission
  * @generated
  */
+@ProviderType
 public abstract class ResourcePermissionBaseImpl
 	extends ResourcePermissionModelImpl implements ResourcePermission {
 	/*
@@ -38,7 +40,7 @@ public abstract class ResourcePermissionBaseImpl
 	 * Never modify or reference this class directly. All methods that expect a resource permission model instance should use the {@link ResourcePermission} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			ResourcePermissionLocalServiceUtil.addResourcePermission(this);
 		}

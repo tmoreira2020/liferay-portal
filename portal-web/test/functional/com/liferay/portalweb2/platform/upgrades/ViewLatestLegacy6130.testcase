@@ -1,3 +1,0 @@
-<definition component-name="portal-upgrades" extends="ViewLatestLegacySmoke">
-	<property name="portal.version" value="6.1.30" />
-</definition>

@@ -15,22 +15,13 @@
 package com.liferay.portlet.social.service.impl;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceContextFactory;
-import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.social.model.SocialActivity;
-import com.liferay.portlet.social.model.SocialActivityFeedEntry;
-import com.liferay.portlet.social.model.SocialActivityInterpreter;
-import com.liferay.portlet.social.model.SocialActivitySet;
-import com.liferay.portlet.social.model.impl.SocialActivityInterpreterImpl;
-import com.liferay.portlet.social.model.impl.SocialRequestInterpreterImpl;
 import com.liferay.portlet.social.service.base.SocialActivityInterpreterLocalServiceBaseImpl;
 import com.liferay.registry.Filter;
 import com.liferay.registry.Registry;
@@ -40,6 +31,13 @@ import com.liferay.registry.ServiceRegistration;
 import com.liferay.registry.ServiceTracker;
 import com.liferay.registry.ServiceTrackerCustomizer;
 import com.liferay.registry.collections.ServiceRegistrationMap;
+import com.liferay.registry.collections.ServiceRegistrationMapImpl;
+import com.liferay.social.kernel.model.SocialActivity;
+import com.liferay.social.kernel.model.SocialActivityFeedEntry;
+import com.liferay.social.kernel.model.SocialActivityInterpreter;
+import com.liferay.social.kernel.model.SocialActivitySet;
+import com.liferay.social.kernel.model.impl.SocialActivityInterpreterImpl;
+import com.liferay.social.kernel.model.impl.SocialRequestInterpreterImpl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,7 +77,7 @@ public class SocialActivityInterpreterLocalServiceImpl
 
 		Registry registry = RegistryUtil.getRegistry();
 
-		Map<String, Object> properties = new HashMap<String, Object>();
+		Map<String, Object> properties = new HashMap<>();
 
 		SocialActivityInterpreterImpl activityInterpreterImpl =
 			(SocialActivityInterpreterImpl)activityInterpreter;
@@ -97,6 +95,8 @@ public class SocialActivityInterpreterLocalServiceImpl
 
 	@Override
 	public void afterPropertiesSet() {
+		super.afterPropertiesSet();
+
 		Registry registry = RegistryUtil.getRegistry();
 
 		Filter filter = registry.getFilter(
@@ -141,28 +141,6 @@ public class SocialActivityInterpreterLocalServiceImpl
 	}
 
 	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #interpret(String,
-	 *             SocialActivity, ServiceContext)}
-	 */
-	@Deprecated
-	@Override
-	public SocialActivityFeedEntry interpret(
-		SocialActivity activity, ThemeDisplay themeDisplay) {
-
-		ServiceContext serviceContext = null;
-
-		try {
-			serviceContext = ServiceContextFactory.getInstance(
-				themeDisplay.getRequest());
-		}
-		catch (Exception e) {
-			return null;
-		}
-
-		return interpret(StringPool.BLANK, activity, serviceContext);
-	}
-
-	/**
 	 * Creates a human readable activity feed entry for the activity using an
 	 * available compatible activity interpreter.
 	 *
@@ -172,7 +150,9 @@ public class SocialActivityInterpreterLocalServiceImpl
 	 * asset type of the activity.
 	 * </p>
 	 *
+	 * @param  selector the context in which the activity interpreter is used
 	 * @param  activity the activity to be translated to human readable form
+	 * @param  serviceContext the service context to be applied
 	 * @return the activity feed that is a human readable form of the activity
 	 *         record or <code>null</code> if a compatible interpreter is not
 	 *         found
@@ -298,9 +278,7 @@ public class SocialActivityInterpreterLocalServiceImpl
 	}
 
 	@Override
-	public void updateActivitySet(long activityId)
-		throws PortalException, SystemException {
-
+	public void updateActivitySet(long activityId) throws PortalException {
 		if (!PropsValues.SOCIAL_ACTIVITY_SETS_BUNDLING_ENABLED) {
 			socialActivitySetLocalService.addActivitySet(activityId);
 
@@ -331,14 +309,13 @@ public class SocialActivityInterpreterLocalServiceImpl
 		}
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		SocialActivityInterpreterLocalServiceImpl.class);
 
-	private Map<String, List<SocialActivityInterpreter>> _activityInterpreters =
-		new HashMap<String, List<SocialActivityInterpreter>>();
-	private ServiceRegistrationMap<SocialActivityInterpreter>
-		_serviceRegistrations =
-			new ServiceRegistrationMap<SocialActivityInterpreter>();
+	private final Map<String, List<SocialActivityInterpreter>>
+		_activityInterpreters = new HashMap<>();
+	private final ServiceRegistrationMap<SocialActivityInterpreter>
+		_serviceRegistrations = new ServiceRegistrationMapImpl<>();
 	private ServiceTracker<SocialActivityInterpreter, SocialActivityInterpreter>
 		_serviceTracker;
 
@@ -369,8 +346,7 @@ public class SocialActivityInterpreterLocalServiceImpl
 				_activityInterpreters.get(activityInterpreter.getSelector());
 
 			if (activityInterpreters == null) {
-				activityInterpreters =
-					new ArrayList<SocialActivityInterpreter>();
+				activityInterpreters = new ArrayList<>();
 			}
 
 			activityInterpreters.add(activityInterpreter);

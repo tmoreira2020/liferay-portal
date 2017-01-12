@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.Portlet;
-import com.liferay.portal.service.PortletLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.Portlet;
+import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
 
 /**
  * The extended model base implementation for the Portlet service. Represents a row in the &quot;Portlet&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.PortletLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see PortletImpl
- * @see com.liferay.portal.model.Portlet
+ * @see Portlet
  * @generated
  */
+@ProviderType
 public abstract class PortletBaseImpl extends PortletModelImpl
 	implements Portlet {
 	/*
@@ -38,7 +40,7 @@ public abstract class PortletBaseImpl extends PortletModelImpl
 	 * Never modify or reference this class directly. All methods that expect a portlet model instance should use the {@link Portlet} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			PortletLocalServiceUtil.addPortlet(this);
 		}

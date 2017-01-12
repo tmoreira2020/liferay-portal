@@ -14,43 +14,48 @@
 
 package com.liferay.portal.service;
 
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.kernel.transaction.Transactional;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.LayoutSet;
-import com.liferay.portal.model.Theme;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.MainServletExecutionTestListener;
-import com.liferay.portal.test.TransactionalExecutionTestListener;
-import com.liferay.portal.util.GroupTestUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.LayoutSet;
+import com.liferay.portal.kernel.model.Theme;
+import com.liferay.portal.kernel.service.ThemeLocalServiceUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.springframework.util.Assert;
 
 /**
  * @author Manuel de la Peña
  */
-@ExecutionTestListeners(
-	listeners = {
-		MainServletExecutionTestListener.class,
-		TransactionalExecutionTestListener.class
-	})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
 public class ThemeServiceTest {
 
-	@Test
-	@Transactional
-	public void testGetTheme() throws Exception {
-		Group group = GroupTestUtil.addGroup();
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
-		LayoutSet layoutSet = group.getPublicLayoutSet();
+	@Before
+	public void setUp() throws Exception {
+		_group = GroupTestUtil.addGroup();
+	}
+
+	@Test
+	public void testGetTheme() throws Exception {
+		LayoutSet layoutSet = _group.getPublicLayoutSet();
 
 		Theme theme = ThemeLocalServiceUtil.getTheme(
-			group.getCompanyId(), layoutSet.getThemeId(), false);
+			_group.getCompanyId(), layoutSet.getThemeId());
 
 		Assert.notNull(theme);
 	}
+
+	@DeleteAfterTestRun
+	private Group _group;
 
 }

@@ -14,15 +14,15 @@
 
 package com.liferay.portlet.messageboards.service.impl;
 
+import com.liferay.message.boards.kernel.model.MBBan;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.User;
-import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.util.PortalUtil;
-import com.liferay.portlet.messageboards.model.MBBan;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portlet.messageboards.service.base.MBBanServiceBaseImpl;
 import com.liferay.portlet.messageboards.service.permission.MBPermission;
 
@@ -33,7 +33,7 @@ public class MBBanServiceImpl extends MBBanServiceBaseImpl {
 
 	@Override
 	public MBBan addBan(long banUserId, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		PermissionChecker permissionChecker = getPermissionChecker();
 
@@ -62,7 +62,7 @@ public class MBBanServiceImpl extends MBBanServiceBaseImpl {
 
 	@Override
 	public void deleteBan(long banUserId, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		MBPermission.check(
 			getPermissionChecker(), serviceContext.getScopeGroupId(),

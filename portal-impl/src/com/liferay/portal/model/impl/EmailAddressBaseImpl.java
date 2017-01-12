@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.EmailAddress;
-import com.liferay.portal.service.EmailAddressLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.EmailAddress;
+import com.liferay.portal.kernel.service.EmailAddressLocalServiceUtil;
 
 /**
  * The extended model base implementation for the EmailAddress service. Represents a row in the &quot;EmailAddress&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.EmailAddressLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see EmailAddressImpl
- * @see com.liferay.portal.model.EmailAddress
+ * @see EmailAddress
  * @generated
  */
+@ProviderType
 public abstract class EmailAddressBaseImpl extends EmailAddressModelImpl
 	implements EmailAddress {
 	/*
@@ -38,7 +40,7 @@ public abstract class EmailAddressBaseImpl extends EmailAddressModelImpl
 	 * Never modify or reference this class directly. All methods that expect a email address model instance should use the {@link EmailAddress} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			EmailAddressLocalServiceUtil.addEmailAddress(this);
 		}

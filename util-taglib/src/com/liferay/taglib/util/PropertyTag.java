@@ -14,13 +14,15 @@
 
 package com.liferay.taglib.util;
 
-import com.liferay.portal.kernel.servlet.taglib.TagSupport;
+import com.liferay.taglib.TagSupport;
 
 import javax.servlet.jsp.JspException;
 
 /**
- * @author Brian Wing Shun Chan
+ * @author     Brian Wing Shun Chan
+ * @deprecated As of 7.0.0, with no direct replacement
  */
+@Deprecated
 public class PropertyTag extends TagSupport {
 
 	@Override

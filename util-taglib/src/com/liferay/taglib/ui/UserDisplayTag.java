@@ -14,11 +14,11 @@
 
 package com.liferay.taglib.ui;
 
-import com.liferay.portal.kernel.servlet.PortalIncludeUtil;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.User;
-import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.taglib.util.PortalIncludeUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
@@ -53,9 +53,38 @@ public class UserDisplayTag extends TagSupport {
 				(HttpServletRequest)pageContext.getRequest();
 
 			request.setAttribute(
-				"liferay-ui:user-display:user-id", String.valueOf(_userId));
+				"liferay-ui:user-display:author", String.valueOf(_author));
 			request.setAttribute(
-				"liferay-ui:user-display:user-name", _userName);
+				"liferay-ui:user-display:displayStyle",
+				String.valueOf(_displayStyle));
+
+			if (Validator.isNull(_imageCssClass)) {
+				_imageCssClass = "img-circle";
+			}
+
+			request.setAttribute(
+				"liferay-ui:user-display:imageCssClass", _imageCssClass);
+
+			request.setAttribute(
+				"liferay-ui:user-display:showLink", String.valueOf(_showLink));
+			request.setAttribute(
+				"liferay-ui:user-display:showUserDetails",
+				String.valueOf(_showUserDetails));
+			request.setAttribute(
+				"liferay-ui:user-display:showUserName",
+				String.valueOf(_showUserName));
+
+			if (Validator.isNull(_userIconCssClass)) {
+				_userIconCssClass = "user-icon-lg";
+			}
+
+			request.setAttribute(
+				"liferay-ui:user-display:userIconCssClass",
+				String.valueOf(_userIconCssClass));
+
+			request.setAttribute(
+				"liferay-ui:user-display:userId", String.valueOf(_userId));
+			request.setAttribute("liferay-ui:user-display:userName", _userName);
 
 			User user = UserLocalServiceUtil.fetchUserById(_userId);
 
@@ -74,14 +103,7 @@ public class UserDisplayTag extends TagSupport {
 				pageContext.removeAttribute("userDisplay");
 			}
 
-			request.setAttribute(
-				"liferay-ui:user-display:displayStyle",
-				String.valueOf(_displayStyle));
-			request.setAttribute(
-				"liferay-ui:user-display:height", String.valueOf(_height));
 			request.setAttribute("liferay-ui:user-display:url", _url);
-			request.setAttribute(
-				"liferay-ui:user-display:width", String.valueOf(_width));
 
 			PortalIncludeUtil.include(pageContext, getStartPage());
 
@@ -97,6 +119,10 @@ public class UserDisplayTag extends TagSupport {
 		}
 	}
 
+	public void setAuthor(boolean author) {
+		_author = author;
+	}
+
 	public void setDisplayStyle(Object displayStyle) {
 		_displayStyle = GetterUtil.getInteger(displayStyle);
 	}
@@ -105,8 +131,24 @@ public class UserDisplayTag extends TagSupport {
 		_endPage = endPage;
 	}
 
-	public void setHeight(Object height) {
-		_height = GetterUtil.getInteger(height);
+	public void setImageCssClass(String imageCssClass) {
+		_imageCssClass = imageCssClass;
+	}
+
+	public void setMarkupView(String markupView) {
+		_markupView = markupView;
+	}
+
+	public void setShowLink(boolean showLink) {
+		_showLink = showLink;
+	}
+
+	public void setShowUserDetails(boolean showUserDetails) {
+		_showUserDetails = showUserDetails;
+	}
+
+	public void setShowUserName(boolean showUserName) {
+		_showUserName = showUserName;
 	}
 
 	public void setStartPage(String startPage) {
@@ -117,6 +159,10 @@ public class UserDisplayTag extends TagSupport {
 		_url = url;
 	}
 
+	public void setUserIconCssClass(String userIconCssClass) {
+		_userIconCssClass = userIconCssClass;
+	}
+
 	public void setUserId(long userId) {
 		_userId = userId;
 	}
@@ -125,41 +171,42 @@ public class UserDisplayTag extends TagSupport {
 		_userName = userName;
 	}
 
-	public void setWidth(Object width) {
-		_width = GetterUtil.getInteger(width);
-	}
-
 	protected String getEndPage() {
-		if (Validator.isNull(_endPage)) {
-			return _END_PAGE;
-		}
-		else {
+		if (Validator.isNotNull(_endPage)) {
 			return _endPage;
 		}
+
+		if (Validator.isNotNull(_markupView)) {
+			return "/html/taglib/ui/user_display/" + _markupView + "/end.jsp";
+		}
+
+		return "/html/taglib/ui/user_display/end.jsp";
 	}
 
 	protected String getStartPage() {
-		if (Validator.isNull(_startPage)) {
-			return _START_PAGE;
-		}
-		else {
+		if (Validator.isNotNull(_startPage)) {
 			return _startPage;
 		}
+
+		if (Validator.isNotNull(_markupView)) {
+			return "/html/taglib/ui/user_display/" + _markupView + "/start.jsp";
+		}
+
+		return "/html/taglib/ui/user_display/start.jsp";
 	}
 
-	private static final String _END_PAGE =
-		"/html/taglib/ui/user_display/end.jsp";
-
-	private static final String _START_PAGE =
-		"/html/taglib/ui/user_display/start.jsp";
-
+	private boolean _author;
 	private int _displayStyle = 1;
 	private String _endPage;
-	private int _height;
+	private String _imageCssClass;
+	private String _markupView;
+	private boolean _showLink = true;
+	private boolean _showUserDetails = true;
+	private boolean _showUserName = true;
 	private String _startPage;
 	private String _url;
+	private String _userIconCssClass;
 	private long _userId;
 	private String _userName;
-	private int _width;
 
 }

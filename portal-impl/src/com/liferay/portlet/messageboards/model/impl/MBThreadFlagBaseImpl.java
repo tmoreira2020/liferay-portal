@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.messageboards.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.messageboards.model.MBThreadFlag;
-import com.liferay.portlet.messageboards.service.MBThreadFlagLocalServiceUtil;
+import com.liferay.message.boards.kernel.model.MBThreadFlag;
+import com.liferay.message.boards.kernel.service.MBThreadFlagLocalServiceUtil;
 
 /**
  * The extended model base implementation for the MBThreadFlag service. Represents a row in the &quot;MBThreadFlag&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.messageboards.service.MBThreadFlagLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see MBThreadFlagImpl
- * @see com.liferay.portlet.messageboards.model.MBThreadFlag
+ * @see MBThreadFlag
  * @generated
  */
+@ProviderType
 public abstract class MBThreadFlagBaseImpl extends MBThreadFlagModelImpl
 	implements MBThreadFlag {
 	/*
@@ -39,7 +40,7 @@ public abstract class MBThreadFlagBaseImpl extends MBThreadFlagModelImpl
 	 * Never modify or reference this class directly. All methods that expect a message boards thread flag model instance should use the {@link MBThreadFlag} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			MBThreadFlagLocalServiceUtil.addMBThreadFlag(this);
 		}

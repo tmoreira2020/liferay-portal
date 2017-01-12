@@ -14,13 +14,13 @@
 
 package com.liferay.portlet.announcements.service.impl;
 
+import com.liferay.announcements.kernel.model.AnnouncementsDelivery;
+import com.liferay.announcements.kernel.model.AnnouncementsEntryConstants;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.model.User;
-import com.liferay.portlet.announcements.model.AnnouncementsDelivery;
-import com.liferay.portlet.announcements.model.AnnouncementsEntryConstants;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portlet.announcements.service.base.AnnouncementsDeliveryLocalServiceBaseImpl;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ public class AnnouncementsDeliveryLocalServiceImpl
 
 	@Override
 	public AnnouncementsDelivery addUserDelivery(long userId, String type)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
@@ -56,8 +56,8 @@ public class AnnouncementsDeliveryLocalServiceImpl
 		catch (SystemException se) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Add failed, fetch {userId=" + userId + ", type=" +
-						type + "}");
+					"Add failed, fetch {userId=" + userId + ", type=" + type +
+						"}");
 			}
 
 			delivery = announcementsDeliveryPersistence.fetchByU_T(
@@ -72,7 +72,7 @@ public class AnnouncementsDeliveryLocalServiceImpl
 	}
 
 	@Override
-	public void deleteDeliveries(long userId) throws SystemException {
+	public void deleteDeliveries(long userId) {
 		List<AnnouncementsDelivery> deliveries =
 			announcementsDeliveryPersistence.findByUserId(userId);
 
@@ -82,16 +82,12 @@ public class AnnouncementsDeliveryLocalServiceImpl
 	}
 
 	@Override
-	public void deleteDelivery(AnnouncementsDelivery delivery)
-		throws SystemException {
-
+	public void deleteDelivery(AnnouncementsDelivery delivery) {
 		announcementsDeliveryPersistence.remove(delivery);
 	}
 
 	@Override
-	public void deleteDelivery(long deliveryId)
-		throws PortalException, SystemException {
-
+	public void deleteDelivery(long deliveryId) throws PortalException {
 		AnnouncementsDelivery delivery =
 			announcementsDeliveryPersistence.findByPrimaryKey(deliveryId);
 
@@ -99,9 +95,7 @@ public class AnnouncementsDeliveryLocalServiceImpl
 	}
 
 	@Override
-	public void deleteDelivery(long userId, String type)
-		throws SystemException {
-
+	public void deleteDelivery(long userId, String type) {
 		AnnouncementsDelivery delivery =
 			announcementsDeliveryPersistence.fetchByU_T(userId, type);
 
@@ -112,18 +106,17 @@ public class AnnouncementsDeliveryLocalServiceImpl
 
 	@Override
 	public AnnouncementsDelivery getDelivery(long deliveryId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		return announcementsDeliveryPersistence.findByPrimaryKey(deliveryId);
 	}
 
 	@Override
 	public List<AnnouncementsDelivery> getUserDeliveries(long userId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
-		List<AnnouncementsDelivery> deliveries =
-			new ArrayList<AnnouncementsDelivery>(
-				AnnouncementsEntryConstants.TYPES.length);
+		List<AnnouncementsDelivery> deliveries = new ArrayList<>(
+			AnnouncementsEntryConstants.TYPES.length);
 
 		for (String type : AnnouncementsEntryConstants.TYPES) {
 			deliveries.add(getUserDelivery(userId, type));
@@ -134,7 +127,7 @@ public class AnnouncementsDeliveryLocalServiceImpl
 
 	@Override
 	public AnnouncementsDelivery getUserDelivery(long userId, String type)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		AnnouncementsDelivery delivery =
 			announcementsDeliveryPersistence.fetchByU_T(userId, type);
@@ -151,7 +144,7 @@ public class AnnouncementsDeliveryLocalServiceImpl
 	public AnnouncementsDelivery updateDelivery(
 			long userId, String type, boolean email, boolean sms,
 			boolean website)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		AnnouncementsDelivery delivery = getUserDelivery(userId, type);
 
@@ -164,7 +157,7 @@ public class AnnouncementsDeliveryLocalServiceImpl
 		return delivery;
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		AnnouncementsDeliveryLocalServiceImpl.class);
 
 }

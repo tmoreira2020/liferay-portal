@@ -18,11 +18,11 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.servlet.ServletInputStreamAdapter;
+import com.liferay.portal.kernel.util.ClassLoaderUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.ClassLoaderUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -62,9 +62,12 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 		super(request);
 
 		_request = request;
+
 		_portletRequest = portletRequest;
+
 		_portletRequestImpl = PortletRequestImpl.getPortletRequestImpl(
 			_portletRequest);
+
 		_pathInfo = pathInfo;
 		_queryString = queryString;
 		_requestURI = GetterUtil.getString(requestURI);
@@ -332,6 +335,10 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 		}
 	}
 
+	/**
+	 * @deprecated As of 7.0.0
+	 */
+	@Deprecated
 	@Override
 	public String getRealPath(String path) {
 		return null;
@@ -434,15 +441,6 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 		return _request.isRequestedSessionIdFromCookie();
 	}
 
-	/**
-	 * @deprecated As of 6.1.0
-	 */
-	@Deprecated
-	@Override
-	public boolean isRequestedSessionIdFromUrl() {
-		return _request.isRequestedSessionIdFromUrl();
-	}
-
 	@Override
 	public boolean isRequestedSessionIdFromURL() {
 		return _request.isRequestedSessionIdFromURL();
@@ -499,9 +497,9 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 
 		Constructor<?> constructor =
 			jettyHttpSessionWrapperClass.getConstructor(
-				new Class[] {HttpSession.class});
+				new Class<?>[] {HttpSession.class});
 
-		return(HttpSession)constructor.newInstance(new Object[] {session});
+		return (HttpSession)constructor.newInstance(new Object[] {session});
 	}
 
 	private ClientDataRequest _getClientDataRequest() {
@@ -512,18 +510,18 @@ public class PortletServletRequest extends HttpServletRequestWrapper {
 		return (EventRequest)_portletRequest;
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		PortletServletRequest.class);
 
-	private boolean _include;
-	private String _lifecycle;
-	private boolean _named;
-	private String _pathInfo;
-	private PortletRequest _portletRequest;
-	private PortletRequestImpl _portletRequestImpl;
-	private String _queryString;
-	private HttpServletRequest _request;
-	private String _requestURI;
-	private String _servletPath;
+	private final boolean _include;
+	private final String _lifecycle;
+	private final boolean _named;
+	private final String _pathInfo;
+	private final PortletRequest _portletRequest;
+	private final PortletRequestImpl _portletRequestImpl;
+	private final String _queryString;
+	private final HttpServletRequest _request;
+	private final String _requestURI;
+	private final String _servletPath;
 
 }

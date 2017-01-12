@@ -14,23 +14,21 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.RequiredLayoutSetPrototypeException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.exception.RequiredLayoutSetPrototypeException;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.model.LayoutSetPrototype;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.SystemEventConstants;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.UnicodeProperties;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.GroupConstants;
-import com.liferay.portal.model.LayoutConstants;
-import com.liferay.portal.model.LayoutSetPrototype;
-import com.liferay.portal.model.ResourceConstants;
-import com.liferay.portal.model.SystemEventConstants;
-import com.liferay.portal.model.User;
-import com.liferay.portal.security.permission.PermissionCacheUtil;
-import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.base.LayoutSetPrototypeLocalServiceBaseImpl;
 
 import java.util.Date;
@@ -51,7 +49,7 @@ public class LayoutSetPrototypeLocalServiceImpl
 			long userId, long companyId, Map<Locale, String> nameMap,
 			Map<Locale, String> descriptionMap, boolean active,
 			boolean layoutsUpdateable, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		// Layout set prototype
 
@@ -85,12 +83,9 @@ public class LayoutSetPrototypeLocalServiceImpl
 
 		// Resources
 
-		if (userId > 0) {
-			resourceLocalService.addResources(
-				companyId, 0, userId, LayoutSetPrototype.class.getName(),
-				layoutSetPrototype.getLayoutSetPrototypeId(), false, false,
-				false);
-		}
+		resourceLocalService.addResources(
+			companyId, 0, userId, LayoutSetPrototype.class.getName(),
+			layoutSetPrototype.getLayoutSetPrototypeId(), false, true, false);
 
 		// Group
 
@@ -102,7 +97,7 @@ public class LayoutSetPrototypeLocalServiceImpl
 			LayoutSetPrototype.class.getName(),
 			layoutSetPrototype.getLayoutSetPrototypeId(),
 			GroupConstants.DEFAULT_LIVE_GROUP_ID,
-			layoutSetPrototype.getName(LocaleUtil.getDefault()), null, 0, true,
+			layoutSetPrototype.getNameMap(), null, 0, true,
 			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, friendlyURL, false,
 			true, serviceContext);
 
@@ -128,9 +123,9 @@ public class LayoutSetPrototypeLocalServiceImpl
 			long userId, long companyId, Map<Locale, String> nameMap,
 			String description, boolean active, boolean layoutsUpdateable,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
-		Map<Locale, String> descriptionMap = new HashMap<Locale, String>();
+		Map<Locale, String> descriptionMap = new HashMap<>();
 
 		descriptionMap.put(LocaleUtil.getDefault(), description);
 
@@ -142,10 +137,11 @@ public class LayoutSetPrototypeLocalServiceImpl
 	@Override
 	@SystemEvent(
 		action = SystemEventConstants.ACTION_SKIP,
-		type = SystemEventConstants.TYPE_DELETE)
+		type = SystemEventConstants.TYPE_DELETE
+	)
 	public LayoutSetPrototype deleteLayoutSetPrototype(
 			LayoutSetPrototype layoutSetPrototype)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		// Group
 
@@ -171,17 +167,13 @@ public class LayoutSetPrototypeLocalServiceImpl
 
 		layoutSetPrototypePersistence.remove(layoutSetPrototype);
 
-		// Permission cache
-
-		PermissionCacheUtil.clearCache();
-
 		return layoutSetPrototype;
 	}
 
 	@Override
 	public LayoutSetPrototype deleteLayoutSetPrototype(
 			long layoutSetPrototypeId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		LayoutSetPrototype layoutSetPrototype =
 			layoutSetPrototypePersistence.findByPrimaryKey(
@@ -191,8 +183,19 @@ public class LayoutSetPrototypeLocalServiceImpl
 	}
 
 	@Override
+	public void deleteLayoutSetPrototypes() throws PortalException {
+		List<LayoutSetPrototype> layoutSetPrototypes =
+			layoutSetPrototypePersistence.findAll();
+
+		for (LayoutSetPrototype layoutSetPrototype : layoutSetPrototypes) {
+			layoutSetPrototypeLocalService.deleteLayoutSetPrototype(
+				layoutSetPrototype);
+		}
+	}
+
+	@Override
 	public void deleteNondefaultLayoutSetPrototypes(long companyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		long defaultUserId = userLocalService.getDefaultUserId(companyId);
 
@@ -206,39 +209,24 @@ public class LayoutSetPrototypeLocalServiceImpl
 		}
 	}
 
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link
-	 *             #getLayoutSetPrototypeByUuidAndCompanyId(String, long)}
-	 */
-	@Deprecated
-	@Override
-	public LayoutSetPrototype getLayoutSetPrototypeByUuid(String uuid)
-		throws PortalException, SystemException {
-
-		return layoutSetPrototypePersistence.findByUuid_First(uuid, null);
-	}
-
 	@Override
 	public LayoutSetPrototype getLayoutSetPrototypeByUuidAndCompanyId(
 			String uuid, long companyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		return layoutSetPrototypePersistence.findByUuid_C_First(
 			uuid, companyId, null);
 	}
 
 	@Override
-	public List<LayoutSetPrototype> getLayoutSetPrototypes(long companyId)
-		throws SystemException {
-
+	public List<LayoutSetPrototype> getLayoutSetPrototypes(long companyId) {
 		return layoutSetPrototypePersistence.findByCompanyId(companyId);
 	}
 
 	@Override
 	public List<LayoutSetPrototype> search(
-			long companyId, Boolean active, int start, int end,
-			OrderByComparator obc)
-		throws SystemException {
+		long companyId, Boolean active, int start, int end,
+		OrderByComparator<LayoutSetPrototype> obc) {
 
 		if (active != null) {
 			return layoutSetPrototypePersistence.findByC_A(
@@ -251,9 +239,7 @@ public class LayoutSetPrototypeLocalServiceImpl
 	}
 
 	@Override
-	public int searchCount(long companyId, Boolean active)
-		throws SystemException {
-
+	public int searchCount(long companyId, Boolean active) {
 		if (active != null) {
 			return layoutSetPrototypePersistence.countByC_A(companyId, active);
 		}
@@ -267,7 +253,7 @@ public class LayoutSetPrototypeLocalServiceImpl
 			long layoutSetPrototypeId, Map<Locale, String> nameMap,
 			Map<Locale, String> descriptionMap, boolean active,
 			boolean layoutsUpdateable, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		// Layout set prototype
 
@@ -305,9 +291,9 @@ public class LayoutSetPrototypeLocalServiceImpl
 			long layoutSetPrototypeId, Map<Locale, String> nameMap,
 			String description, boolean active, boolean layoutsUpdateable,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
-		Map<Locale, String> descriptionMap = new HashMap<Locale, String>();
+		Map<Locale, String> descriptionMap = new HashMap<>();
 
 		descriptionMap.put(LocaleUtil.getDefault(), description);
 
@@ -319,7 +305,7 @@ public class LayoutSetPrototypeLocalServiceImpl
 	@Override
 	public LayoutSetPrototype updateLayoutSetPrototype(
 			long layoutSetPrototypeId, String settings)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		// Layout set prototype
 

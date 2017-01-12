@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.ClassName;
-import com.liferay.portal.service.ClassNameLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.ClassName;
+import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
 
 /**
  * The extended model base implementation for the ClassName service. Represents a row in the &quot;ClassName_&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.ClassNameLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see ClassNameImpl
- * @see com.liferay.portal.model.ClassName
+ * @see ClassName
  * @generated
  */
+@ProviderType
 public abstract class ClassNameBaseImpl extends ClassNameModelImpl
 	implements ClassName {
 	/*
@@ -38,7 +40,7 @@ public abstract class ClassNameBaseImpl extends ClassNameModelImpl
 	 * Never modify or reference this class directly. All methods that expect a class name model instance should use the {@link ClassName} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			ClassNameLocalServiceUtil.addClassName(this);
 		}

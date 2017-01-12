@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.User;
-import com.liferay.portal.service.UserLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 
 /**
  * The extended model base implementation for the User service. Represents a row in the &quot;User_&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.UserLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see UserImpl
- * @see com.liferay.portal.model.User
+ * @see User
  * @generated
  */
+@ProviderType
 public abstract class UserBaseImpl extends UserModelImpl implements User {
 	/*
 	 * NOTE FOR DEVELOPERS:
@@ -37,7 +39,7 @@ public abstract class UserBaseImpl extends UserModelImpl implements User {
 	 * Never modify or reference this class directly. All methods that expect a user model instance should use the {@link User} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			UserLocalServiceUtil.addUser(this);
 		}

@@ -14,40 +14,54 @@
 
 package com.liferay.portal.service.base;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.expando.kernel.service.persistence.ExpandoRowPersistence;
+
+import com.liferay.exportimport.kernel.lar.ExportImportHelperUtil;
+import com.liferay.exportimport.kernel.lar.ManifestSummary;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.exportimport.kernel.lar.StagedModelType;
+import com.liferay.exportimport.kernel.service.persistence.ExportImportConfigurationFinder;
+import com.liferay.exportimport.kernel.service.persistence.ExportImportConfigurationPersistence;
+
 import com.liferay.portal.kernel.bean.BeanReference;
-import com.liferay.portal.kernel.bean.IdentifiableBean;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.UserGroup;
+import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
+import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
+import com.liferay.portal.kernel.service.UserGroupLocalService;
+import com.liferay.portal.kernel.service.persistence.GroupFinder;
+import com.liferay.portal.kernel.service.persistence.GroupPersistence;
+import com.liferay.portal.kernel.service.persistence.LayoutFinder;
+import com.liferay.portal.kernel.service.persistence.LayoutPersistence;
+import com.liferay.portal.kernel.service.persistence.TeamFinder;
+import com.liferay.portal.kernel.service.persistence.TeamPersistence;
+import com.liferay.portal.kernel.service.persistence.UserFinder;
+import com.liferay.portal.kernel.service.persistence.UserGroupFinder;
+import com.liferay.portal.kernel.service.persistence.UserGroupGroupRoleFinder;
+import com.liferay.portal.kernel.service.persistence.UserGroupGroupRolePersistence;
+import com.liferay.portal.kernel.service.persistence.UserGroupPersistence;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.model.PersistedModel;
-import com.liferay.portal.model.UserGroup;
-import com.liferay.portal.service.BaseLocalServiceImpl;
-import com.liferay.portal.service.PersistedModelLocalServiceRegistry;
-import com.liferay.portal.service.UserGroupLocalService;
-import com.liferay.portal.service.persistence.GroupFinder;
-import com.liferay.portal.service.persistence.GroupPersistence;
-import com.liferay.portal.service.persistence.LayoutFinder;
-import com.liferay.portal.service.persistence.LayoutPersistence;
-import com.liferay.portal.service.persistence.TeamFinder;
-import com.liferay.portal.service.persistence.TeamPersistence;
-import com.liferay.portal.service.persistence.UserFinder;
-import com.liferay.portal.service.persistence.UserGroupFinder;
-import com.liferay.portal.service.persistence.UserGroupGroupRoleFinder;
-import com.liferay.portal.service.persistence.UserGroupGroupRolePersistence;
-import com.liferay.portal.service.persistence.UserGroupPersistence;
-import com.liferay.portal.service.persistence.UserPersistence;
-import com.liferay.portal.util.PortalUtil;
-
-import com.liferay.portlet.expando.service.persistence.ExpandoRowPersistence;
+import com.liferay.portal.kernel.util.PortalUtil;
 
 import java.io.Serializable;
 
@@ -64,15 +78,16 @@ import javax.sql.DataSource;
  *
  * @author Brian Wing Shun Chan
  * @see com.liferay.portal.service.impl.UserGroupLocalServiceImpl
- * @see com.liferay.portal.service.UserGroupLocalServiceUtil
+ * @see com.liferay.portal.kernel.service.UserGroupLocalServiceUtil
  * @generated
  */
+@ProviderType
 public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
-	implements UserGroupLocalService, IdentifiableBean {
+	implements UserGroupLocalService, IdentifiableOSGiService {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this class directly. Always use {@link com.liferay.portal.service.UserGroupLocalServiceUtil} to access the user group local service.
+	 * Never modify or reference this class directly. Always use {@link com.liferay.portal.kernel.service.UserGroupLocalServiceUtil} to access the user group local service.
 	 */
 
 	/**
@@ -80,12 +95,10 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param userGroup the user group
 	 * @return the user group that was added
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public UserGroup addUserGroup(UserGroup userGroup)
-		throws SystemException {
+	public UserGroup addUserGroup(UserGroup userGroup) {
 		userGroup.setNew(true);
 
 		return userGroupPersistence.update(userGroup);
@@ -108,12 +121,11 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param userGroupId the primary key of the user group
 	 * @return the user group that was removed
 	 * @throws PortalException if a user group with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	public UserGroup deleteUserGroup(long userGroupId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return userGroupPersistence.remove(userGroupId);
 	}
 
@@ -123,12 +135,11 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param userGroup the user group
 	 * @return the user group that was removed
 	 * @throws PortalException
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	public UserGroup deleteUserGroup(UserGroup userGroup)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return userGroupPersistence.remove(userGroup);
 	}
 
@@ -145,12 +156,9 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return userGroupPersistence.findWithDynamicQuery(dynamicQuery);
 	}
 
@@ -165,12 +173,10 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param start the lower bound of the range of model instances
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end) {
 		return userGroupPersistence.findWithDynamicQuery(dynamicQuery, start,
 			end);
 	}
@@ -187,46 +193,41 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end, OrderByComparator<T> orderByComparator) {
 		return userGroupPersistence.findWithDynamicQuery(dynamicQuery, start,
 			end, orderByComparator);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
-	public long dynamicQueryCount(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return userGroupPersistence.countWithDynamicQuery(dynamicQuery);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @param projection the projection to apply to the query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
 	public long dynamicQueryCount(DynamicQuery dynamicQuery,
-		Projection projection) throws SystemException {
+		Projection projection) {
 		return userGroupPersistence.countWithDynamicQuery(dynamicQuery,
 			projection);
 	}
 
 	@Override
-	public UserGroup fetchUserGroup(long userGroupId) throws SystemException {
+	public UserGroup fetchUserGroup(long userGroupId) {
 		return userGroupPersistence.fetchByPrimaryKey(userGroupId);
 	}
 
@@ -234,13 +235,12 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * Returns the user group with the matching UUID and company.
 	 *
 	 * @param uuid the user group's UUID
-	 * @param  companyId the primary key of the company
+	 * @param companyId the primary key of the company
 	 * @return the matching user group, or <code>null</code> if a matching user group could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public UserGroup fetchUserGroupByUuidAndCompanyId(String uuid,
-		long companyId) throws SystemException {
+		long companyId) {
 		return userGroupPersistence.fetchByUuid_C_First(uuid, companyId, null);
 	}
 
@@ -250,17 +250,110 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param userGroupId the primary key of the user group
 	 * @return the user group
 	 * @throws PortalException if a user group with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public UserGroup getUserGroup(long userGroupId)
-		throws PortalException, SystemException {
+	public UserGroup getUserGroup(long userGroupId) throws PortalException {
 		return userGroupPersistence.findByPrimaryKey(userGroupId);
 	}
 
 	@Override
+	public ActionableDynamicQuery getActionableDynamicQuery() {
+		ActionableDynamicQuery actionableDynamicQuery = new DefaultActionableDynamicQuery();
+
+		actionableDynamicQuery.setBaseLocalService(userGroupLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(UserGroup.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("userGroupId");
+
+		return actionableDynamicQuery;
+	}
+
+	@Override
+	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery = new IndexableActionableDynamicQuery();
+
+		indexableActionableDynamicQuery.setBaseLocalService(userGroupLocalService);
+		indexableActionableDynamicQuery.setClassLoader(getClassLoader());
+		indexableActionableDynamicQuery.setModelClass(UserGroup.class);
+
+		indexableActionableDynamicQuery.setPrimaryKeyPropertyName("userGroupId");
+
+		return indexableActionableDynamicQuery;
+	}
+
+	protected void initActionableDynamicQuery(
+		ActionableDynamicQuery actionableDynamicQuery) {
+		actionableDynamicQuery.setBaseLocalService(userGroupLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(UserGroup.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("userGroupId");
+	}
+
+	@Override
+	public ExportActionableDynamicQuery getExportActionableDynamicQuery(
+		final PortletDataContext portletDataContext) {
+		final ExportActionableDynamicQuery exportActionableDynamicQuery = new ExportActionableDynamicQuery() {
+				@Override
+				public long performCount() throws PortalException {
+					ManifestSummary manifestSummary = portletDataContext.getManifestSummary();
+
+					StagedModelType stagedModelType = getStagedModelType();
+
+					long modelAdditionCount = super.performCount();
+
+					manifestSummary.addModelAdditionCount(stagedModelType,
+						modelAdditionCount);
+
+					long modelDeletionCount = ExportImportHelperUtil.getModelDeletionCount(portletDataContext,
+							stagedModelType);
+
+					manifestSummary.addModelDeletionCount(stagedModelType,
+						modelDeletionCount);
+
+					return modelAdditionCount;
+				}
+			};
+
+		initActionableDynamicQuery(exportActionableDynamicQuery);
+
+		exportActionableDynamicQuery.setAddCriteriaMethod(new ActionableDynamicQuery.AddCriteriaMethod() {
+				@Override
+				public void addCriteria(DynamicQuery dynamicQuery) {
+					portletDataContext.addDateRangeCriteria(dynamicQuery,
+						"modifiedDate");
+				}
+			});
+
+		exportActionableDynamicQuery.setCompanyId(portletDataContext.getCompanyId());
+
+		exportActionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<UserGroup>() {
+				@Override
+				public void performAction(UserGroup userGroup)
+					throws PortalException {
+					StagedModelDataHandlerUtil.exportStagedModel(portletDataContext,
+						userGroup);
+				}
+			});
+		exportActionableDynamicQuery.setStagedModelType(new StagedModelType(
+				PortalUtil.getClassNameId(UserGroup.class.getName())));
+
+		return exportActionableDynamicQuery;
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
+		throws PortalException {
+		return userGroupLocalService.deleteUserGroup((UserGroup)persistedModel);
+	}
+
+	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return userGroupPersistence.findByPrimaryKey(primaryKeyObj);
 	}
 
@@ -268,14 +361,13 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * Returns the user group with the matching UUID and company.
 	 *
 	 * @param uuid the user group's UUID
-	 * @param  companyId the primary key of the company
+	 * @param companyId the primary key of the company
 	 * @return the matching user group
 	 * @throws PortalException if a matching user group could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public UserGroup getUserGroupByUuidAndCompanyId(String uuid, long companyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return userGroupPersistence.findByUuid_C_First(uuid, companyId, null);
 	}
 
@@ -289,11 +381,9 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param start the lower bound of the range of user groups
 	 * @param end the upper bound of the range of user groups (not inclusive)
 	 * @return the range of user groups
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<UserGroup> getUserGroups(int start, int end)
-		throws SystemException {
+	public List<UserGroup> getUserGroups(int start, int end) {
 		return userGroupPersistence.findAll(start, end);
 	}
 
@@ -301,10 +391,9 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * Returns the number of user groups.
 	 *
 	 * @return the number of user groups
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getUserGroupsCount() throws SystemException {
+	public int getUserGroupsCount() {
 		return userGroupPersistence.countAll();
 	}
 
@@ -313,439 +402,387 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param userGroup the user group
 	 * @return the user group that was updated
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public UserGroup updateUserGroup(UserGroup userGroup)
-		throws SystemException {
+	public UserGroup updateUserGroup(UserGroup userGroup) {
 		return userGroupPersistence.update(userGroup);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addGroupUserGroup(long groupId, long userGroupId)
-		throws SystemException {
+	public void addGroupUserGroup(long groupId, long userGroupId) {
 		groupPersistence.addUserGroup(groupId, userGroupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addGroupUserGroup(long groupId, UserGroup userGroup)
-		throws SystemException {
+	public void addGroupUserGroup(long groupId, UserGroup userGroup) {
 		groupPersistence.addUserGroup(groupId, userGroup);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addGroupUserGroups(long groupId, long[] userGroupIds)
-		throws SystemException {
+	public void addGroupUserGroups(long groupId, long[] userGroupIds) {
 		groupPersistence.addUserGroups(groupId, userGroupIds);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addGroupUserGroups(long groupId, List<UserGroup> UserGroups)
-		throws SystemException {
-		groupPersistence.addUserGroups(groupId, UserGroups);
+	public void addGroupUserGroups(long groupId, List<UserGroup> userGroups) {
+		groupPersistence.addUserGroups(groupId, userGroups);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void clearGroupUserGroups(long groupId) throws SystemException {
+	public void clearGroupUserGroups(long groupId) {
 		groupPersistence.clearUserGroups(groupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteGroupUserGroup(long groupId, long userGroupId)
-		throws SystemException {
+	public void deleteGroupUserGroup(long groupId, long userGroupId) {
 		groupPersistence.removeUserGroup(groupId, userGroupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteGroupUserGroup(long groupId, UserGroup userGroup)
-		throws SystemException {
+	public void deleteGroupUserGroup(long groupId, UserGroup userGroup) {
 		groupPersistence.removeUserGroup(groupId, userGroup);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteGroupUserGroups(long groupId, long[] userGroupIds)
-		throws SystemException {
+	public void deleteGroupUserGroups(long groupId, long[] userGroupIds) {
 		groupPersistence.removeUserGroups(groupId, userGroupIds);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteGroupUserGroups(long groupId, List<UserGroup> UserGroups)
-		throws SystemException {
-		groupPersistence.removeUserGroups(groupId, UserGroups);
+	public void deleteGroupUserGroups(long groupId, List<UserGroup> userGroups) {
+		groupPersistence.removeUserGroups(groupId, userGroups);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
+	 * Returns the groupIds of the groups associated with the user group.
+	 *
+	 * @param userGroupId the userGroupId of the user group
+	 * @return long[] the groupIds of groups associated with the user group
 	 */
 	@Override
-	public List<UserGroup> getGroupUserGroups(long groupId)
-		throws SystemException {
+	public long[] getGroupPrimaryKeys(long userGroupId) {
+		return userGroupPersistence.getGroupPrimaryKeys(userGroupId);
+	}
+
+	/**
+	 */
+	@Override
+	public List<UserGroup> getGroupUserGroups(long groupId) {
 		return groupPersistence.getUserGroups(groupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<UserGroup> getGroupUserGroups(long groupId, int start, int end)
-		throws SystemException {
+	public List<UserGroup> getGroupUserGroups(long groupId, int start, int end) {
 		return groupPersistence.getUserGroups(groupId, start, end);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public List<UserGroup> getGroupUserGroups(long groupId, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+		OrderByComparator<UserGroup> orderByComparator) {
 		return groupPersistence.getUserGroups(groupId, start, end,
 			orderByComparator);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getGroupUserGroupsCount(long groupId) throws SystemException {
+	public int getGroupUserGroupsCount(long groupId) {
 		return groupPersistence.getUserGroupsSize(groupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public boolean hasGroupUserGroup(long groupId, long userGroupId)
-		throws SystemException {
+	public boolean hasGroupUserGroup(long groupId, long userGroupId) {
 		return groupPersistence.containsUserGroup(groupId, userGroupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public boolean hasGroupUserGroups(long groupId) throws SystemException {
+	public boolean hasGroupUserGroups(long groupId) {
 		return groupPersistence.containsUserGroups(groupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void setGroupUserGroups(long groupId, long[] userGroupIds)
-		throws SystemException {
+	public void setGroupUserGroups(long groupId, long[] userGroupIds) {
 		groupPersistence.setUserGroups(groupId, userGroupIds);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addTeamUserGroup(long teamId, long userGroupId)
-		throws SystemException {
+	public void addTeamUserGroup(long teamId, long userGroupId) {
 		teamPersistence.addUserGroup(teamId, userGroupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addTeamUserGroup(long teamId, UserGroup userGroup)
-		throws SystemException {
+	public void addTeamUserGroup(long teamId, UserGroup userGroup) {
 		teamPersistence.addUserGroup(teamId, userGroup);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addTeamUserGroups(long teamId, long[] userGroupIds)
-		throws SystemException {
+	public void addTeamUserGroups(long teamId, long[] userGroupIds) {
 		teamPersistence.addUserGroups(teamId, userGroupIds);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addTeamUserGroups(long teamId, List<UserGroup> UserGroups)
-		throws SystemException {
-		teamPersistence.addUserGroups(teamId, UserGroups);
+	public void addTeamUserGroups(long teamId, List<UserGroup> userGroups) {
+		teamPersistence.addUserGroups(teamId, userGroups);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void clearTeamUserGroups(long teamId) throws SystemException {
+	public void clearTeamUserGroups(long teamId) {
 		teamPersistence.clearUserGroups(teamId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteTeamUserGroup(long teamId, long userGroupId)
-		throws SystemException {
+	public void deleteTeamUserGroup(long teamId, long userGroupId) {
 		teamPersistence.removeUserGroup(teamId, userGroupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteTeamUserGroup(long teamId, UserGroup userGroup)
-		throws SystemException {
+	public void deleteTeamUserGroup(long teamId, UserGroup userGroup) {
 		teamPersistence.removeUserGroup(teamId, userGroup);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteTeamUserGroups(long teamId, long[] userGroupIds)
-		throws SystemException {
+	public void deleteTeamUserGroups(long teamId, long[] userGroupIds) {
 		teamPersistence.removeUserGroups(teamId, userGroupIds);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteTeamUserGroups(long teamId, List<UserGroup> UserGroups)
-		throws SystemException {
-		teamPersistence.removeUserGroups(teamId, UserGroups);
+	public void deleteTeamUserGroups(long teamId, List<UserGroup> userGroups) {
+		teamPersistence.removeUserGroups(teamId, userGroups);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
+	 * Returns the teamIds of the teams associated with the user group.
+	 *
+	 * @param userGroupId the userGroupId of the user group
+	 * @return long[] the teamIds of teams associated with the user group
 	 */
 	@Override
-	public List<UserGroup> getTeamUserGroups(long teamId)
-		throws SystemException {
+	public long[] getTeamPrimaryKeys(long userGroupId) {
+		return userGroupPersistence.getTeamPrimaryKeys(userGroupId);
+	}
+
+	/**
+	 */
+	@Override
+	public List<UserGroup> getTeamUserGroups(long teamId) {
 		return teamPersistence.getUserGroups(teamId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<UserGroup> getTeamUserGroups(long teamId, int start, int end)
-		throws SystemException {
+	public List<UserGroup> getTeamUserGroups(long teamId, int start, int end) {
 		return teamPersistence.getUserGroups(teamId, start, end);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public List<UserGroup> getTeamUserGroups(long teamId, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+		OrderByComparator<UserGroup> orderByComparator) {
 		return teamPersistence.getUserGroups(teamId, start, end,
 			orderByComparator);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getTeamUserGroupsCount(long teamId) throws SystemException {
+	public int getTeamUserGroupsCount(long teamId) {
 		return teamPersistence.getUserGroupsSize(teamId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public boolean hasTeamUserGroup(long teamId, long userGroupId)
-		throws SystemException {
+	public boolean hasTeamUserGroup(long teamId, long userGroupId) {
 		return teamPersistence.containsUserGroup(teamId, userGroupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public boolean hasTeamUserGroups(long teamId) throws SystemException {
+	public boolean hasTeamUserGroups(long teamId) {
 		return teamPersistence.containsUserGroups(teamId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void setTeamUserGroups(long teamId, long[] userGroupIds)
-		throws SystemException {
+	public void setTeamUserGroups(long teamId, long[] userGroupIds) {
 		teamPersistence.setUserGroups(teamId, userGroupIds);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addUserUserGroup(long userId, long userGroupId)
-		throws SystemException {
+	public void addUserUserGroup(long userId, long userGroupId) {
 		userPersistence.addUserGroup(userId, userGroupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addUserUserGroup(long userId, UserGroup userGroup)
-		throws SystemException {
+	public void addUserUserGroup(long userId, UserGroup userGroup) {
 		userPersistence.addUserGroup(userId, userGroup);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addUserUserGroups(long userId, long[] userGroupIds)
-		throws SystemException {
+	public void addUserUserGroups(long userId, long[] userGroupIds) {
 		userPersistence.addUserGroups(userId, userGroupIds);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void addUserUserGroups(long userId, List<UserGroup> UserGroups)
-		throws SystemException {
-		userPersistence.addUserGroups(userId, UserGroups);
+	public void addUserUserGroups(long userId, List<UserGroup> userGroups) {
+		userPersistence.addUserGroups(userId, userGroups);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void clearUserUserGroups(long userId) throws SystemException {
+	public void clearUserUserGroups(long userId) {
 		userPersistence.clearUserGroups(userId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteUserUserGroup(long userId, long userGroupId)
-		throws SystemException {
+	public void deleteUserUserGroup(long userId, long userGroupId) {
 		userPersistence.removeUserGroup(userId, userGroupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteUserUserGroup(long userId, UserGroup userGroup)
-		throws SystemException {
+	public void deleteUserUserGroup(long userId, UserGroup userGroup) {
 		userPersistence.removeUserGroup(userId, userGroup);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteUserUserGroups(long userId, long[] userGroupIds)
-		throws SystemException {
+	public void deleteUserUserGroups(long userId, long[] userGroupIds) {
 		userPersistence.removeUserGroups(userId, userGroupIds);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public void deleteUserUserGroups(long userId, List<UserGroup> UserGroups)
-		throws SystemException {
-		userPersistence.removeUserGroups(userId, UserGroups);
+	public void deleteUserUserGroups(long userId, List<UserGroup> userGroups) {
+		userPersistence.removeUserGroups(userId, userGroups);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
+	 * Returns the userIds of the users associated with the user group.
+	 *
+	 * @param userGroupId the userGroupId of the user group
+	 * @return long[] the userIds of users associated with the user group
 	 */
 	@Override
-	public List<UserGroup> getUserUserGroups(long userId)
-		throws SystemException {
+	public long[] getUserPrimaryKeys(long userGroupId) {
+		return userGroupPersistence.getUserPrimaryKeys(userGroupId);
+	}
+
+	/**
+	 */
+	@Override
+	public List<UserGroup> getUserUserGroups(long userId) {
 		return userPersistence.getUserGroups(userId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<UserGroup> getUserUserGroups(long userId, int start, int end)
-		throws SystemException {
+	public List<UserGroup> getUserUserGroups(long userId, int start, int end) {
 		return userPersistence.getUserGroups(userId, start, end);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public List<UserGroup> getUserUserGroups(long userId, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+		OrderByComparator<UserGroup> orderByComparator) {
 		return userPersistence.getUserGroups(userId, start, end,
 			orderByComparator);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getUserUserGroupsCount(long userId) throws SystemException {
+	public int getUserUserGroupsCount(long userId) {
 		return userPersistence.getUserGroupsSize(userId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public boolean hasUserUserGroup(long userId, long userGroupId)
-		throws SystemException {
+	public boolean hasUserUserGroup(long userId, long userGroupId) {
 		return userPersistence.containsUserGroup(userId, userGroupId);
 	}
 
 	/**
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public boolean hasUserUserGroups(long userId) throws SystemException {
+	public boolean hasUserUserGroups(long userId) {
 		return userPersistence.containsUserGroups(userId);
 	}
 
 	/**
 	 * @throws PortalException
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public void setUserUserGroups(long userId, long[] userGroupIds)
-		throws PortalException, SystemException {
+		throws PortalException {
 		userPersistence.setUserGroups(userId, userGroupIds);
 	}
 
@@ -754,7 +791,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the user group local service
 	 */
-	public com.liferay.portal.service.UserGroupLocalService getUserGroupLocalService() {
+	public UserGroupLocalService getUserGroupLocalService() {
 		return userGroupLocalService;
 	}
 
@@ -764,27 +801,8 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param userGroupLocalService the user group local service
 	 */
 	public void setUserGroupLocalService(
-		com.liferay.portal.service.UserGroupLocalService userGroupLocalService) {
+		UserGroupLocalService userGroupLocalService) {
 		this.userGroupLocalService = userGroupLocalService;
-	}
-
-	/**
-	 * Returns the user group remote service.
-	 *
-	 * @return the user group remote service
-	 */
-	public com.liferay.portal.service.UserGroupService getUserGroupService() {
-		return userGroupService;
-	}
-
-	/**
-	 * Sets the user group remote service.
-	 *
-	 * @param userGroupService the user group remote service
-	 */
-	public void setUserGroupService(
-		com.liferay.portal.service.UserGroupService userGroupService) {
-		this.userGroupService = userGroupService;
 	}
 
 	/**
@@ -829,7 +847,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the counter local service
 	 */
-	public com.liferay.counter.service.CounterLocalService getCounterLocalService() {
+	public com.liferay.counter.kernel.service.CounterLocalService getCounterLocalService() {
 		return counterLocalService;
 	}
 
@@ -839,7 +857,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param counterLocalService the counter local service
 	 */
 	public void setCounterLocalService(
-		com.liferay.counter.service.CounterLocalService counterLocalService) {
+		com.liferay.counter.kernel.service.CounterLocalService counterLocalService) {
 		this.counterLocalService = counterLocalService;
 	}
 
@@ -848,7 +866,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the group local service
 	 */
-	public com.liferay.portal.service.GroupLocalService getGroupLocalService() {
+	public com.liferay.portal.kernel.service.GroupLocalService getGroupLocalService() {
 		return groupLocalService;
 	}
 
@@ -858,27 +876,8 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param groupLocalService the group local service
 	 */
 	public void setGroupLocalService(
-		com.liferay.portal.service.GroupLocalService groupLocalService) {
+		com.liferay.portal.kernel.service.GroupLocalService groupLocalService) {
 		this.groupLocalService = groupLocalService;
-	}
-
-	/**
-	 * Returns the group remote service.
-	 *
-	 * @return the group remote service
-	 */
-	public com.liferay.portal.service.GroupService getGroupService() {
-		return groupService;
-	}
-
-	/**
-	 * Sets the group remote service.
-	 *
-	 * @param groupService the group remote service
-	 */
-	public void setGroupService(
-		com.liferay.portal.service.GroupService groupService) {
-		this.groupService = groupService;
 	}
 
 	/**
@@ -922,7 +921,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the layout local service
 	 */
-	public com.liferay.portal.service.LayoutLocalService getLayoutLocalService() {
+	public com.liferay.portal.kernel.service.LayoutLocalService getLayoutLocalService() {
 		return layoutLocalService;
 	}
 
@@ -932,27 +931,8 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param layoutLocalService the layout local service
 	 */
 	public void setLayoutLocalService(
-		com.liferay.portal.service.LayoutLocalService layoutLocalService) {
+		com.liferay.portal.kernel.service.LayoutLocalService layoutLocalService) {
 		this.layoutLocalService = layoutLocalService;
-	}
-
-	/**
-	 * Returns the layout remote service.
-	 *
-	 * @return the layout remote service
-	 */
-	public com.liferay.portal.service.LayoutService getLayoutService() {
-		return layoutService;
-	}
-
-	/**
-	 * Sets the layout remote service.
-	 *
-	 * @param layoutService the layout remote service
-	 */
-	public void setLayoutService(
-		com.liferay.portal.service.LayoutService layoutService) {
-		this.layoutService = layoutService;
 	}
 
 	/**
@@ -996,7 +976,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the resource local service
 	 */
-	public com.liferay.portal.service.ResourceLocalService getResourceLocalService() {
+	public com.liferay.portal.kernel.service.ResourceLocalService getResourceLocalService() {
 		return resourceLocalService;
 	}
 
@@ -1006,7 +986,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param resourceLocalService the resource local service
 	 */
 	public void setResourceLocalService(
-		com.liferay.portal.service.ResourceLocalService resourceLocalService) {
+		com.liferay.portal.kernel.service.ResourceLocalService resourceLocalService) {
 		this.resourceLocalService = resourceLocalService;
 	}
 
@@ -1015,7 +995,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the team local service
 	 */
-	public com.liferay.portal.service.TeamLocalService getTeamLocalService() {
+	public com.liferay.portal.kernel.service.TeamLocalService getTeamLocalService() {
 		return teamLocalService;
 	}
 
@@ -1025,27 +1005,8 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param teamLocalService the team local service
 	 */
 	public void setTeamLocalService(
-		com.liferay.portal.service.TeamLocalService teamLocalService) {
+		com.liferay.portal.kernel.service.TeamLocalService teamLocalService) {
 		this.teamLocalService = teamLocalService;
-	}
-
-	/**
-	 * Returns the team remote service.
-	 *
-	 * @return the team remote service
-	 */
-	public com.liferay.portal.service.TeamService getTeamService() {
-		return teamService;
-	}
-
-	/**
-	 * Sets the team remote service.
-	 *
-	 * @param teamService the team remote service
-	 */
-	public void setTeamService(
-		com.liferay.portal.service.TeamService teamService) {
-		this.teamService = teamService;
 	}
 
 	/**
@@ -1089,7 +1050,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the user local service
 	 */
-	public com.liferay.portal.service.UserLocalService getUserLocalService() {
+	public com.liferay.portal.kernel.service.UserLocalService getUserLocalService() {
 		return userLocalService;
 	}
 
@@ -1099,27 +1060,8 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param userLocalService the user local service
 	 */
 	public void setUserLocalService(
-		com.liferay.portal.service.UserLocalService userLocalService) {
+		com.liferay.portal.kernel.service.UserLocalService userLocalService) {
 		this.userLocalService = userLocalService;
-	}
-
-	/**
-	 * Returns the user remote service.
-	 *
-	 * @return the user remote service
-	 */
-	public com.liferay.portal.service.UserService getUserService() {
-		return userService;
-	}
-
-	/**
-	 * Sets the user remote service.
-	 *
-	 * @param userService the user remote service
-	 */
-	public void setUserService(
-		com.liferay.portal.service.UserService userService) {
-		this.userService = userService;
 	}
 
 	/**
@@ -1163,7 +1105,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the expando row local service
 	 */
-	public com.liferay.portlet.expando.service.ExpandoRowLocalService getExpandoRowLocalService() {
+	public com.liferay.expando.kernel.service.ExpandoRowLocalService getExpandoRowLocalService() {
 		return expandoRowLocalService;
 	}
 
@@ -1173,7 +1115,7 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param expandoRowLocalService the expando row local service
 	 */
 	public void setExpandoRowLocalService(
-		com.liferay.portlet.expando.service.ExpandoRowLocalService expandoRowLocalService) {
+		com.liferay.expando.kernel.service.ExpandoRowLocalService expandoRowLocalService) {
 		this.expandoRowLocalService = expandoRowLocalService;
 	}
 
@@ -1197,11 +1139,87 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	}
 
 	/**
+	 * Returns the export import local service.
+	 *
+	 * @return the export import local service
+	 */
+	public com.liferay.exportimport.kernel.service.ExportImportLocalService getExportImportLocalService() {
+		return exportImportLocalService;
+	}
+
+	/**
+	 * Sets the export import local service.
+	 *
+	 * @param exportImportLocalService the export import local service
+	 */
+	public void setExportImportLocalService(
+		com.liferay.exportimport.kernel.service.ExportImportLocalService exportImportLocalService) {
+		this.exportImportLocalService = exportImportLocalService;
+	}
+
+	/**
+	 * Returns the export import configuration local service.
+	 *
+	 * @return the export import configuration local service
+	 */
+	public com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService getExportImportConfigurationLocalService() {
+		return exportImportConfigurationLocalService;
+	}
+
+	/**
+	 * Sets the export import configuration local service.
+	 *
+	 * @param exportImportConfigurationLocalService the export import configuration local service
+	 */
+	public void setExportImportConfigurationLocalService(
+		com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService exportImportConfigurationLocalService) {
+		this.exportImportConfigurationLocalService = exportImportConfigurationLocalService;
+	}
+
+	/**
+	 * Returns the export import configuration persistence.
+	 *
+	 * @return the export import configuration persistence
+	 */
+	public ExportImportConfigurationPersistence getExportImportConfigurationPersistence() {
+		return exportImportConfigurationPersistence;
+	}
+
+	/**
+	 * Sets the export import configuration persistence.
+	 *
+	 * @param exportImportConfigurationPersistence the export import configuration persistence
+	 */
+	public void setExportImportConfigurationPersistence(
+		ExportImportConfigurationPersistence exportImportConfigurationPersistence) {
+		this.exportImportConfigurationPersistence = exportImportConfigurationPersistence;
+	}
+
+	/**
+	 * Returns the export import configuration finder.
+	 *
+	 * @return the export import configuration finder
+	 */
+	public ExportImportConfigurationFinder getExportImportConfigurationFinder() {
+		return exportImportConfigurationFinder;
+	}
+
+	/**
+	 * Sets the export import configuration finder.
+	 *
+	 * @param exportImportConfigurationFinder the export import configuration finder
+	 */
+	public void setExportImportConfigurationFinder(
+		ExportImportConfigurationFinder exportImportConfigurationFinder) {
+		this.exportImportConfigurationFinder = exportImportConfigurationFinder;
+	}
+
+	/**
 	 * Returns the user group group role local service.
 	 *
 	 * @return the user group group role local service
 	 */
-	public com.liferay.portal.service.UserGroupGroupRoleLocalService getUserGroupGroupRoleLocalService() {
+	public com.liferay.portal.kernel.service.UserGroupGroupRoleLocalService getUserGroupGroupRoleLocalService() {
 		return userGroupGroupRoleLocalService;
 	}
 
@@ -1211,27 +1229,8 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param userGroupGroupRoleLocalService the user group group role local service
 	 */
 	public void setUserGroupGroupRoleLocalService(
-		com.liferay.portal.service.UserGroupGroupRoleLocalService userGroupGroupRoleLocalService) {
+		com.liferay.portal.kernel.service.UserGroupGroupRoleLocalService userGroupGroupRoleLocalService) {
 		this.userGroupGroupRoleLocalService = userGroupGroupRoleLocalService;
-	}
-
-	/**
-	 * Returns the user group group role remote service.
-	 *
-	 * @return the user group group role remote service
-	 */
-	public com.liferay.portal.service.UserGroupGroupRoleService getUserGroupGroupRoleService() {
-		return userGroupGroupRoleService;
-	}
-
-	/**
-	 * Sets the user group group role remote service.
-	 *
-	 * @param userGroupGroupRoleService the user group group role remote service
-	 */
-	public void setUserGroupGroupRoleService(
-		com.liferay.portal.service.UserGroupGroupRoleService userGroupGroupRoleService) {
-		this.userGroupGroupRoleService = userGroupGroupRoleService;
 	}
 
 	/**
@@ -1273,33 +1272,23 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	}
 
 	public void afterPropertiesSet() {
-		persistedModelLocalServiceRegistry.register("com.liferay.portal.model.UserGroup",
+		persistedModelLocalServiceRegistry.register("com.liferay.portal.kernel.model.UserGroup",
 			userGroupLocalService);
 	}
 
 	public void destroy() {
 		persistedModelLocalServiceRegistry.unregister(
-			"com.liferay.portal.model.UserGroup");
+			"com.liferay.portal.kernel.model.UserGroup");
 	}
 
 	/**
-	 * Returns the Spring bean ID for this bean.
+	 * Returns the OSGi service identifier.
 	 *
-	 * @return the Spring bean ID for this bean
+	 * @return the OSGi service identifier
 	 */
 	@Override
-	public String getBeanIdentifier() {
-		return _beanIdentifier;
-	}
-
-	/**
-	 * Sets the Spring bean ID for this bean.
-	 *
-	 * @param beanIdentifier the Spring bean ID for this bean
-	 */
-	@Override
-	public void setBeanIdentifier(String beanIdentifier) {
-		_beanIdentifier = beanIdentifier;
+	public String getOSGiServiceIdentifier() {
+		return UserGroupLocalService.class.getName();
 	}
 
 	protected Class<?> getModelClass() {
@@ -1315,17 +1304,17 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param sql the sql query
 	 */
-	protected void runSQL(String sql) throws SystemException {
+	protected void runSQL(String sql) {
 		try {
 			DataSource dataSource = userGroupPersistence.getDataSource();
 
-			DB db = DBFactoryUtil.getDB();
+			DB db = DBManagerUtil.getDB();
 
 			sql = db.buildSQL(sql);
 			sql = PortalUtil.transformSQL(sql);
 
 			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(dataSource,
-					sql, new int[0]);
+					sql);
 
 			sqlUpdate.update();
 		}
@@ -1334,63 +1323,58 @@ public abstract class UserGroupLocalServiceBaseImpl extends BaseLocalServiceImpl
 		}
 	}
 
-	@BeanReference(type = com.liferay.portal.service.UserGroupLocalService.class)
-	protected com.liferay.portal.service.UserGroupLocalService userGroupLocalService;
-	@BeanReference(type = com.liferay.portal.service.UserGroupService.class)
-	protected com.liferay.portal.service.UserGroupService userGroupService;
+	@BeanReference(type = UserGroupLocalService.class)
+	protected UserGroupLocalService userGroupLocalService;
 	@BeanReference(type = UserGroupPersistence.class)
 	protected UserGroupPersistence userGroupPersistence;
 	@BeanReference(type = UserGroupFinder.class)
 	protected UserGroupFinder userGroupFinder;
-	@BeanReference(type = com.liferay.counter.service.CounterLocalService.class)
-	protected com.liferay.counter.service.CounterLocalService counterLocalService;
-	@BeanReference(type = com.liferay.portal.service.GroupLocalService.class)
-	protected com.liferay.portal.service.GroupLocalService groupLocalService;
-	@BeanReference(type = com.liferay.portal.service.GroupService.class)
-	protected com.liferay.portal.service.GroupService groupService;
+	@BeanReference(type = com.liferay.counter.kernel.service.CounterLocalService.class)
+	protected com.liferay.counter.kernel.service.CounterLocalService counterLocalService;
+	@BeanReference(type = com.liferay.portal.kernel.service.GroupLocalService.class)
+	protected com.liferay.portal.kernel.service.GroupLocalService groupLocalService;
 	@BeanReference(type = GroupPersistence.class)
 	protected GroupPersistence groupPersistence;
 	@BeanReference(type = GroupFinder.class)
 	protected GroupFinder groupFinder;
-	@BeanReference(type = com.liferay.portal.service.LayoutLocalService.class)
-	protected com.liferay.portal.service.LayoutLocalService layoutLocalService;
-	@BeanReference(type = com.liferay.portal.service.LayoutService.class)
-	protected com.liferay.portal.service.LayoutService layoutService;
+	@BeanReference(type = com.liferay.portal.kernel.service.LayoutLocalService.class)
+	protected com.liferay.portal.kernel.service.LayoutLocalService layoutLocalService;
 	@BeanReference(type = LayoutPersistence.class)
 	protected LayoutPersistence layoutPersistence;
 	@BeanReference(type = LayoutFinder.class)
 	protected LayoutFinder layoutFinder;
-	@BeanReference(type = com.liferay.portal.service.ResourceLocalService.class)
-	protected com.liferay.portal.service.ResourceLocalService resourceLocalService;
-	@BeanReference(type = com.liferay.portal.service.TeamLocalService.class)
-	protected com.liferay.portal.service.TeamLocalService teamLocalService;
-	@BeanReference(type = com.liferay.portal.service.TeamService.class)
-	protected com.liferay.portal.service.TeamService teamService;
+	@BeanReference(type = com.liferay.portal.kernel.service.ResourceLocalService.class)
+	protected com.liferay.portal.kernel.service.ResourceLocalService resourceLocalService;
+	@BeanReference(type = com.liferay.portal.kernel.service.TeamLocalService.class)
+	protected com.liferay.portal.kernel.service.TeamLocalService teamLocalService;
 	@BeanReference(type = TeamPersistence.class)
 	protected TeamPersistence teamPersistence;
 	@BeanReference(type = TeamFinder.class)
 	protected TeamFinder teamFinder;
-	@BeanReference(type = com.liferay.portal.service.UserLocalService.class)
-	protected com.liferay.portal.service.UserLocalService userLocalService;
-	@BeanReference(type = com.liferay.portal.service.UserService.class)
-	protected com.liferay.portal.service.UserService userService;
+	@BeanReference(type = com.liferay.portal.kernel.service.UserLocalService.class)
+	protected com.liferay.portal.kernel.service.UserLocalService userLocalService;
 	@BeanReference(type = UserPersistence.class)
 	protected UserPersistence userPersistence;
 	@BeanReference(type = UserFinder.class)
 	protected UserFinder userFinder;
-	@BeanReference(type = com.liferay.portlet.expando.service.ExpandoRowLocalService.class)
-	protected com.liferay.portlet.expando.service.ExpandoRowLocalService expandoRowLocalService;
+	@BeanReference(type = com.liferay.expando.kernel.service.ExpandoRowLocalService.class)
+	protected com.liferay.expando.kernel.service.ExpandoRowLocalService expandoRowLocalService;
 	@BeanReference(type = ExpandoRowPersistence.class)
 	protected ExpandoRowPersistence expandoRowPersistence;
-	@BeanReference(type = com.liferay.portal.service.UserGroupGroupRoleLocalService.class)
-	protected com.liferay.portal.service.UserGroupGroupRoleLocalService userGroupGroupRoleLocalService;
-	@BeanReference(type = com.liferay.portal.service.UserGroupGroupRoleService.class)
-	protected com.liferay.portal.service.UserGroupGroupRoleService userGroupGroupRoleService;
+	@BeanReference(type = com.liferay.exportimport.kernel.service.ExportImportLocalService.class)
+	protected com.liferay.exportimport.kernel.service.ExportImportLocalService exportImportLocalService;
+	@BeanReference(type = com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService.class)
+	protected com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService exportImportConfigurationLocalService;
+	@BeanReference(type = ExportImportConfigurationPersistence.class)
+	protected ExportImportConfigurationPersistence exportImportConfigurationPersistence;
+	@BeanReference(type = ExportImportConfigurationFinder.class)
+	protected ExportImportConfigurationFinder exportImportConfigurationFinder;
+	@BeanReference(type = com.liferay.portal.kernel.service.UserGroupGroupRoleLocalService.class)
+	protected com.liferay.portal.kernel.service.UserGroupGroupRoleLocalService userGroupGroupRoleLocalService;
 	@BeanReference(type = UserGroupGroupRolePersistence.class)
 	protected UserGroupGroupRolePersistence userGroupGroupRolePersistence;
 	@BeanReference(type = UserGroupGroupRoleFinder.class)
 	protected UserGroupGroupRoleFinder userGroupGroupRoleFinder;
 	@BeanReference(type = PersistedModelLocalServiceRegistry.class)
 	protected PersistedModelLocalServiceRegistry persistedModelLocalServiceRegistry;
-	private String _beanIdentifier;
 }

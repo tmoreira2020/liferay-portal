@@ -14,29 +14,41 @@
 
 package com.liferay.portal.service.base;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.exportimport.kernel.lar.ExportImportHelperUtil;
+import com.liferay.exportimport.kernel.lar.ManifestSummary;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.exportimport.kernel.lar.StagedModelType;
+
 import com.liferay.portal.kernel.bean.BeanReference;
-import com.liferay.portal.kernel.bean.IdentifiableBean;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.RepositoryEntry;
+import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
+import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
+import com.liferay.portal.kernel.service.RepositoryEntryLocalService;
+import com.liferay.portal.kernel.service.persistence.RepositoryEntryPersistence;
+import com.liferay.portal.kernel.service.persistence.UserFinder;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.model.PersistedModel;
-import com.liferay.portal.model.RepositoryEntry;
-import com.liferay.portal.service.BaseLocalServiceImpl;
-import com.liferay.portal.service.PersistedModelLocalServiceRegistry;
-import com.liferay.portal.service.RepositoryEntryLocalService;
-import com.liferay.portal.service.persistence.RepositoryEntryPersistence;
-import com.liferay.portal.service.persistence.UserFinder;
-import com.liferay.portal.service.persistence.UserPersistence;
-import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 
 import java.io.Serializable;
 
@@ -53,16 +65,17 @@ import javax.sql.DataSource;
  *
  * @author Brian Wing Shun Chan
  * @see com.liferay.portal.service.impl.RepositoryEntryLocalServiceImpl
- * @see com.liferay.portal.service.RepositoryEntryLocalServiceUtil
+ * @see com.liferay.portal.kernel.service.RepositoryEntryLocalServiceUtil
  * @generated
  */
+@ProviderType
 public abstract class RepositoryEntryLocalServiceBaseImpl
 	extends BaseLocalServiceImpl implements RepositoryEntryLocalService,
-		IdentifiableBean {
+		IdentifiableOSGiService {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this class directly. Always use {@link com.liferay.portal.service.RepositoryEntryLocalServiceUtil} to access the repository entry local service.
+	 * Never modify or reference this class directly. Always use {@link com.liferay.portal.kernel.service.RepositoryEntryLocalServiceUtil} to access the repository entry local service.
 	 */
 
 	/**
@@ -70,12 +83,10 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 *
 	 * @param repositoryEntry the repository entry
 	 * @return the repository entry that was added
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public RepositoryEntry addRepositoryEntry(RepositoryEntry repositoryEntry)
-		throws SystemException {
+	public RepositoryEntry addRepositoryEntry(RepositoryEntry repositoryEntry) {
 		repositoryEntry.setNew(true);
 
 		return repositoryEntryPersistence.update(repositoryEntry);
@@ -98,12 +109,11 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param repositoryEntryId the primary key of the repository entry
 	 * @return the repository entry that was removed
 	 * @throws PortalException if a repository entry with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	public RepositoryEntry deleteRepositoryEntry(long repositoryEntryId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return repositoryEntryPersistence.remove(repositoryEntryId);
 	}
 
@@ -112,12 +122,11 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 *
 	 * @param repositoryEntry the repository entry
 	 * @return the repository entry that was removed
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	public RepositoryEntry deleteRepositoryEntry(
-		RepositoryEntry repositoryEntry) throws SystemException {
+		RepositoryEntry repositoryEntry) {
 		return repositoryEntryPersistence.remove(repositoryEntry);
 	}
 
@@ -134,12 +143,9 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return repositoryEntryPersistence.findWithDynamicQuery(dynamicQuery);
 	}
 
@@ -154,12 +160,10 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param start the lower bound of the range of model instances
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end) {
 		return repositoryEntryPersistence.findWithDynamicQuery(dynamicQuery,
 			start, end);
 	}
@@ -176,63 +180,42 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end, OrderByComparator<T> orderByComparator) {
 		return repositoryEntryPersistence.findWithDynamicQuery(dynamicQuery,
 			start, end, orderByComparator);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
-	public long dynamicQueryCount(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return repositoryEntryPersistence.countWithDynamicQuery(dynamicQuery);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @param projection the projection to apply to the query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
 	public long dynamicQueryCount(DynamicQuery dynamicQuery,
-		Projection projection) throws SystemException {
+		Projection projection) {
 		return repositoryEntryPersistence.countWithDynamicQuery(dynamicQuery,
 			projection);
 	}
 
 	@Override
-	public RepositoryEntry fetchRepositoryEntry(long repositoryEntryId)
-		throws SystemException {
+	public RepositoryEntry fetchRepositoryEntry(long repositoryEntryId) {
 		return repositoryEntryPersistence.fetchByPrimaryKey(repositoryEntryId);
-	}
-
-	/**
-	 * Returns the repository entry with the matching UUID and company.
-	 *
-	 * @param uuid the repository entry's UUID
-	 * @param  companyId the primary key of the company
-	 * @return the matching repository entry, or <code>null</code> if a matching repository entry could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public RepositoryEntry fetchRepositoryEntryByUuidAndCompanyId(String uuid,
-		long companyId) throws SystemException {
-		return repositoryEntryPersistence.fetchByUuid_C_First(uuid, companyId,
-			null);
 	}
 
 	/**
@@ -241,11 +224,10 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param uuid the repository entry's UUID
 	 * @param groupId the primary key of the group
 	 * @return the matching repository entry, or <code>null</code> if a matching repository entry could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public RepositoryEntry fetchRepositoryEntryByUuidAndGroupId(String uuid,
-		long groupId) throws SystemException {
+		long groupId) {
 		return repositoryEntryPersistence.fetchByUUID_G(uuid, groupId);
 	}
 
@@ -255,34 +237,146 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param repositoryEntryId the primary key of the repository entry
 	 * @return the repository entry
 	 * @throws PortalException if a repository entry with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public RepositoryEntry getRepositoryEntry(long repositoryEntryId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return repositoryEntryPersistence.findByPrimaryKey(repositoryEntryId);
 	}
 
 	@Override
+	public ActionableDynamicQuery getActionableDynamicQuery() {
+		ActionableDynamicQuery actionableDynamicQuery = new DefaultActionableDynamicQuery();
+
+		actionableDynamicQuery.setBaseLocalService(repositoryEntryLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(RepositoryEntry.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("repositoryEntryId");
+
+		return actionableDynamicQuery;
+	}
+
+	@Override
+	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery = new IndexableActionableDynamicQuery();
+
+		indexableActionableDynamicQuery.setBaseLocalService(repositoryEntryLocalService);
+		indexableActionableDynamicQuery.setClassLoader(getClassLoader());
+		indexableActionableDynamicQuery.setModelClass(RepositoryEntry.class);
+
+		indexableActionableDynamicQuery.setPrimaryKeyPropertyName(
+			"repositoryEntryId");
+
+		return indexableActionableDynamicQuery;
+	}
+
+	protected void initActionableDynamicQuery(
+		ActionableDynamicQuery actionableDynamicQuery) {
+		actionableDynamicQuery.setBaseLocalService(repositoryEntryLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(RepositoryEntry.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("repositoryEntryId");
+	}
+
+	@Override
+	public ExportActionableDynamicQuery getExportActionableDynamicQuery(
+		final PortletDataContext portletDataContext) {
+		final ExportActionableDynamicQuery exportActionableDynamicQuery = new ExportActionableDynamicQuery() {
+				@Override
+				public long performCount() throws PortalException {
+					ManifestSummary manifestSummary = portletDataContext.getManifestSummary();
+
+					StagedModelType stagedModelType = getStagedModelType();
+
+					long modelAdditionCount = super.performCount();
+
+					manifestSummary.addModelAdditionCount(stagedModelType,
+						modelAdditionCount);
+
+					long modelDeletionCount = ExportImportHelperUtil.getModelDeletionCount(portletDataContext,
+							stagedModelType);
+
+					manifestSummary.addModelDeletionCount(stagedModelType,
+						modelDeletionCount);
+
+					return modelAdditionCount;
+				}
+			};
+
+		initActionableDynamicQuery(exportActionableDynamicQuery);
+
+		exportActionableDynamicQuery.setAddCriteriaMethod(new ActionableDynamicQuery.AddCriteriaMethod() {
+				@Override
+				public void addCriteria(DynamicQuery dynamicQuery) {
+					portletDataContext.addDateRangeCriteria(dynamicQuery,
+						"modifiedDate");
+				}
+			});
+
+		exportActionableDynamicQuery.setCompanyId(portletDataContext.getCompanyId());
+
+		exportActionableDynamicQuery.setGroupId(portletDataContext.getScopeGroupId());
+
+		exportActionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<RepositoryEntry>() {
+				@Override
+				public void performAction(RepositoryEntry repositoryEntry)
+					throws PortalException {
+					StagedModelDataHandlerUtil.exportStagedModel(portletDataContext,
+						repositoryEntry);
+				}
+			});
+		exportActionableDynamicQuery.setStagedModelType(new StagedModelType(
+				PortalUtil.getClassNameId(RepositoryEntry.class.getName())));
+
+		return exportActionableDynamicQuery;
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
+		throws PortalException {
+		return repositoryEntryLocalService.deleteRepositoryEntry((RepositoryEntry)persistedModel);
+	}
+
+	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return repositoryEntryPersistence.findByPrimaryKey(primaryKeyObj);
 	}
 
 	/**
-	 * Returns the repository entry with the matching UUID and company.
+	 * Returns all the repository entries matching the UUID and company.
 	 *
-	 * @param uuid the repository entry's UUID
-	 * @param  companyId the primary key of the company
-	 * @return the matching repository entry
-	 * @throws PortalException if a matching repository entry could not be found
-	 * @throws SystemException if a system exception occurred
+	 * @param uuid the UUID of the repository entries
+	 * @param companyId the primary key of the company
+	 * @return the matching repository entries, or an empty list if no matches were found
 	 */
 	@Override
-	public RepositoryEntry getRepositoryEntryByUuidAndCompanyId(String uuid,
-		long companyId) throws PortalException, SystemException {
-		return repositoryEntryPersistence.findByUuid_C_First(uuid, companyId,
-			null);
+	public List<RepositoryEntry> getRepositoryEntriesByUuidAndCompanyId(
+		String uuid, long companyId) {
+		return repositoryEntryPersistence.findByUuid_C(uuid, companyId);
+	}
+
+	/**
+	 * Returns a range of repository entries matching the UUID and company.
+	 *
+	 * @param uuid the UUID of the repository entries
+	 * @param companyId the primary key of the company
+	 * @param start the lower bound of the range of repository entries
+	 * @param end the upper bound of the range of repository entries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the range of matching repository entries, or an empty list if no matches were found
+	 */
+	@Override
+	public List<RepositoryEntry> getRepositoryEntriesByUuidAndCompanyId(
+		String uuid, long companyId, int start, int end,
+		OrderByComparator<RepositoryEntry> orderByComparator) {
+		return repositoryEntryPersistence.findByUuid_C(uuid, companyId, start,
+			end, orderByComparator);
 	}
 
 	/**
@@ -292,11 +386,10 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param groupId the primary key of the group
 	 * @return the matching repository entry
 	 * @throws PortalException if a matching repository entry could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public RepositoryEntry getRepositoryEntryByUuidAndGroupId(String uuid,
-		long groupId) throws PortalException, SystemException {
+		long groupId) throws PortalException {
 		return repositoryEntryPersistence.findByUUID_G(uuid, groupId);
 	}
 
@@ -310,11 +403,9 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param start the lower bound of the range of repository entries
 	 * @param end the upper bound of the range of repository entries (not inclusive)
 	 * @return the range of repository entries
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<RepositoryEntry> getRepositoryEntries(int start, int end)
-		throws SystemException {
+	public List<RepositoryEntry> getRepositoryEntries(int start, int end) {
 		return repositoryEntryPersistence.findAll(start, end);
 	}
 
@@ -322,10 +413,9 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * Returns the number of repository entries.
 	 *
 	 * @return the number of repository entries
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getRepositoryEntriesCount() throws SystemException {
+	public int getRepositoryEntriesCount() {
 		return repositoryEntryPersistence.countAll();
 	}
 
@@ -334,12 +424,11 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 *
 	 * @param repositoryEntry the repository entry
 	 * @return the repository entry that was updated
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public RepositoryEntry updateRepositoryEntry(
-		RepositoryEntry repositoryEntry) throws SystemException {
+		RepositoryEntry repositoryEntry) {
 		return repositoryEntryPersistence.update(repositoryEntry);
 	}
 
@@ -348,7 +437,7 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 *
 	 * @return the repository entry local service
 	 */
-	public com.liferay.portal.service.RepositoryEntryLocalService getRepositoryEntryLocalService() {
+	public RepositoryEntryLocalService getRepositoryEntryLocalService() {
 		return repositoryEntryLocalService;
 	}
 
@@ -358,7 +447,7 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param repositoryEntryLocalService the repository entry local service
 	 */
 	public void setRepositoryEntryLocalService(
-		com.liferay.portal.service.RepositoryEntryLocalService repositoryEntryLocalService) {
+		RepositoryEntryLocalService repositoryEntryLocalService) {
 		this.repositoryEntryLocalService = repositoryEntryLocalService;
 	}
 
@@ -386,7 +475,7 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 *
 	 * @return the counter local service
 	 */
-	public com.liferay.counter.service.CounterLocalService getCounterLocalService() {
+	public com.liferay.counter.kernel.service.CounterLocalService getCounterLocalService() {
 		return counterLocalService;
 	}
 
@@ -396,7 +485,7 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param counterLocalService the counter local service
 	 */
 	public void setCounterLocalService(
-		com.liferay.counter.service.CounterLocalService counterLocalService) {
+		com.liferay.counter.kernel.service.CounterLocalService counterLocalService) {
 		this.counterLocalService = counterLocalService;
 	}
 
@@ -405,7 +494,7 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 *
 	 * @return the user local service
 	 */
-	public com.liferay.portal.service.UserLocalService getUserLocalService() {
+	public com.liferay.portal.kernel.service.UserLocalService getUserLocalService() {
 		return userLocalService;
 	}
 
@@ -415,27 +504,8 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 * @param userLocalService the user local service
 	 */
 	public void setUserLocalService(
-		com.liferay.portal.service.UserLocalService userLocalService) {
+		com.liferay.portal.kernel.service.UserLocalService userLocalService) {
 		this.userLocalService = userLocalService;
-	}
-
-	/**
-	 * Returns the user remote service.
-	 *
-	 * @return the user remote service
-	 */
-	public com.liferay.portal.service.UserService getUserService() {
-		return userService;
-	}
-
-	/**
-	 * Sets the user remote service.
-	 *
-	 * @param userService the user remote service
-	 */
-	public void setUserService(
-		com.liferay.portal.service.UserService userService) {
-		this.userService = userService;
 	}
 
 	/**
@@ -475,33 +545,23 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	}
 
 	public void afterPropertiesSet() {
-		persistedModelLocalServiceRegistry.register("com.liferay.portal.model.RepositoryEntry",
+		persistedModelLocalServiceRegistry.register("com.liferay.portal.kernel.model.RepositoryEntry",
 			repositoryEntryLocalService);
 	}
 
 	public void destroy() {
 		persistedModelLocalServiceRegistry.unregister(
-			"com.liferay.portal.model.RepositoryEntry");
+			"com.liferay.portal.kernel.model.RepositoryEntry");
 	}
 
 	/**
-	 * Returns the Spring bean ID for this bean.
+	 * Returns the OSGi service identifier.
 	 *
-	 * @return the Spring bean ID for this bean
+	 * @return the OSGi service identifier
 	 */
 	@Override
-	public String getBeanIdentifier() {
-		return _beanIdentifier;
-	}
-
-	/**
-	 * Sets the Spring bean ID for this bean.
-	 *
-	 * @param beanIdentifier the Spring bean ID for this bean
-	 */
-	@Override
-	public void setBeanIdentifier(String beanIdentifier) {
-		_beanIdentifier = beanIdentifier;
+	public String getOSGiServiceIdentifier() {
+		return RepositoryEntryLocalService.class.getName();
 	}
 
 	protected Class<?> getModelClass() {
@@ -517,17 +577,17 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 	 *
 	 * @param sql the sql query
 	 */
-	protected void runSQL(String sql) throws SystemException {
+	protected void runSQL(String sql) {
 		try {
 			DataSource dataSource = repositoryEntryPersistence.getDataSource();
 
-			DB db = DBFactoryUtil.getDB();
+			DB db = DBManagerUtil.getDB();
 
 			sql = db.buildSQL(sql);
 			sql = PortalUtil.transformSQL(sql);
 
 			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(dataSource,
-					sql, new int[0]);
+					sql);
 
 			sqlUpdate.update();
 		}
@@ -536,21 +596,18 @@ public abstract class RepositoryEntryLocalServiceBaseImpl
 		}
 	}
 
-	@BeanReference(type = com.liferay.portal.service.RepositoryEntryLocalService.class)
-	protected com.liferay.portal.service.RepositoryEntryLocalService repositoryEntryLocalService;
+	@BeanReference(type = RepositoryEntryLocalService.class)
+	protected RepositoryEntryLocalService repositoryEntryLocalService;
 	@BeanReference(type = RepositoryEntryPersistence.class)
 	protected RepositoryEntryPersistence repositoryEntryPersistence;
-	@BeanReference(type = com.liferay.counter.service.CounterLocalService.class)
-	protected com.liferay.counter.service.CounterLocalService counterLocalService;
-	@BeanReference(type = com.liferay.portal.service.UserLocalService.class)
-	protected com.liferay.portal.service.UserLocalService userLocalService;
-	@BeanReference(type = com.liferay.portal.service.UserService.class)
-	protected com.liferay.portal.service.UserService userService;
+	@BeanReference(type = com.liferay.counter.kernel.service.CounterLocalService.class)
+	protected com.liferay.counter.kernel.service.CounterLocalService counterLocalService;
+	@BeanReference(type = com.liferay.portal.kernel.service.UserLocalService.class)
+	protected com.liferay.portal.kernel.service.UserLocalService userLocalService;
 	@BeanReference(type = UserPersistence.class)
 	protected UserPersistence userPersistence;
 	@BeanReference(type = UserFinder.class)
 	protected UserFinder userFinder;
 	@BeanReference(type = PersistedModelLocalServiceRegistry.class)
 	protected PersistedModelLocalServiceRegistry persistedModelLocalServiceRegistry;
-	private String _beanIdentifier;
 }

@@ -14,30 +14,35 @@
 
 package com.liferay.portlet.documentlibrary.service.base;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.document.library.kernel.model.DLContent;
+import com.liferay.document.library.kernel.model.DLContentDataBlobModel;
+import com.liferay.document.library.kernel.service.DLContentLocalService;
+import com.liferay.document.library.kernel.service.persistence.DLContentPersistence;
+
 import com.liferay.portal.kernel.bean.BeanReference;
-import com.liferay.portal.kernel.bean.IdentifiableBean;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
+import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.model.PersistedModel;
-import com.liferay.portal.service.BaseLocalServiceImpl;
-import com.liferay.portal.service.PersistedModelLocalServiceRegistry;
-import com.liferay.portal.util.PortalUtil;
-
-import com.liferay.portlet.documentlibrary.model.DLContent;
-import com.liferay.portlet.documentlibrary.model.DLContentDataBlobModel;
-import com.liferay.portlet.documentlibrary.service.DLContentLocalService;
-import com.liferay.portlet.documentlibrary.service.persistence.DLContentPersistence;
+import com.liferay.portal.kernel.util.PortalUtil;
 
 import java.io.Serializable;
 
@@ -54,15 +59,16 @@ import javax.sql.DataSource;
  *
  * @author Brian Wing Shun Chan
  * @see com.liferay.portlet.documentlibrary.service.impl.DLContentLocalServiceImpl
- * @see com.liferay.portlet.documentlibrary.service.DLContentLocalServiceUtil
+ * @see com.liferay.document.library.kernel.service.DLContentLocalServiceUtil
  * @generated
  */
+@ProviderType
 public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
-	implements DLContentLocalService, IdentifiableBean {
+	implements DLContentLocalService, IdentifiableOSGiService {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this class directly. Always use {@link com.liferay.portlet.documentlibrary.service.DLContentLocalServiceUtil} to access the document library content local service.
+	 * Never modify or reference this class directly. Always use {@link com.liferay.document.library.kernel.service.DLContentLocalServiceUtil} to access the document library content local service.
 	 */
 
 	/**
@@ -70,12 +76,10 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param dlContent the document library content
 	 * @return the document library content that was added
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public DLContent addDLContent(DLContent dlContent)
-		throws SystemException {
+	public DLContent addDLContent(DLContent dlContent) {
 		dlContent.setNew(true);
 
 		return dlContentPersistence.update(dlContent);
@@ -98,12 +102,10 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param contentId the primary key of the document library content
 	 * @return the document library content that was removed
 	 * @throws PortalException if a document library content with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public DLContent deleteDLContent(long contentId)
-		throws PortalException, SystemException {
+	public DLContent deleteDLContent(long contentId) throws PortalException {
 		return dlContentPersistence.remove(contentId);
 	}
 
@@ -112,12 +114,10 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param dlContent the document library content
 	 * @return the document library content that was removed
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public DLContent deleteDLContent(DLContent dlContent)
-		throws SystemException {
+	public DLContent deleteDLContent(DLContent dlContent) {
 		return dlContentPersistence.remove(dlContent);
 	}
 
@@ -134,12 +134,9 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return dlContentPersistence.findWithDynamicQuery(dynamicQuery);
 	}
 
@@ -154,12 +151,10 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param start the lower bound of the range of model instances
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end) {
 		return dlContentPersistence.findWithDynamicQuery(dynamicQuery, start,
 			end);
 	}
@@ -176,46 +171,41 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end, OrderByComparator<T> orderByComparator) {
 		return dlContentPersistence.findWithDynamicQuery(dynamicQuery, start,
 			end, orderByComparator);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
-	public long dynamicQueryCount(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return dlContentPersistence.countWithDynamicQuery(dynamicQuery);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @param projection the projection to apply to the query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
 	public long dynamicQueryCount(DynamicQuery dynamicQuery,
-		Projection projection) throws SystemException {
+		Projection projection) {
 		return dlContentPersistence.countWithDynamicQuery(dynamicQuery,
 			projection);
 	}
 
 	@Override
-	public DLContent fetchDLContent(long contentId) throws SystemException {
+	public DLContent fetchDLContent(long contentId) {
 		return dlContentPersistence.fetchByPrimaryKey(contentId);
 	}
 
@@ -225,17 +215,59 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param contentId the primary key of the document library content
 	 * @return the document library content
 	 * @throws PortalException if a document library content with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public DLContent getDLContent(long contentId)
-		throws PortalException, SystemException {
+	public DLContent getDLContent(long contentId) throws PortalException {
 		return dlContentPersistence.findByPrimaryKey(contentId);
 	}
 
 	@Override
+	public ActionableDynamicQuery getActionableDynamicQuery() {
+		ActionableDynamicQuery actionableDynamicQuery = new DefaultActionableDynamicQuery();
+
+		actionableDynamicQuery.setBaseLocalService(dlContentLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(DLContent.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("contentId");
+
+		return actionableDynamicQuery;
+	}
+
+	@Override
+	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery = new IndexableActionableDynamicQuery();
+
+		indexableActionableDynamicQuery.setBaseLocalService(dlContentLocalService);
+		indexableActionableDynamicQuery.setClassLoader(getClassLoader());
+		indexableActionableDynamicQuery.setModelClass(DLContent.class);
+
+		indexableActionableDynamicQuery.setPrimaryKeyPropertyName("contentId");
+
+		return indexableActionableDynamicQuery;
+	}
+
+	protected void initActionableDynamicQuery(
+		ActionableDynamicQuery actionableDynamicQuery) {
+		actionableDynamicQuery.setBaseLocalService(dlContentLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(DLContent.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("contentId");
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
+		throws PortalException {
+		return dlContentLocalService.deleteDLContent((DLContent)persistedModel);
+	}
+
+	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return dlContentPersistence.findByPrimaryKey(primaryKeyObj);
 	}
 
@@ -249,11 +281,9 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param start the lower bound of the range of document library contents
 	 * @param end the upper bound of the range of document library contents (not inclusive)
 	 * @return the range of document library contents
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<DLContent> getDLContents(int start, int end)
-		throws SystemException {
+	public List<DLContent> getDLContents(int start, int end) {
 		return dlContentPersistence.findAll(start, end);
 	}
 
@@ -261,10 +291,9 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * Returns the number of document library contents.
 	 *
 	 * @return the number of document library contents
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getDLContentsCount() throws SystemException {
+	public int getDLContentsCount() {
 		return dlContentPersistence.countAll();
 	}
 
@@ -273,24 +302,21 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param dlContent the document library content
 	 * @return the document library content that was updated
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public DLContent updateDLContent(DLContent dlContent)
-		throws SystemException {
+	public DLContent updateDLContent(DLContent dlContent) {
 		return dlContentPersistence.update(dlContent);
 	}
 
 	@Override
-	public DLContentDataBlobModel getDataBlobModel(Serializable primaryKey)
-		throws SystemException {
+	public DLContentDataBlobModel getDataBlobModel(Serializable primaryKey) {
 		Session session = null;
 
 		try {
 			session = dlContentPersistence.openSession();
 
-			return (com.liferay.portlet.documentlibrary.model.DLContentDataBlobModel)session.get(DLContentDataBlobModel.class,
+			return (DLContentDataBlobModel)session.get(DLContentDataBlobModel.class,
 				primaryKey);
 		}
 		catch (Exception e) {
@@ -306,7 +332,7 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the document library content local service
 	 */
-	public com.liferay.portlet.documentlibrary.service.DLContentLocalService getDLContentLocalService() {
+	public DLContentLocalService getDLContentLocalService() {
 		return dlContentLocalService;
 	}
 
@@ -316,7 +342,7 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param dlContentLocalService the document library content local service
 	 */
 	public void setDLContentLocalService(
-		com.liferay.portlet.documentlibrary.service.DLContentLocalService dlContentLocalService) {
+		DLContentLocalService dlContentLocalService) {
 		this.dlContentLocalService = dlContentLocalService;
 	}
 
@@ -344,7 +370,7 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the counter local service
 	 */
-	public com.liferay.counter.service.CounterLocalService getCounterLocalService() {
+	public com.liferay.counter.kernel.service.CounterLocalService getCounterLocalService() {
 		return counterLocalService;
 	}
 
@@ -354,38 +380,28 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param counterLocalService the counter local service
 	 */
 	public void setCounterLocalService(
-		com.liferay.counter.service.CounterLocalService counterLocalService) {
+		com.liferay.counter.kernel.service.CounterLocalService counterLocalService) {
 		this.counterLocalService = counterLocalService;
 	}
 
 	public void afterPropertiesSet() {
-		persistedModelLocalServiceRegistry.register("com.liferay.portlet.documentlibrary.model.DLContent",
+		persistedModelLocalServiceRegistry.register("com.liferay.document.library.kernel.model.DLContent",
 			dlContentLocalService);
 	}
 
 	public void destroy() {
 		persistedModelLocalServiceRegistry.unregister(
-			"com.liferay.portlet.documentlibrary.model.DLContent");
+			"com.liferay.document.library.kernel.model.DLContent");
 	}
 
 	/**
-	 * Returns the Spring bean ID for this bean.
+	 * Returns the OSGi service identifier.
 	 *
-	 * @return the Spring bean ID for this bean
+	 * @return the OSGi service identifier
 	 */
 	@Override
-	public String getBeanIdentifier() {
-		return _beanIdentifier;
-	}
-
-	/**
-	 * Sets the Spring bean ID for this bean.
-	 *
-	 * @param beanIdentifier the Spring bean ID for this bean
-	 */
-	@Override
-	public void setBeanIdentifier(String beanIdentifier) {
-		_beanIdentifier = beanIdentifier;
+	public String getOSGiServiceIdentifier() {
+		return DLContentLocalService.class.getName();
 	}
 
 	protected Class<?> getModelClass() {
@@ -401,17 +417,17 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param sql the sql query
 	 */
-	protected void runSQL(String sql) throws SystemException {
+	protected void runSQL(String sql) {
 		try {
 			DataSource dataSource = dlContentPersistence.getDataSource();
 
-			DB db = DBFactoryUtil.getDB();
+			DB db = DBManagerUtil.getDB();
 
 			sql = db.buildSQL(sql);
 			sql = PortalUtil.transformSQL(sql);
 
 			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(dataSource,
-					sql, new int[0]);
+					sql);
 
 			sqlUpdate.update();
 		}
@@ -420,13 +436,12 @@ public abstract class DLContentLocalServiceBaseImpl extends BaseLocalServiceImpl
 		}
 	}
 
-	@BeanReference(type = com.liferay.portlet.documentlibrary.service.DLContentLocalService.class)
-	protected com.liferay.portlet.documentlibrary.service.DLContentLocalService dlContentLocalService;
+	@BeanReference(type = DLContentLocalService.class)
+	protected DLContentLocalService dlContentLocalService;
 	@BeanReference(type = DLContentPersistence.class)
 	protected DLContentPersistence dlContentPersistence;
-	@BeanReference(type = com.liferay.counter.service.CounterLocalService.class)
-	protected com.liferay.counter.service.CounterLocalService counterLocalService;
+	@BeanReference(type = com.liferay.counter.kernel.service.CounterLocalService.class)
+	protected com.liferay.counter.kernel.service.CounterLocalService counterLocalService;
 	@BeanReference(type = PersistedModelLocalServiceRegistry.class)
 	protected PersistedModelLocalServiceRegistry persistedModelLocalServiceRegistry;
-	private String _beanIdentifier;
 }

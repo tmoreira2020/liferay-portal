@@ -14,7 +14,9 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.model.Region;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.Region;
 
 /**
  * The extended model base implementation for the Region service. Represents a row in the &quot;Region&quot; database table, with each column mapped to a property of this class.
@@ -25,9 +27,10 @@ import com.liferay.portal.model.Region;
  *
  * @author Brian Wing Shun Chan
  * @see RegionImpl
- * @see com.liferay.portal.model.Region
+ * @see Region
  * @generated
  */
+@ProviderType
 public abstract class RegionBaseImpl extends RegionModelImpl implements Region {
 	/*
 	 * NOTE FOR DEVELOPERS:

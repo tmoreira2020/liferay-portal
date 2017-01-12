@@ -22,10 +22,10 @@
 String portletTitle = HtmlUtil.escape(PortalUtil.getPortletTitle(renderResponse));
 
 if (portletTitle == null) {
-	portletTitle = LanguageUtil.get(pageContext, "portlet");
+	portletTitle = LanguageUtil.get(request, "portlet");
 }
 %>
 
 <div class="alert alert-info">
-	<%= LanguageUtil.format(pageContext, "x-will-only-be-shown-after-you-refresh-the-page", portletTitle, false) %>
+	<liferay-ui:message arguments="<%= portletTitle %>" key="x-will-only-be-shown-after-you-refresh-the-page" translateArguments="<%= false %>" />
 </div>

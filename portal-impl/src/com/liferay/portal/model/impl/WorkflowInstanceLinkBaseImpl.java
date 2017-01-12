@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.WorkflowInstanceLink;
-import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.WorkflowInstanceLink;
+import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalServiceUtil;
 
 /**
  * The extended model base implementation for the WorkflowInstanceLink service. Represents a row in the &quot;WorkflowInstanceLink&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.WorkflowInstanceLinkLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see WorkflowInstanceLinkImpl
- * @see com.liferay.portal.model.WorkflowInstanceLink
+ * @see WorkflowInstanceLink
  * @generated
  */
+@ProviderType
 public abstract class WorkflowInstanceLinkBaseImpl
 	extends WorkflowInstanceLinkModelImpl implements WorkflowInstanceLink {
 	/*
@@ -38,7 +40,7 @@ public abstract class WorkflowInstanceLinkBaseImpl
 	 * Never modify or reference this class directly. All methods that expect a workflow instance link model instance should use the {@link WorkflowInstanceLink} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			WorkflowInstanceLinkLocalServiceUtil.addWorkflowInstanceLink(this);
 		}

@@ -1,5 +1,0 @@
-<definition component-name="portal-collaboration">
-	<command priority="5">
-		<execute macro="macro" />
-	</command>
-</definition>

@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.messageboards.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.messageboards.model.MBMailingList;
-import com.liferay.portlet.messageboards.service.MBMailingListLocalServiceUtil;
+import com.liferay.message.boards.kernel.model.MBMailingList;
+import com.liferay.message.boards.kernel.service.MBMailingListLocalServiceUtil;
 
 /**
  * The extended model base implementation for the MBMailingList service. Represents a row in the &quot;MBMailingList&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.messageboards.service.MBMailingListLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see MBMailingListImpl
- * @see com.liferay.portlet.messageboards.model.MBMailingList
+ * @see MBMailingList
  * @generated
  */
+@ProviderType
 public abstract class MBMailingListBaseImpl extends MBMailingListModelImpl
 	implements MBMailingList {
 	/*
@@ -39,7 +40,7 @@ public abstract class MBMailingListBaseImpl extends MBMailingListModelImpl
 	 * Never modify or reference this class directly. All methods that expect a message boards mailing list model instance should use the {@link MBMailingList} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			MBMailingListLocalServiceUtil.addMBMailingList(this);
 		}

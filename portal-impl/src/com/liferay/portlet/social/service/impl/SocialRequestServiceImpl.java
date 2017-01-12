@@ -15,12 +15,11 @@
 package com.liferay.portlet.social.service.impl;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portlet.social.model.SocialRequest;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portlet.social.service.base.SocialRequestServiceBaseImpl;
-import com.liferay.portlet.social.service.permission.SocialRequestPermissionUtil;
+import com.liferay.social.kernel.model.SocialRequest;
+import com.liferay.social.kernel.service.permission.SocialRequestPermissionUtil;
 
 /**
  * Provides the remote service for updating social requests. Its methods include
@@ -33,7 +32,7 @@ public class SocialRequestServiceImpl extends SocialRequestServiceBaseImpl {
 	@Override
 	public SocialRequest updateRequest(
 			long requestId, int status, ThemeDisplay themeDisplay)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		SocialRequestPermissionUtil.check(
 			getPermissionChecker(), requestId, ActionKeys.UPDATE);

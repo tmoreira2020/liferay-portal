@@ -42,15 +42,13 @@ public class PortletAutoDeployer
 				PropsValues.AUTO_DEPLOY_DEPLOY_DIR);
 			destDir = DeployUtil.getAutoDeployDestDir();
 			appServerType = ServerDetector.getServerId();
-			auiTaglibDTD = DeployUtil.getResourcePath("aui.tld");
+			auiTaglibDTD = DeployUtil.getResourcePath("liferay-aui.tld");
 			portletTaglibDTD = DeployUtil.getResourcePath(
 				"liferay-portlet.tld");
 			portletExtTaglibDTD = DeployUtil.getResourcePath(
 				"liferay-portlet-ext.tld");
 			securityTaglibDTD = DeployUtil.getResourcePath(
 				"liferay-security.tld");
-			stagingTaglibDTD = DeployUtil.getResourcePath(
-				"liferay-staging.tld");
 			themeTaglibDTD = DeployUtil.getResourcePath("liferay-theme.tld");
 			uiTaglibDTD = DeployUtil.getResourcePath("liferay-ui.tld");
 			utilTaglibDTD = DeployUtil.getResourcePath("liferay-util.tld");
@@ -64,8 +62,11 @@ public class PortletAutoDeployer
 			tomcatLibDir = PrefsPropsUtil.getString(
 				PropsKeys.AUTO_DEPLOY_TOMCAT_LIB_DIR,
 				PropsValues.AUTO_DEPLOY_TOMCAT_LIB_DIR);
+			wildflyPrefix = PrefsPropsUtil.getString(
+				PropsKeys.AUTO_DEPLOY_WILDFLY_PREFIX,
+				PropsValues.AUTO_DEPLOY_WILDFLY_PREFIX);
 
-			List<String> jars = new ArrayList<String>();
+			List<String> jars = new ArrayList<>();
 
 			addExtJar(jars, "ext-util-bridges.jar");
 			addExtJar(jars, "ext-util-java.jar");
@@ -83,6 +84,7 @@ public class PortletAutoDeployer
 		}
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(PortletAutoDeployer.class);
+	private static final Log _log = LogFactoryUtil.getLog(
+		PortletAutoDeployer.class);
 
 }

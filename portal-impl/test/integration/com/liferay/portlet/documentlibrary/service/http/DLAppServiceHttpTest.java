@@ -14,31 +14,34 @@
 
 package com.liferay.portlet.documentlibrary.service.http;
 
+import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.test.EnvironmentExecutionTestListener;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.util.GroupTestUtil;
-import com.liferay.portal.util.TestPropsValues;
-import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
+import com.liferay.portal.service.http.HttpPrincipalTestUtil;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Alexander Chow
  */
-@ExecutionTestListeners(listeners = {EnvironmentExecutionTestListener.class})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
 public class DLAppServiceHttpTest {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Before
 	public void setUp() throws Exception {
@@ -47,19 +50,19 @@ public class DLAppServiceHttpTest {
 		String name = "Test Folder";
 		String description = "This is a test folder.";
 
-		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
-			_group.getGroupId());
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
 
 		try {
 			DLAppServiceHttp.deleteFolder(
-				TestPropsValues.getHttpPrincipal(), _group.getGroupId(),
+				HttpPrincipalTestUtil.getHttpPrincipal(), _group.getGroupId(),
 				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, name);
 		}
 		catch (Exception e) {
 		}
 
 		_folder = DLAppServiceHttp.addFolder(
-			TestPropsValues.getHttpPrincipal(), _group.getGroupId(),
+			HttpPrincipalTestUtil.getHttpPrincipal(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, name, description,
 			serviceContext);
 	}
@@ -69,7 +72,8 @@ public class DLAppServiceHttpTest {
 		try {
 			if (_folder != null) {
 				DLAppServiceHttp.deleteFolder(
-					TestPropsValues.getHttpPrincipal(), _folder.getFolderId());
+					HttpPrincipalTestUtil.getHttpPrincipal(),
+					_folder.getFolderId());
 			}
 		}
 		catch (Exception e) {
@@ -86,7 +90,8 @@ public class DLAppServiceHttpTest {
 		FileEntry fileEntry = addFileEntry("Test Delete.txt");
 
 		DLAppServiceHttp.deleteFileEntry(
-			TestPropsValues.getHttpPrincipal(), fileEntry.getFileEntryId());
+			HttpPrincipalTestUtil.getHttpPrincipal(),
+			fileEntry.getFileEntryId());
 	}
 
 	@Test
@@ -94,7 +99,7 @@ public class DLAppServiceHttpTest {
 		FileEntry fileEntry = addFileEntry("Test Get.txt");
 
 		DLAppServiceHttp.getFileEntryByUuidAndGroupId(
-			TestPropsValues.getHttpPrincipal(), fileEntry.getUuid(),
+			HttpPrincipalTestUtil.getHttpPrincipal(), fileEntry.getUuid(),
 			fileEntry.getGroupId());
 	}
 
@@ -104,13 +109,13 @@ public class DLAppServiceHttpTest {
 		String changeLog = StringPool.BLANK;
 		byte[] bytes = _CONTENT.getBytes();
 
-		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
-			_group.getGroupId());
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
 
 		return DLAppServiceHttp.addFileEntry(
-			TestPropsValues.getHttpPrincipal(), _group.getGroupId(), folderId,
-			title, ContentTypes.TEXT_PLAIN, title, description, changeLog,
-			bytes, serviceContext);
+			HttpPrincipalTestUtil.getHttpPrincipal(), _group.getGroupId(),
+			folderId, title, ContentTypes.TEXT_PLAIN, title, description,
+			changeLog, bytes, serviceContext);
 	}
 
 	private static final String _CONTENT =

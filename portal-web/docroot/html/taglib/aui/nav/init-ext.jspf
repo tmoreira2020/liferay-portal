@@ -13,3 +13,13 @@
  * details.
  */
 --%>
+
+<%
+String bodyContentString = StringPool.BLANK;
+
+Object bodyContent = request.getAttribute("aui:nav:bodyContent");
+
+if (bodyContent != null) {
+	bodyContentString = bodyContent.toString();
+}
+%>

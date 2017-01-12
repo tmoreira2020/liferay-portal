@@ -14,43 +14,41 @@
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.exportimport.kernel.staging.LayoutStagingUtil;
+import com.liferay.exportimport.kernel.staging.MergeLayoutPrototypesThreadLocal;
+import com.liferay.exportimport.kernel.staging.StagingUtil;
 import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.staging.LayoutStagingUtil;
-import com.liferay.portal.kernel.staging.MergeLayoutPrototypesThreadLocal;
-import com.liferay.portal.kernel.staging.StagingUtil;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutRevision;
+import com.liferay.portal.kernel.model.LayoutSet;
+import com.liferay.portal.kernel.model.LayoutStagingHandler;
+import com.liferay.portal.kernel.model.SystemEventConstants;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.service.LayoutFriendlyURLLocalServiceUtil;
+import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.LayoutRevisionLocalServiceUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.SystemEventLocalServiceUtil;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.service.persistence.LayoutRevisionUtil;
+import com.liferay.portal.kernel.service.persistence.LayoutUtil;
 import com.liferay.portal.kernel.systemevent.SystemEventHierarchyEntry;
 import com.liferay.portal.kernel.systemevent.SystemEventHierarchyEntryThreadLocal;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ClassLoaderUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.model.LayoutRevision;
-import com.liferay.portal.model.LayoutSet;
-import com.liferay.portal.model.LayoutStagingHandler;
-import com.liferay.portal.model.SystemEventConstants;
-import com.liferay.portal.model.User;
-import com.liferay.portal.security.auth.PrincipalThreadLocal;
-import com.liferay.portal.service.LayoutFriendlyURLLocalServiceUtil;
-import com.liferay.portal.service.LayoutLocalService;
-import com.liferay.portal.service.LayoutRevisionLocalServiceUtil;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceContextThreadLocal;
-import com.liferay.portal.service.SystemEventLocalServiceUtil;
-import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portal.service.persistence.LayoutRevisionUtil;
-import com.liferay.portal.service.persistence.LayoutUtil;
-import com.liferay.portal.staging.ProxiedLayoutsThreadLocal;
-import com.liferay.portal.staging.StagingAdvicesThreadLocal;
-import com.liferay.portal.util.ClassLoaderUtil;
-import com.liferay.portal.util.PortalUtil;
+import com.liferay.portlet.exportimport.staging.ProxiedLayoutsThreadLocal;
+import com.liferay.portlet.exportimport.staging.StagingAdvicesThreadLocal;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -85,7 +83,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 	public void deleteLayout(
 			LayoutLocalService layoutLocalService, Layout layout,
 			boolean updateLayoutSet, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		long layoutSetBranchId = ParamUtil.getLong(
 			serviceContext, "layoutSetBranchId");
@@ -116,7 +114,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 	public void deleteLayout(
 			LayoutLocalService layoutLocalService, long groupId,
 			boolean privateLayout, long layoutId, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		Layout layout = layoutLocalService.getLayout(
 			groupId, privateLayout, layoutId);
@@ -183,7 +181,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 			Map<Locale, String> friendlyURLMap = null;
 
 			if (Arrays.equals(parameterTypes, _UPDATE_LAYOUT_PARAMETER_TYPES)) {
-				friendlyURLMap = new HashMap<Locale, String>();
+				friendlyURLMap = new HashMap<>();
 
 				friendlyURLMap.put(
 					LocaleUtil.getSiteDefault(), (String)arguments[11]);
@@ -240,20 +238,24 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 			Map<Locale, String> robotsMap, String type, boolean hidden,
 			Map<Locale, String> friendlyURLMap, boolean iconImage,
 			byte[] iconBytes, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		// Layout
 
 		parentLayoutId = layoutLocalServiceHelper.getParentLayoutId(
 			groupId, privateLayout, parentLayoutId);
 		String name = nameMap.get(LocaleUtil.getSiteDefault());
-		friendlyURLMap = layoutLocalServiceHelper.getFriendlyURLMap(
-			groupId, privateLayout, layoutId, StringPool.BLANK, friendlyURLMap);
-		String friendlyURL = friendlyURLMap.get(LocaleUtil.getSiteDefault());
+
+		Map<Locale, String> layoutFriendlyURLMap =
+			layoutLocalServiceHelper.getFriendlyURLMap(
+				groupId, privateLayout, layoutId, name, friendlyURLMap);
+
+		String friendlyURL = layoutFriendlyURLMap.get(
+			LocaleUtil.getSiteDefault());
 
 		layoutLocalServiceHelper.validate(
 			groupId, privateLayout, layoutId, parentLayoutId, name, type,
-			hidden, friendlyURLMap);
+			hidden, layoutFriendlyURLMap, serviceContext);
 
 		layoutLocalServiceHelper.validateParentLayoutId(
 			groupId, privateLayout, layoutId, parentLayoutId);
@@ -307,25 +309,34 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 		LayoutFriendlyURLLocalServiceUtil.updateLayoutFriendlyURLs(
 			originalLayout.getUserId(), originalLayout.getCompanyId(),
 			originalLayout.getGroupId(), originalLayout.getPlid(),
-			originalLayout.isPrivateLayout(), friendlyURLMap, serviceContext);
+			originalLayout.isPrivateLayout(), layoutFriendlyURLMap,
+			serviceContext);
 
 		boolean hasWorkflowTask = StagingUtil.hasWorkflowTask(
 			serviceContext.getUserId(), layoutRevision);
 
 		serviceContext.setAttribute("revisionInProgress", hasWorkflowTask);
 
-		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_SAVE_DRAFT);
+		int workflowAction = serviceContext.getWorkflowAction();
 
-		LayoutRevisionLocalServiceUtil.updateLayoutRevision(
-			serviceContext.getUserId(), layoutRevision.getLayoutRevisionId(),
-			layoutRevision.getLayoutBranchId(), layoutRevision.getName(),
-			layoutRevision.getTitle(), layoutRevision.getDescription(),
-			layoutRevision.getKeywords(), layoutRevision.getRobots(),
-			layoutRevision.getTypeSettings(), layoutRevision.getIconImage(),
-			layoutRevision.getIconImageId(), layoutRevision.getThemeId(),
-			layoutRevision.getColorSchemeId(), layoutRevision.getWapThemeId(),
-			layoutRevision.getWapColorSchemeId(), layoutRevision.getCss(),
-			serviceContext);
+		try {
+			serviceContext.setWorkflowAction(
+				WorkflowConstants.ACTION_SAVE_DRAFT);
+
+			LayoutRevisionLocalServiceUtil.updateLayoutRevision(
+				serviceContext.getUserId(),
+				layoutRevision.getLayoutRevisionId(),
+				layoutRevision.getLayoutBranchId(), layoutRevision.getName(),
+				layoutRevision.getTitle(), layoutRevision.getDescription(),
+				layoutRevision.getKeywords(), layoutRevision.getRobots(),
+				layoutRevision.getTypeSettings(), layoutRevision.getIconImage(),
+				layoutRevision.getIconImageId(), layoutRevision.getThemeId(),
+				layoutRevision.getColorSchemeId(), layoutRevision.getCss(),
+				serviceContext);
+		}
+		finally {
+			serviceContext.setWorkflowAction(workflowAction);
+		}
 
 		return layout;
 	}
@@ -333,7 +344,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 	public Layout updateLayout(
 			LayoutLocalService layoutLocalService, long groupId,
 			boolean privateLayout, long layoutId, String typeSettings)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		Layout layout = LayoutUtil.findByG_P_L(
 			groupId, privateLayout, layoutId);
@@ -370,8 +381,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 			layoutRevision.getKeywords(), layoutRevision.getRobots(),
 			layoutRevision.getTypeSettings(), layoutRevision.getIconImage(),
 			layoutRevision.getIconImageId(), layoutRevision.getThemeId(),
-			layoutRevision.getColorSchemeId(), layoutRevision.getWapThemeId(),
-			layoutRevision.getWapColorSchemeId(), layoutRevision.getCss(),
+			layoutRevision.getColorSchemeId(), layoutRevision.getCss(),
 			serviceContext);
 
 		return layout;
@@ -380,8 +390,8 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 	public Layout updateLookAndFeel(
 			LayoutLocalService layoutLocalService, long groupId,
 			boolean privateLayout, long layoutId, String themeId,
-			String colorSchemeId, String css, boolean wapTheme)
-		throws PortalException, SystemException {
+			String colorSchemeId, String css)
+		throws PortalException {
 
 		Layout layout = LayoutUtil.findByG_P_L(
 			groupId, privateLayout, layoutId);
@@ -393,19 +403,12 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 
 		if (layoutRevision == null) {
 			return layoutLocalService.updateLookAndFeel(
-				groupId, privateLayout, layoutId, themeId, colorSchemeId, css,
-				wapTheme);
+				groupId, privateLayout, layoutId, themeId, colorSchemeId, css);
 		}
 
-		if (wapTheme) {
-			layout.setWapThemeId(themeId);
-			layout.setWapColorSchemeId(colorSchemeId);
-		}
-		else {
-			layout.setThemeId(themeId);
-			layout.setColorSchemeId(colorSchemeId);
-			layout.setCss(css);
-		}
+		layout.setThemeId(themeId);
+		layout.setColorSchemeId(colorSchemeId);
+		layout.setCss(css);
 
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
@@ -427,8 +430,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 			layoutRevision.getKeywords(), layoutRevision.getRobots(),
 			layoutRevision.getTypeSettings(), layoutRevision.getIconImage(),
 			layoutRevision.getIconImageId(), layoutRevision.getThemeId(),
-			layoutRevision.getColorSchemeId(), layoutRevision.getWapThemeId(),
-			layoutRevision.getWapColorSchemeId(), layoutRevision.getCss(),
+			layoutRevision.getColorSchemeId(), layoutRevision.getCss(),
 			serviceContext);
 
 		return layout;
@@ -437,7 +439,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 	public Layout updateName(
 			LayoutLocalService layoutLocalService, Layout layout, String name,
 			String languageId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		layout = wrapLayout(layout);
 
@@ -469,8 +471,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 			layoutRevision.getKeywords(), layoutRevision.getRobots(),
 			layoutRevision.getTypeSettings(), layoutRevision.getIconImage(),
 			layoutRevision.getIconImageId(), layoutRevision.getThemeId(),
-			layoutRevision.getColorSchemeId(), layoutRevision.getWapThemeId(),
-			layoutRevision.getWapColorSchemeId(), layoutRevision.getCss(),
+			layoutRevision.getColorSchemeId(), layoutRevision.getCss(),
 			serviceContext);
 
 		return layout;
@@ -479,7 +480,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 	protected void doDeleteLayout(
 			LayoutLocalService layoutLocalService, Layout layout,
 			boolean updateLayoutSet, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (SystemEventHierarchyEntryThreadLocal.push(
 				Layout.class, layout.getPlid()) == null) {
@@ -519,8 +520,8 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 		}
 
 		proxiedLayout = ProxyUtil.newProxyInstance(
-			ClassLoaderUtil.getPortalClassLoader(), new Class[] {Layout.class},
-			new LayoutStagingHandler(layout));
+			ClassLoaderUtil.getPortalClassLoader(),
+			new Class<?>[] {Layout.class}, new LayoutStagingHandler(layout));
 
 		proxiedLayouts.put(layout, proxiedLayout);
 
@@ -592,7 +593,7 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 			}
 		}
 
-		List<Layout> wrappedLayouts = new ArrayList<Layout>(layouts.size());
+		List<Layout> wrappedLayouts = new ArrayList<>(layouts.size());
 
 		for (int i = 0; i < layouts.size(); i++) {
 			Layout wrappedLayout = wrapLayout(layouts.get(i));
@@ -642,11 +643,11 @@ public class LayoutLocalServiceStagingAdvice implements MethodInterceptor {
 		String.class, Boolean.class, byte[].class, ServiceContext.class
 	};
 
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutLocalServiceStagingAdvice.class);
 
-	private static Set<String> _layoutLocalServiceStagingAdviceMethodNames =
-		new HashSet<String>();
+	private static final Set<String>
+		_layoutLocalServiceStagingAdviceMethodNames = new HashSet<>();
 
 	static {
 		_layoutLocalServiceStagingAdviceMethodNames.add("createLayout");

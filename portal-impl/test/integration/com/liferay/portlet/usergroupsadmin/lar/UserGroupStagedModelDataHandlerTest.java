@@ -14,33 +14,51 @@
 
 package com.liferay.portlet.usergroupsadmin.lar;
 
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.lar.BaseStagedModelDataHandlerTestCase;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.StagedModel;
-import com.liferay.portal.model.UserGroup;
-import com.liferay.portal.service.UserGroupLocalServiceUtil;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.MainServletExecutionTestListener;
-import com.liferay.portal.test.TransactionalExecutionTestListener;
-import com.liferay.portal.util.UserGroupTestUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.StagedModel;
+import com.liferay.portal.kernel.model.UserGroup;
+import com.liferay.portal.kernel.service.UserGroupLocalServiceUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.rule.Sync;
+import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
+import com.liferay.portal.kernel.test.util.UserGroupTestUtil;
+import com.liferay.portal.lar.test.BaseStagedModelDataHandlerTestCase;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.List;
 import java.util.Map;
 
-import org.junit.runner.RunWith;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 
 /**
  * @author David Mendez Gonzalez
  */
-@ExecutionTestListeners(
-	listeners = {
-		MainServletExecutionTestListener.class,
-		TransactionalExecutionTestListener.class
-	})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
+@Sync
 public class UserGroupStagedModelDataHandlerTest
 	extends BaseStagedModelDataHandlerTestCase {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			SynchronousDestinationTestRule.INSTANCE);
+
+	@After
+	@Override
+	public void tearDown() throws Exception {
+		super.tearDown();
+
+		if (_userGroup != null) {
+			_userGroup =
+				UserGroupLocalServiceUtil.fetchUserGroupByUuidAndCompanyId(
+					_userGroup.getUuid(), _userGroup.getCompanyId());
+		}
+	}
 
 	@Override
 	protected StagedModel addStagedModel(
@@ -48,17 +66,9 @@ public class UserGroupStagedModelDataHandlerTest
 			Map<String, List<StagedModel>> dependentStagedModelsMap)
 		throws Exception {
 
-		return UserGroupTestUtil.addUserGroup();
-	}
+		_userGroup = UserGroupTestUtil.addUserGroup();
 
-	@Override
-	protected void deleteStagedModel(
-			StagedModel stagedModel,
-			Map<String, List<StagedModel>> dependentStagedModelsMap,
-			Group group)
-		throws Exception {
-
-		UserGroupLocalServiceUtil.deleteUserGroup((UserGroup)stagedModel);
+		return _userGroup;
 	}
 
 	@Override
@@ -76,5 +86,26 @@ public class UserGroupStagedModelDataHandlerTest
 	protected Class<? extends StagedModel> getStagedModelClass() {
 		return UserGroup.class;
 	}
+
+	@Override
+	protected void validateImportedStagedModel(
+			StagedModel stagedModel, StagedModel importedStagedModel)
+		throws Exception {
+
+		super.validateImportedStagedModel(stagedModel, importedStagedModel);
+
+		UserGroup userGroup = (UserGroup)stagedModel;
+		UserGroup importedUserGroup = (UserGroup)importedStagedModel;
+
+		Assert.assertEquals(userGroup.getName(), importedUserGroup.getName());
+		Assert.assertEquals(
+			userGroup.getDescription(), importedUserGroup.getDescription());
+		Assert.assertEquals(
+			userGroup.isAddedByLDAPImport(),
+			importedUserGroup.isAddedByLDAPImport());
+	}
+
+	@DeleteAfterTestRun
+	private UserGroup _userGroup;
 
 }

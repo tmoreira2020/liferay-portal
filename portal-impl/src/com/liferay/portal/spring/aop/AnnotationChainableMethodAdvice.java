@@ -54,11 +54,12 @@ public abstract class AnnotationChainableMethodAdvice<T extends Annotation>
 			return (T)annotation;
 		}
 
-		Object thisObject = methodInvocation.getThis();
-
-		Class<?> targetClass = thisObject.getClass();
-
 		Method method = methodInvocation.getMethod();
+
+		ServiceBeanMethodInvocation serviceBeanMethodInvocation =
+			(ServiceBeanMethodInvocation)methodInvocation;
+
+		Class<?> targetClass = serviceBeanMethodInvocation.getTargetClass();
 
 		List<Annotation> annotations = AnnotationLocator.locate(
 			method, targetClass);
@@ -79,8 +80,7 @@ public abstract class AnnotationChainableMethodAdvice<T extends Annotation>
 			methodInvocation,
 			annotations.toArray(new Annotation[annotations.size()]));
 
-		Set<Class<? extends Annotation>> annotationClasses =
-			new HashSet<Class<? extends Annotation>>();
+		Set<Class<? extends Annotation>> annotationClasses = new HashSet<>();
 
 		annotation = _nullAnnotation;
 
@@ -100,9 +100,10 @@ public abstract class AnnotationChainableMethodAdvice<T extends Annotation>
 				serviceBeanAopCacheManager.
 					getRegisteredAnnotationChainableMethodAdvices();
 
-		for (Map.Entry<Class<? extends Annotation>,
-				AnnotationChainableMethodAdvice<?>[]> entry :
-					annotationChainableMethodAdvices.entrySet()) {
+		for (Map.Entry
+				<Class<? extends Annotation>,
+					AnnotationChainableMethodAdvice<?>[]> entry :
+						annotationChainableMethodAdvices.entrySet()) {
 
 			Class<? extends Annotation> annotationClass = entry.getKey();
 			AnnotationChainableMethodAdvice<?>[]
@@ -140,7 +141,7 @@ public abstract class AnnotationChainableMethodAdvice<T extends Annotation>
 			_annotationClass, this);
 	}
 
-	private Class<? extends Annotation> _annotationClass;
-	private T _nullAnnotation;
+	private final Class<? extends Annotation> _annotationClass;
+	private final T _nullAnnotation;
 
 }

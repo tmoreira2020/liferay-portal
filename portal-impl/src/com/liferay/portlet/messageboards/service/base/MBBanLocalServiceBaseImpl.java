@@ -14,31 +14,43 @@
 
 package com.liferay.portlet.messageboards.service.base;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.exportimport.kernel.lar.ExportImportHelperUtil;
+import com.liferay.exportimport.kernel.lar.ManifestSummary;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.exportimport.kernel.lar.StagedModelType;
+
+import com.liferay.message.boards.kernel.model.MBBan;
+import com.liferay.message.boards.kernel.service.MBBanLocalService;
+import com.liferay.message.boards.kernel.service.persistence.MBBanPersistence;
+
 import com.liferay.portal.kernel.bean.BeanReference;
-import com.liferay.portal.kernel.bean.IdentifiableBean;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
+import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
+import com.liferay.portal.kernel.service.persistence.SystemEventPersistence;
+import com.liferay.portal.kernel.service.persistence.UserFinder;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.model.PersistedModel;
-import com.liferay.portal.service.BaseLocalServiceImpl;
-import com.liferay.portal.service.PersistedModelLocalServiceRegistry;
-import com.liferay.portal.service.persistence.SystemEventPersistence;
-import com.liferay.portal.service.persistence.UserFinder;
-import com.liferay.portal.service.persistence.UserPersistence;
-import com.liferay.portal.util.PortalUtil;
-
-import com.liferay.portlet.messageboards.model.MBBan;
-import com.liferay.portlet.messageboards.service.MBBanLocalService;
-import com.liferay.portlet.messageboards.service.persistence.MBBanPersistence;
+import com.liferay.portal.kernel.util.PortalUtil;
 
 import java.io.Serializable;
 
@@ -55,15 +67,16 @@ import javax.sql.DataSource;
  *
  * @author Brian Wing Shun Chan
  * @see com.liferay.portlet.messageboards.service.impl.MBBanLocalServiceImpl
- * @see com.liferay.portlet.messageboards.service.MBBanLocalServiceUtil
+ * @see com.liferay.message.boards.kernel.service.MBBanLocalServiceUtil
  * @generated
  */
+@ProviderType
 public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
-	implements MBBanLocalService, IdentifiableBean {
+	implements MBBanLocalService, IdentifiableOSGiService {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this class directly. Always use {@link com.liferay.portlet.messageboards.service.MBBanLocalServiceUtil} to access the message boards ban local service.
+	 * Never modify or reference this class directly. Always use {@link com.liferay.message.boards.kernel.service.MBBanLocalServiceUtil} to access the message boards ban local service.
 	 */
 
 	/**
@@ -71,11 +84,10 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param mbBan the message boards ban
 	 * @return the message boards ban that was added
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public MBBan addMBBan(MBBan mbBan) throws SystemException {
+	public MBBan addMBBan(MBBan mbBan) {
 		mbBan.setNew(true);
 
 		return mbBanPersistence.update(mbBan);
@@ -98,12 +110,10 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param banId the primary key of the message boards ban
 	 * @return the message boards ban that was removed
 	 * @throws PortalException if a message boards ban with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public MBBan deleteMBBan(long banId)
-		throws PortalException, SystemException {
+	public MBBan deleteMBBan(long banId) throws PortalException {
 		return mbBanPersistence.remove(banId);
 	}
 
@@ -112,11 +122,10 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param mbBan the message boards ban
 	 * @return the message boards ban that was removed
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public MBBan deleteMBBan(MBBan mbBan) throws SystemException {
+	public MBBan deleteMBBan(MBBan mbBan) {
 		return mbBanPersistence.remove(mbBan);
 	}
 
@@ -133,12 +142,9 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return mbBanPersistence.findWithDynamicQuery(dynamicQuery);
 	}
 
@@ -153,12 +159,10 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param start the lower bound of the range of model instances
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end) {
 		return mbBanPersistence.findWithDynamicQuery(dynamicQuery, start, end);
 	}
 
@@ -174,60 +178,41 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end, OrderByComparator<T> orderByComparator) {
 		return mbBanPersistence.findWithDynamicQuery(dynamicQuery, start, end,
 			orderByComparator);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
-	public long dynamicQueryCount(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return mbBanPersistence.countWithDynamicQuery(dynamicQuery);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @param projection the projection to apply to the query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
 	public long dynamicQueryCount(DynamicQuery dynamicQuery,
-		Projection projection) throws SystemException {
+		Projection projection) {
 		return mbBanPersistence.countWithDynamicQuery(dynamicQuery, projection);
 	}
 
 	@Override
-	public MBBan fetchMBBan(long banId) throws SystemException {
+	public MBBan fetchMBBan(long banId) {
 		return mbBanPersistence.fetchByPrimaryKey(banId);
-	}
-
-	/**
-	 * Returns the message boards ban with the matching UUID and company.
-	 *
-	 * @param uuid the message boards ban's UUID
-	 * @param  companyId the primary key of the company
-	 * @return the matching message boards ban, or <code>null</code> if a matching message boards ban could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public MBBan fetchMBBanByUuidAndCompanyId(String uuid, long companyId)
-		throws SystemException {
-		return mbBanPersistence.fetchByUuid_C_First(uuid, companyId, null);
 	}
 
 	/**
@@ -236,11 +221,9 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param uuid the message boards ban's UUID
 	 * @param groupId the primary key of the group
 	 * @return the matching message boards ban, or <code>null</code> if a matching message boards ban could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public MBBan fetchMBBanByUuidAndGroupId(String uuid, long groupId)
-		throws SystemException {
+	public MBBan fetchMBBanByUuidAndGroupId(String uuid, long groupId) {
 		return mbBanPersistence.fetchByUUID_G(uuid, groupId);
 	}
 
@@ -250,32 +233,142 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param banId the primary key of the message boards ban
 	 * @return the message boards ban
 	 * @throws PortalException if a message boards ban with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public MBBan getMBBan(long banId) throws PortalException, SystemException {
+	public MBBan getMBBan(long banId) throws PortalException {
 		return mbBanPersistence.findByPrimaryKey(banId);
 	}
 
 	@Override
+	public ActionableDynamicQuery getActionableDynamicQuery() {
+		ActionableDynamicQuery actionableDynamicQuery = new DefaultActionableDynamicQuery();
+
+		actionableDynamicQuery.setBaseLocalService(mbBanLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(MBBan.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("banId");
+
+		return actionableDynamicQuery;
+	}
+
+	@Override
+	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery = new IndexableActionableDynamicQuery();
+
+		indexableActionableDynamicQuery.setBaseLocalService(mbBanLocalService);
+		indexableActionableDynamicQuery.setClassLoader(getClassLoader());
+		indexableActionableDynamicQuery.setModelClass(MBBan.class);
+
+		indexableActionableDynamicQuery.setPrimaryKeyPropertyName("banId");
+
+		return indexableActionableDynamicQuery;
+	}
+
+	protected void initActionableDynamicQuery(
+		ActionableDynamicQuery actionableDynamicQuery) {
+		actionableDynamicQuery.setBaseLocalService(mbBanLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(MBBan.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("banId");
+	}
+
+	@Override
+	public ExportActionableDynamicQuery getExportActionableDynamicQuery(
+		final PortletDataContext portletDataContext) {
+		final ExportActionableDynamicQuery exportActionableDynamicQuery = new ExportActionableDynamicQuery() {
+				@Override
+				public long performCount() throws PortalException {
+					ManifestSummary manifestSummary = portletDataContext.getManifestSummary();
+
+					StagedModelType stagedModelType = getStagedModelType();
+
+					long modelAdditionCount = super.performCount();
+
+					manifestSummary.addModelAdditionCount(stagedModelType,
+						modelAdditionCount);
+
+					long modelDeletionCount = ExportImportHelperUtil.getModelDeletionCount(portletDataContext,
+							stagedModelType);
+
+					manifestSummary.addModelDeletionCount(stagedModelType,
+						modelDeletionCount);
+
+					return modelAdditionCount;
+				}
+			};
+
+		initActionableDynamicQuery(exportActionableDynamicQuery);
+
+		exportActionableDynamicQuery.setAddCriteriaMethod(new ActionableDynamicQuery.AddCriteriaMethod() {
+				@Override
+				public void addCriteria(DynamicQuery dynamicQuery) {
+					portletDataContext.addDateRangeCriteria(dynamicQuery,
+						"modifiedDate");
+				}
+			});
+
+		exportActionableDynamicQuery.setCompanyId(portletDataContext.getCompanyId());
+
+		exportActionableDynamicQuery.setGroupId(portletDataContext.getScopeGroupId());
+
+		exportActionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<MBBan>() {
+				@Override
+				public void performAction(MBBan mbBan)
+					throws PortalException {
+					StagedModelDataHandlerUtil.exportStagedModel(portletDataContext,
+						mbBan);
+				}
+			});
+		exportActionableDynamicQuery.setStagedModelType(new StagedModelType(
+				PortalUtil.getClassNameId(MBBan.class.getName())));
+
+		return exportActionableDynamicQuery;
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
+		throws PortalException {
+		return mbBanLocalService.deleteMBBan((MBBan)persistedModel);
+	}
+
+	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return mbBanPersistence.findByPrimaryKey(primaryKeyObj);
 	}
 
 	/**
-	 * Returns the message boards ban with the matching UUID and company.
+	 * Returns all the message boards bans matching the UUID and company.
 	 *
-	 * @param uuid the message boards ban's UUID
-	 * @param  companyId the primary key of the company
-	 * @return the matching message boards ban
-	 * @throws PortalException if a matching message boards ban could not be found
-	 * @throws SystemException if a system exception occurred
+	 * @param uuid the UUID of the message boards bans
+	 * @param companyId the primary key of the company
+	 * @return the matching message boards bans, or an empty list if no matches were found
 	 */
 	@Override
-	public MBBan getMBBanByUuidAndCompanyId(String uuid, long companyId)
-		throws PortalException, SystemException {
-		return mbBanPersistence.findByUuid_C_First(uuid, companyId, null);
+	public List<MBBan> getMBBansByUuidAndCompanyId(String uuid, long companyId) {
+		return mbBanPersistence.findByUuid_C(uuid, companyId);
+	}
+
+	/**
+	 * Returns a range of message boards bans matching the UUID and company.
+	 *
+	 * @param uuid the UUID of the message boards bans
+	 * @param companyId the primary key of the company
+	 * @param start the lower bound of the range of message boards bans
+	 * @param end the upper bound of the range of message boards bans (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the range of matching message boards bans, or an empty list if no matches were found
+	 */
+	@Override
+	public List<MBBan> getMBBansByUuidAndCompanyId(String uuid, long companyId,
+		int start, int end, OrderByComparator<MBBan> orderByComparator) {
+		return mbBanPersistence.findByUuid_C(uuid, companyId, start, end,
+			orderByComparator);
 	}
 
 	/**
@@ -285,11 +378,10 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param groupId the primary key of the group
 	 * @return the matching message boards ban
 	 * @throws PortalException if a matching message boards ban could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public MBBan getMBBanByUuidAndGroupId(String uuid, long groupId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return mbBanPersistence.findByUUID_G(uuid, groupId);
 	}
 
@@ -303,10 +395,9 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param start the lower bound of the range of message boards bans
 	 * @param end the upper bound of the range of message boards bans (not inclusive)
 	 * @return the range of message boards bans
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<MBBan> getMBBans(int start, int end) throws SystemException {
+	public List<MBBan> getMBBans(int start, int end) {
 		return mbBanPersistence.findAll(start, end);
 	}
 
@@ -314,10 +405,9 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * Returns the number of message boards bans.
 	 *
 	 * @return the number of message boards bans
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getMBBansCount() throws SystemException {
+	public int getMBBansCount() {
 		return mbBanPersistence.countAll();
 	}
 
@@ -326,11 +416,10 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param mbBan the message boards ban
 	 * @return the message boards ban that was updated
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public MBBan updateMBBan(MBBan mbBan) throws SystemException {
+	public MBBan updateMBBan(MBBan mbBan) {
 		return mbBanPersistence.update(mbBan);
 	}
 
@@ -339,7 +428,7 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the message boards ban local service
 	 */
-	public com.liferay.portlet.messageboards.service.MBBanLocalService getMBBanLocalService() {
+	public MBBanLocalService getMBBanLocalService() {
 		return mbBanLocalService;
 	}
 
@@ -348,28 +437,8 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param mbBanLocalService the message boards ban local service
 	 */
-	public void setMBBanLocalService(
-		com.liferay.portlet.messageboards.service.MBBanLocalService mbBanLocalService) {
+	public void setMBBanLocalService(MBBanLocalService mbBanLocalService) {
 		this.mbBanLocalService = mbBanLocalService;
-	}
-
-	/**
-	 * Returns the message boards ban remote service.
-	 *
-	 * @return the message boards ban remote service
-	 */
-	public com.liferay.portlet.messageboards.service.MBBanService getMBBanService() {
-		return mbBanService;
-	}
-
-	/**
-	 * Sets the message boards ban remote service.
-	 *
-	 * @param mbBanService the message boards ban remote service
-	 */
-	public void setMBBanService(
-		com.liferay.portlet.messageboards.service.MBBanService mbBanService) {
-		this.mbBanService = mbBanService;
 	}
 
 	/**
@@ -395,7 +464,7 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the counter local service
 	 */
-	public com.liferay.counter.service.CounterLocalService getCounterLocalService() {
+	public com.liferay.counter.kernel.service.CounterLocalService getCounterLocalService() {
 		return counterLocalService;
 	}
 
@@ -405,7 +474,7 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param counterLocalService the counter local service
 	 */
 	public void setCounterLocalService(
-		com.liferay.counter.service.CounterLocalService counterLocalService) {
+		com.liferay.counter.kernel.service.CounterLocalService counterLocalService) {
 		this.counterLocalService = counterLocalService;
 	}
 
@@ -414,7 +483,7 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the system event local service
 	 */
-	public com.liferay.portal.service.SystemEventLocalService getSystemEventLocalService() {
+	public com.liferay.portal.kernel.service.SystemEventLocalService getSystemEventLocalService() {
 		return systemEventLocalService;
 	}
 
@@ -424,7 +493,7 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param systemEventLocalService the system event local service
 	 */
 	public void setSystemEventLocalService(
-		com.liferay.portal.service.SystemEventLocalService systemEventLocalService) {
+		com.liferay.portal.kernel.service.SystemEventLocalService systemEventLocalService) {
 		this.systemEventLocalService = systemEventLocalService;
 	}
 
@@ -452,7 +521,7 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the user local service
 	 */
-	public com.liferay.portal.service.UserLocalService getUserLocalService() {
+	public com.liferay.portal.kernel.service.UserLocalService getUserLocalService() {
 		return userLocalService;
 	}
 
@@ -462,27 +531,8 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param userLocalService the user local service
 	 */
 	public void setUserLocalService(
-		com.liferay.portal.service.UserLocalService userLocalService) {
+		com.liferay.portal.kernel.service.UserLocalService userLocalService) {
 		this.userLocalService = userLocalService;
-	}
-
-	/**
-	 * Returns the user remote service.
-	 *
-	 * @return the user remote service
-	 */
-	public com.liferay.portal.service.UserService getUserService() {
-		return userService;
-	}
-
-	/**
-	 * Sets the user remote service.
-	 *
-	 * @param userService the user remote service
-	 */
-	public void setUserService(
-		com.liferay.portal.service.UserService userService) {
-		this.userService = userService;
 	}
 
 	/**
@@ -522,33 +572,23 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	}
 
 	public void afterPropertiesSet() {
-		persistedModelLocalServiceRegistry.register("com.liferay.portlet.messageboards.model.MBBan",
+		persistedModelLocalServiceRegistry.register("com.liferay.message.boards.kernel.model.MBBan",
 			mbBanLocalService);
 	}
 
 	public void destroy() {
 		persistedModelLocalServiceRegistry.unregister(
-			"com.liferay.portlet.messageboards.model.MBBan");
+			"com.liferay.message.boards.kernel.model.MBBan");
 	}
 
 	/**
-	 * Returns the Spring bean ID for this bean.
+	 * Returns the OSGi service identifier.
 	 *
-	 * @return the Spring bean ID for this bean
+	 * @return the OSGi service identifier
 	 */
 	@Override
-	public String getBeanIdentifier() {
-		return _beanIdentifier;
-	}
-
-	/**
-	 * Sets the Spring bean ID for this bean.
-	 *
-	 * @param beanIdentifier the Spring bean ID for this bean
-	 */
-	@Override
-	public void setBeanIdentifier(String beanIdentifier) {
-		_beanIdentifier = beanIdentifier;
+	public String getOSGiServiceIdentifier() {
+		return MBBanLocalService.class.getName();
 	}
 
 	protected Class<?> getModelClass() {
@@ -564,17 +604,17 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param sql the sql query
 	 */
-	protected void runSQL(String sql) throws SystemException {
+	protected void runSQL(String sql) {
 		try {
 			DataSource dataSource = mbBanPersistence.getDataSource();
 
-			DB db = DBFactoryUtil.getDB();
+			DB db = DBManagerUtil.getDB();
 
 			sql = db.buildSQL(sql);
 			sql = PortalUtil.transformSQL(sql);
 
 			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(dataSource,
-					sql, new int[0]);
+					sql);
 
 			sqlUpdate.update();
 		}
@@ -583,27 +623,22 @@ public abstract class MBBanLocalServiceBaseImpl extends BaseLocalServiceImpl
 		}
 	}
 
-	@BeanReference(type = com.liferay.portlet.messageboards.service.MBBanLocalService.class)
-	protected com.liferay.portlet.messageboards.service.MBBanLocalService mbBanLocalService;
-	@BeanReference(type = com.liferay.portlet.messageboards.service.MBBanService.class)
-	protected com.liferay.portlet.messageboards.service.MBBanService mbBanService;
+	@BeanReference(type = MBBanLocalService.class)
+	protected MBBanLocalService mbBanLocalService;
 	@BeanReference(type = MBBanPersistence.class)
 	protected MBBanPersistence mbBanPersistence;
-	@BeanReference(type = com.liferay.counter.service.CounterLocalService.class)
-	protected com.liferay.counter.service.CounterLocalService counterLocalService;
-	@BeanReference(type = com.liferay.portal.service.SystemEventLocalService.class)
-	protected com.liferay.portal.service.SystemEventLocalService systemEventLocalService;
+	@BeanReference(type = com.liferay.counter.kernel.service.CounterLocalService.class)
+	protected com.liferay.counter.kernel.service.CounterLocalService counterLocalService;
+	@BeanReference(type = com.liferay.portal.kernel.service.SystemEventLocalService.class)
+	protected com.liferay.portal.kernel.service.SystemEventLocalService systemEventLocalService;
 	@BeanReference(type = SystemEventPersistence.class)
 	protected SystemEventPersistence systemEventPersistence;
-	@BeanReference(type = com.liferay.portal.service.UserLocalService.class)
-	protected com.liferay.portal.service.UserLocalService userLocalService;
-	@BeanReference(type = com.liferay.portal.service.UserService.class)
-	protected com.liferay.portal.service.UserService userService;
+	@BeanReference(type = com.liferay.portal.kernel.service.UserLocalService.class)
+	protected com.liferay.portal.kernel.service.UserLocalService userLocalService;
 	@BeanReference(type = UserPersistence.class)
 	protected UserPersistence userPersistence;
 	@BeanReference(type = UserFinder.class)
 	protected UserFinder userFinder;
 	@BeanReference(type = PersistedModelLocalServiceRegistry.class)
 	protected PersistedModelLocalServiceRegistry persistedModelLocalServiceRegistry;
-	private String _beanIdentifier;
 }

@@ -22,6 +22,9 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Writer;
 
 import java.util.Date;
@@ -78,6 +81,11 @@ public class JSONObjectImpl implements JSONObject {
 		catch (Exception e) {
 			throw new JSONException(e);
 		}
+	}
+
+	@Override
+	public Object get(String key) {
+		return _jsonObject.opt(key);
 	}
 
 	@Override
@@ -268,7 +276,29 @@ public class JSONObjectImpl implements JSONObject {
 	@Override
 	public JSONObject put(String key, long value) {
 		try {
-			_jsonObject.put(key, value);
+			_jsonObject.put(key, String.valueOf(value));
+		}
+		catch (Exception e) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(e, e);
+			}
+		}
+
+		return this;
+	}
+
+	@Override
+	public JSONObject put(String key, Object value) {
+		try {
+			if (value instanceof JSONArray) {
+				put(key, (JSONArray)value);
+			}
+			else if (value instanceof JSONObject) {
+				put(key, (JSONObject)value);
+			}
+			else {
+				_jsonObject.put(key, value);
+			}
 		}
 		catch (Exception e) {
 			if (_log.isWarnEnabled()) {
@@ -311,8 +341,24 @@ public class JSONObjectImpl implements JSONObject {
 	}
 
 	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		try {
+			_jsonObject = new org.json.JSONObject(
+				(String)objectInput.readObject());
+		}
+		catch (Exception e) {
+			throw new IOException(e);
+		}
+	}
+
+	@Override
 	public Object remove(String key) {
 		return _jsonObject.remove(key);
+	}
+
+	@Override
+	public String toJSONString() {
+		return toString();
 	}
 
 	@Override
@@ -340,9 +386,14 @@ public class JSONObjectImpl implements JSONObject {
 		}
 	}
 
+	@Override
+	public void writeExternal(ObjectOutput objectOutput) throws IOException {
+		objectOutput.writeObject(toString());
+	}
+
 	private static final String _NULL_JSON = "{}";
 
-	private static Log _log = LogFactoryUtil.getLog(JSONObjectImpl.class);
+	private static final Log _log = LogFactoryUtil.getLog(JSONObjectImpl.class);
 
 	private org.json.JSONObject _jsonObject;
 

@@ -17,15 +17,15 @@
 <%@ include file="/html/common/themes/init.jsp" %>
 
 <%
-if ((PropsValues.LOCALE_PREPEND_FRIENDLY_URL_STYLE == 3) && !user.isDefaultUser() && (user.getLocale() != locale)) {
+if (!user.isDefaultUser() && !locale.equals(user.getLocale())) {
 	PortalUtil.addUserLocaleOptionsMessage(request);
 }
 %>
 
 <c:if test="<%= ShutdownUtil.isInProcess() %>">
-	<div class="alert alert-block" id="lfrShutdownMessage">
+	<div class="alert alert-danger lfr-shutdown-message popup-alert-warning" id="lfrShutdownMessage">
 		<span class="notice-label"><liferay-ui:message key="maintenance-alert" /></span> <span class="notice-date"><%= FastDateFormatFactoryUtil.getTime(locale).format(Time.getDate(CalendarFactoryUtil.getCalendar(timeZone))) %> <%= timeZone.getDisplayName(false, TimeZone.SHORT, locale) %></span>
-		<span class="notice-message"><%= LanguageUtil.format(pageContext, "the-portal-will-shutdown-for-maintenance-in-x-minutes", String.valueOf((ShutdownUtil.getInProcess() / Time.MINUTE) + 1), false) %></span>
+		<span class="notice-message"><liferay-ui:message arguments="<%= String.valueOf((ShutdownUtil.getInProcess() / Time.MINUTE) + 1) %>" key="the-portal-will-shutdown-for-maintenance-in-x-minutes" translateArguments="<%= false %>" /></span>
 
 		<c:if test="<%= Validator.isNotNull(ShutdownUtil.getMessage()) %>">
 			<span class="custom-shutdown-message"><%= HtmlUtil.escape(ShutdownUtil.getMessage()) %></span>
@@ -48,20 +48,18 @@ if (Validator.isNotNull(jspPath) || Validator.isNotNull(message)) {
 	}
 %>
 
-	<div class="alert alert-block taglib-portal-message <%= cssClass %>" id="portalMessageContainer">
+	<div class="alert taglib-portal-message <%= cssClass %>" id="portalMessageContainer">
 		<c:choose>
 			<c:when test="<%= Validator.isNotNull(jspPath) %>">
 				<liferay-util:include page="<%= jspPath %>" portletId="<%= portletId %>" />
 			</c:when>
 			<c:otherwise>
-				<liferay-ui:message key="<%= message %>" /><button type="button" class="close">&times;</button>
+				<liferay-ui:message key="<%= message %>" /><button class="close" type="button">&times;</button>
 			</c:otherwise>
 		</c:choose>
 	</div>
 
 	<aui:script use="liferay-notice">
-		var portalMessageContainer = A.one('#portalMessageContainer');
-
 		var banner = new Liferay.Notice(
 			{
 				animationConfig:

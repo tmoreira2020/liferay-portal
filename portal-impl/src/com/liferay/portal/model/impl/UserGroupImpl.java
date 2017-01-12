@@ -15,9 +15,8 @@
 package com.liferay.portal.model.impl;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 
 /**
  * @author Brian Wing Shun Chan
@@ -25,42 +24,35 @@ import com.liferay.portal.service.GroupLocalServiceUtil;
  */
 public class UserGroupImpl extends UserGroupBaseImpl {
 
-	public UserGroupImpl() {
-	}
-
 	@Override
-	public Group getGroup() throws PortalException, SystemException {
+	public Group getGroup() throws PortalException {
 		return GroupLocalServiceUtil.getUserGroupGroup(
 			getCompanyId(), getUserGroupId());
 	}
 
 	@Override
-	public long getGroupId() throws PortalException, SystemException {
+	public long getGroupId() throws PortalException {
 		Group group = getGroup();
 
 		return group.getGroupId();
 	}
 
 	@Override
-	public int getPrivateLayoutsPageCount()
-		throws PortalException, SystemException {
-
+	public int getPrivateLayoutsPageCount() throws PortalException {
 		Group group = getGroup();
 
 		return group.getPrivateLayoutsPageCount();
 	}
 
 	@Override
-	public int getPublicLayoutsPageCount()
-		throws PortalException, SystemException {
-
+	public int getPublicLayoutsPageCount() throws PortalException {
 		Group group = getGroup();
 
 		return group.getPublicLayoutsPageCount();
 	}
 
 	@Override
-	public boolean hasPrivateLayouts() throws PortalException, SystemException {
+	public boolean hasPrivateLayouts() throws PortalException {
 		if (getPrivateLayoutsPageCount() > 0) {
 			return true;
 		}
@@ -70,7 +62,7 @@ public class UserGroupImpl extends UserGroupBaseImpl {
 	}
 
 	@Override
-	public boolean hasPublicLayouts() throws PortalException, SystemException {
+	public boolean hasPublicLayouts() throws PortalException {
 		if (getPublicLayoutsPageCount() > 0) {
 			return true;
 		}

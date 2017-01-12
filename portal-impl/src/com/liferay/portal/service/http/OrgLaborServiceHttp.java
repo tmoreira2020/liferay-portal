@@ -14,19 +14,22 @@
 
 package com.liferay.portal.service.http;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.HttpPrincipal;
+import com.liferay.portal.kernel.service.OrgLaborServiceUtil;
+import com.liferay.portal.kernel.service.http.TunnelUtil;
 import com.liferay.portal.kernel.util.MethodHandler;
 import com.liferay.portal.kernel.util.MethodKey;
-import com.liferay.portal.security.auth.HttpPrincipal;
-import com.liferay.portal.service.OrgLaborServiceUtil;
 
 /**
  * Provides the HTTP utility for the
- * {@link com.liferay.portal.service.OrgLaborServiceUtil} service utility. The
+ * {@link OrgLaborServiceUtil} service utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it requires an additional
- * {@link com.liferay.portal.security.auth.HttpPrincipal} parameter.
+ * {@link HttpPrincipal} parameter.
  *
  * <p>
  * The benefits of using the HTTP utility is that it is fast and allows for
@@ -45,18 +48,18 @@ import com.liferay.portal.service.OrgLaborServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see OrgLaborServiceSoap
- * @see com.liferay.portal.security.auth.HttpPrincipal
- * @see com.liferay.portal.service.OrgLaborServiceUtil
+ * @see HttpPrincipal
+ * @see OrgLaborServiceUtil
  * @generated
  */
+@ProviderType
 public class OrgLaborServiceHttp {
-	public static com.liferay.portal.model.OrgLabor addOrgLabor(
-		HttpPrincipal httpPrincipal, long organizationId, int typeId,
+	public static com.liferay.portal.kernel.model.OrgLabor addOrgLabor(
+		HttpPrincipal httpPrincipal, long organizationId, long typeId,
 		int sunOpen, int sunClose, int monOpen, int monClose, int tueOpen,
 		int tueClose, int wedOpen, int wedClose, int thuOpen, int thuClose,
 		int friOpen, int friClose, int satOpen, int satClose)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(OrgLaborServiceUtil.class,
 					"addOrgLabor", _addOrgLaborParameterTypes0);
@@ -76,14 +79,10 @@ public class OrgLaborServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (com.liferay.portal.model.OrgLabor)returnObj;
+			return (com.liferay.portal.kernel.model.OrgLabor)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -94,8 +93,7 @@ public class OrgLaborServiceHttp {
 
 	public static void deleteOrgLabor(HttpPrincipal httpPrincipal,
 		long orgLaborId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(OrgLaborServiceUtil.class,
 					"deleteOrgLabor", _deleteOrgLaborParameterTypes1);
@@ -111,10 +109,6 @@ public class OrgLaborServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 		}
@@ -125,10 +119,9 @@ public class OrgLaborServiceHttp {
 		}
 	}
 
-	public static com.liferay.portal.model.OrgLabor getOrgLabor(
+	public static com.liferay.portal.kernel.model.OrgLabor getOrgLabor(
 		HttpPrincipal httpPrincipal, long orgLaborId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(OrgLaborServiceUtil.class,
 					"getOrgLabor", _getOrgLaborParameterTypes2);
@@ -146,14 +139,10 @@ public class OrgLaborServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (com.liferay.portal.model.OrgLabor)returnObj;
+			return (com.liferay.portal.kernel.model.OrgLabor)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -162,10 +151,9 @@ public class OrgLaborServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portal.model.OrgLabor> getOrgLabors(
+	public static java.util.List<com.liferay.portal.kernel.model.OrgLabor> getOrgLabors(
 		HttpPrincipal httpPrincipal, long organizationId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(OrgLaborServiceUtil.class,
 					"getOrgLabors", _getOrgLaborsParameterTypes3);
@@ -183,14 +171,10 @@ public class OrgLaborServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portal.model.OrgLabor>)returnObj;
+			return (java.util.List<com.liferay.portal.kernel.model.OrgLabor>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -199,13 +183,12 @@ public class OrgLaborServiceHttp {
 		}
 	}
 
-	public static com.liferay.portal.model.OrgLabor updateOrgLabor(
-		HttpPrincipal httpPrincipal, long orgLaborId, int typeId, int sunOpen,
+	public static com.liferay.portal.kernel.model.OrgLabor updateOrgLabor(
+		HttpPrincipal httpPrincipal, long orgLaborId, long typeId, int sunOpen,
 		int sunClose, int monOpen, int monClose, int tueOpen, int tueClose,
 		int wedOpen, int wedClose, int thuOpen, int thuClose, int friOpen,
 		int friClose, int satOpen, int satClose)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(OrgLaborServiceUtil.class,
 					"updateOrgLabor", _updateOrgLaborParameterTypes4);
@@ -225,14 +208,10 @@ public class OrgLaborServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (com.liferay.portal.model.OrgLabor)returnObj;
+			return (com.liferay.portal.kernel.model.OrgLabor)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -243,7 +222,7 @@ public class OrgLaborServiceHttp {
 
 	private static Log _log = LogFactoryUtil.getLog(OrgLaborServiceHttp.class);
 	private static final Class<?>[] _addOrgLaborParameterTypes0 = new Class[] {
-			long.class, int.class, int.class, int.class, int.class, int.class,
+			long.class, long.class, int.class, int.class, int.class, int.class,
 			int.class, int.class, int.class, int.class, int.class, int.class,
 			int.class, int.class, int.class, int.class
 		};
@@ -257,7 +236,7 @@ public class OrgLaborServiceHttp {
 			long.class
 		};
 	private static final Class<?>[] _updateOrgLaborParameterTypes4 = new Class[] {
-			long.class, int.class, int.class, int.class, int.class, int.class,
+			long.class, long.class, int.class, int.class, int.class, int.class,
 			int.class, int.class, int.class, int.class, int.class, int.class,
 			int.class, int.class, int.class, int.class
 		};

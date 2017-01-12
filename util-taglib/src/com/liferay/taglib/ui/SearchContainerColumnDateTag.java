@@ -15,11 +15,11 @@
 package com.liferay.taglib.ui;
 
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
-import com.liferay.portal.kernel.dao.search.DateSearchEntry;
 import com.liferay.portal.kernel.dao.search.ResultRow;
 import com.liferay.portal.kernel.dao.search.SearchEntry;
 import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.taglib.search.DateSearchEntry;
 
 import java.util.Date;
 import java.util.List;
@@ -65,7 +65,7 @@ public class SearchContainerColumnDateTag<R> extends SearchContainerColumnTag {
 			dateSearchEntry.setColspan(getColspan());
 			dateSearchEntry.setCssClass(getCssClass());
 			dateSearchEntry.setDate(_value);
-			dateSearchEntry.setHref((String)getHref());
+			dateSearchEntry.setHref(String.valueOf(getHref()));
 			dateSearchEntry.setValign(getValign());
 
 			resultRow.addSearchEntry(index, dateSearchEntry);

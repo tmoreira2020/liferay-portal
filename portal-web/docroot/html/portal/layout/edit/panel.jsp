@@ -25,24 +25,24 @@ String panelSelectedPortlets = StringPool.BLANK;
 if (selLayout != null) {
 	UnicodeProperties typeSettingsProperties = selLayout.getTypeSettingsProperties();
 
-	description = typeSettingsProperties.getProperty("description", StringPool.BLANK);
+	description = typeSettingsProperties.getProperty("panelLayoutDescription", StringPool.BLANK);
 	panelSelectedPortlets = typeSettingsProperties.getProperty("panelSelectedPortlets", StringPool.BLANK);
 }
 %>
 
-<aui:input cssClass="layout-description" id="descriptionPanel" label="description" name="TypeSettingsProperties--description--" type="textarea" value="<%= description %>" wrap="soft" />
+<aui:input cssClass="layout-description" id="descriptionPanel" label="description" name="TypeSettingsProperties--panelLayoutDescription--" type="textarea" value="<%= description %>" wrap="soft" />
 
 <div class="alert alert-info">
-	<liferay-ui:message key="select-the-applications-that-will-be-available-in-the-panel" />
+	<liferay-ui:message key="select-the-applications-that-are-available-in-the-panel" />
 </div>
 
 <aui:input id='<%= HtmlUtil.escapeAttribute(idPrefix) + "panelSelectedPortlets" %>' name="TypeSettingsProperties--panelSelectedPortlets--" type="hidden" value="<%= panelSelectedPortlets %>" />
 
-<div class="lfr-tree-loading" id='<portlet:namespace /><%= HtmlUtil.escapeAttribute(idPrefix) + "selectPortletsTreeLoading" %>'>
+<div class="lfr-tree-loading" id="<portlet:namespace /><%= HtmlUtil.escapeAttribute(idPrefix) + "selectPortletsTreeLoading" %>">
 	<span class="icon icon-loading lfr-tree-loading-icon"></span>
 </div>
 
-<div id='<portlet:namespace /><%= HtmlUtil.escapeAttribute(idPrefix) + "selectPortletsTree" %>' style="margin: 4px;"></div>
+<div id="<portlet:namespace /><%= HtmlUtil.escapeAttribute(idPrefix) + "selectPortletsTree" %>" style="margin: 4px;"></div>
 
 <aui:script use="aui-tree-view">
 	var panelSelectedPortletsEl = A.one('#<portlet:namespace /><%= HtmlUtil.escapeJS(idPrefix) %>panelSelectedPortlets');
@@ -55,7 +55,7 @@ if (selLayout != null) {
 
 			A.each(
 				json.children.list,
-				function(item, index, collection) {
+				function(item, index) {
 					var childPortlets = [];
 					var total = 0;
 
@@ -92,7 +92,7 @@ if (selLayout != null) {
 						label: item.name,
 						leaf: item.leaf,
 						type: 'task'
-					}
+					};
 
 					if (nodeChildren) {
 						newNode.children = TreeUtil.formatJSONResults(item);
@@ -115,7 +115,7 @@ if (selLayout != null) {
 		portletLister.setIncludeInstanceablePortlets(false);
 		portletLister.setIteratePortlets(true);
 		portletLister.setLayoutTypePortlet(layoutTypePortlet);
-		portletLister.setRootNodeName(LanguageUtil.get(pageContext, "application"));
+		portletLister.setRootNodeName(LanguageUtil.get(request, "application"));
 		portletLister.setServletContext(application);
 		portletLister.setThemeDisplay(themeDisplay);
 		portletLister.setUser(user);

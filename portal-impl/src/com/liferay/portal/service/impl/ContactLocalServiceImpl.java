@@ -14,18 +14,18 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.ContactBirthdayException;
-import com.liferay.portal.ContactClassNameException;
+import com.liferay.portal.kernel.exception.ContactBirthdayException;
+import com.liferay.portal.kernel.exception.ContactClassNameException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.Contact;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.Contact;
-import com.liferay.portal.model.User;
 import com.liferay.portal.service.base.ContactLocalServiceBaseImpl;
-import com.liferay.portal.util.PortalUtil;
 
 import java.util.Date;
 import java.util.List;
@@ -37,22 +37,34 @@ public class ContactLocalServiceImpl extends ContactLocalServiceBaseImpl {
 
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
+	public Contact addContact(Contact contact) {
+		try {
+			validateBirthday(contact.getBirthday());
+		}
+		catch (ContactBirthdayException cbe) {
+			throw new SystemException(cbe);
+		}
+
+		return super.addContact(contact);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
 	public Contact addContact(
 			long userId, String className, long classPK, String emailAddress,
-			String firstName, String middleName, String lastName, int prefixId,
-			int suffixId, boolean male, int birthdayMonth, int birthdayDay,
-			int birthdayYear, String smsSn, String aimSn, String facebookSn,
-			String icqSn, String jabberSn, String msnSn, String mySpaceSn,
-			String skypeSn, String twitterSn, String ymSn, String jobTitle)
-		throws PortalException, SystemException {
+			String firstName, String middleName, String lastName, long prefixId,
+			long suffixId, boolean male, int birthdayMonth, int birthdayDay,
+			int birthdayYear, String smsSn, String facebookSn, String jabberSn,
+			String skypeSn, String twitterSn, String jobTitle)
+		throws PortalException {
 
 		User user = userPersistence.findByPrimaryKey(userId);
 		Date birthday = PortalUtil.getDate(
 			birthdayMonth, birthdayDay, birthdayYear,
 			ContactBirthdayException.class);
-		Date now = new Date();
 
 		validate(className, classPK);
+		validateBirthday(birthday);
 
 		long contactId = counterLocalService.increment();
 
@@ -61,8 +73,6 @@ public class ContactLocalServiceImpl extends ContactLocalServiceBaseImpl {
 		contact.setCompanyId(user.getCompanyId());
 		contact.setUserId(user.getUserId());
 		contact.setUserName(user.getFullName());
-		contact.setCreateDate(now);
-		contact.setModifiedDate(now);
 		contact.setClassName(className);
 		contact.setClassPK(classPK);
 		contact.setEmailAddress(emailAddress);
@@ -74,15 +84,10 @@ public class ContactLocalServiceImpl extends ContactLocalServiceBaseImpl {
 		contact.setMale(male);
 		contact.setBirthday(birthday);
 		contact.setSmsSn(smsSn);
-		contact.setAimSn(aimSn);
 		contact.setFacebookSn(facebookSn);
-		contact.setIcqSn(icqSn);
 		contact.setJabberSn(jabberSn);
-		contact.setMsnSn(msnSn);
-		contact.setMySpaceSn(mySpaceSn);
 		contact.setSkypeSn(skypeSn);
 		contact.setTwitterSn(twitterSn);
-		contact.setYmSn(ymSn);
 		contact.setJobTitle(jobTitle);
 
 		contactPersistence.update(contact);
@@ -92,7 +97,7 @@ public class ContactLocalServiceImpl extends ContactLocalServiceBaseImpl {
 
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public Contact deleteContact(Contact contact) throws SystemException {
+	public Contact deleteContact(Contact contact) {
 
 		// Contact
 
@@ -127,7 +132,7 @@ public class ContactLocalServiceImpl extends ContactLocalServiceBaseImpl {
 
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public Contact deleteContact(long contactId) throws SystemException {
+	public Contact deleteContact(long contactId) {
 		Contact contact = contactPersistence.fetchByPrimaryKey(contactId);
 
 		if (contact != null) {
@@ -139,39 +144,49 @@ public class ContactLocalServiceImpl extends ContactLocalServiceBaseImpl {
 
 	@Override
 	public List<Contact> getContacts(
-			long classNameId, long classPK, int start, int end,
-			OrderByComparator orderByComparator)
-		throws SystemException {
+		long classNameId, long classPK, int start, int end,
+		OrderByComparator<Contact> orderByComparator) {
 
 		return contactPersistence.findByC_C(
 			classNameId, classPK, start, end, orderByComparator);
 	}
 
 	@Override
-	public int getContactsCount(long classNameId, long classPK)
-		throws SystemException {
-
+	public int getContactsCount(long classNameId, long classPK) {
 		return contactPersistence.countByC_C(classNameId, classPK);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public Contact updateContact(Contact contact) {
+		try {
+			validateBirthday(contact.getBirthday());
+		}
+		catch (ContactBirthdayException cbe) {
+			throw new SystemException(cbe);
+		}
+
+		return super.updateContact(contact);
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public Contact updateContact(
 			long contactId, String emailAddress, String firstName,
-			String middleName, String lastName, int prefixId, int suffixId,
+			String middleName, String lastName, long prefixId, long suffixId,
 			boolean male, int birthdayMonth, int birthdayDay, int birthdayYear,
-			String smsSn, String aimSn, String facebookSn, String icqSn,
-			String jabberSn, String msnSn, String mySpaceSn, String skypeSn,
-			String twitterSn, String ymSn, String jobTitle)
-		throws PortalException, SystemException {
+			String smsSn, String facebookSn, String jabberSn, String skypeSn,
+			String twitterSn, String jobTitle)
+		throws PortalException {
 
 		Date birthday = PortalUtil.getDate(
 			birthdayMonth, birthdayDay, birthdayYear,
 			ContactBirthdayException.class);
 
+		validateBirthday(birthday);
+
 		Contact contact = contactPersistence.findByPrimaryKey(contactId);
 
-		contact.setModifiedDate(new Date());
 		contact.setEmailAddress(emailAddress);
 		contact.setFirstName(firstName);
 		contact.setMiddleName(middleName);
@@ -181,15 +196,10 @@ public class ContactLocalServiceImpl extends ContactLocalServiceBaseImpl {
 		contact.setMale(male);
 		contact.setBirthday(birthday);
 		contact.setSmsSn(smsSn);
-		contact.setAimSn(aimSn);
 		contact.setFacebookSn(facebookSn);
-		contact.setIcqSn(icqSn);
 		contact.setJabberSn(jabberSn);
-		contact.setMsnSn(msnSn);
-		contact.setMySpaceSn(mySpaceSn);
 		contact.setSkypeSn(skypeSn);
 		contact.setTwitterSn(twitterSn);
-		contact.setYmSn(ymSn);
 		contact.setJobTitle(jobTitle);
 
 		contactPersistence.update(contact);
@@ -204,6 +214,14 @@ public class ContactLocalServiceImpl extends ContactLocalServiceBaseImpl {
 			className.equals(User.class.getName()) || (classPK <= 0)) {
 
 			throw new ContactClassNameException();
+		}
+	}
+
+	protected void validateBirthday(Date birthday)
+		throws ContactBirthdayException {
+
+		if ((birthday != null) && birthday.after(new Date())) {
+			throw new ContactBirthdayException("Birthday is in the future");
 		}
 	}
 

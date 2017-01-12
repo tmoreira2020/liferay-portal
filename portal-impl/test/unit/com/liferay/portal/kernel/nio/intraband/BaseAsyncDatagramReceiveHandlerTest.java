@@ -14,60 +14,68 @@
 
 package com.liferay.portal.kernel.nio.intraband;
 
-import com.liferay.portal.kernel.test.CodeCoverageAssertor;
+import com.liferay.portal.kernel.test.CaptureHandler;
 import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
-import com.liferay.portal.test.AdviseWith;
-import com.liferay.portal.test.AspectJMockingNewClassLoaderJUnitTestRunner;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.kernel.test.rule.NewEnv;
+import com.liferay.portal.test.rule.AdviseWith;
+import com.liferay.portal.test.rule.AspectJNewEnvTestRule;
+import com.liferay.registry.BasicRegistryImpl;
+import com.liferay.registry.RegistryUtil;
 
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Shuyang Zhou
  */
-@RunWith(AspectJMockingNewClassLoaderJUnitTestRunner.class)
+@NewEnv(type = NewEnv.Type.CLASSLOADER)
 public class BaseAsyncDatagramReceiveHandlerTest {
 
 	@ClassRule
-	public static CodeCoverageAssertor codeCoverageAssertor =
-		new CodeCoverageAssertor();
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			CodeCoverageAssertor.INSTANCE, AspectJNewEnvTestRule.INSTANCE);
+
+	@Before
+	public void setUp() {
+		RegistryUtil.setRegistry(new BasicRegistryImpl());
+	}
 
 	@AdviseWith(adviceClasses = {PortalExecutorManagerUtilAdvice.class})
 	@Test
 	public void testErrorDispatch() {
-		List<LogRecord> logRecords = JDKLoggerTestUtil.configureJDKLogger(
-			BaseAsyncDatagramReceiveHandler.class.getName(), Level.SEVERE);
+		try (CaptureHandler captureHandler =
+				JDKLoggerTestUtil.configureJDKLogger(
+					BaseAsyncDatagramReceiveHandler.class.getName(),
+					Level.SEVERE)) {
 
-		ErrorAsyncDatagramReceiveHandler errorAsyncDatagramReceiveHandler =
-			new ErrorAsyncDatagramReceiveHandler();
+			List<LogRecord> logRecords = captureHandler.getLogRecords();
 
-		errorAsyncDatagramReceiveHandler.receive(null, null);
+			ErrorAsyncDatagramReceiveHandler errorAsyncDatagramReceiveHandler =
+				new ErrorAsyncDatagramReceiveHandler();
 
-		Assert.assertEquals(1, logRecords.size());
+			errorAsyncDatagramReceiveHandler.receive(null, null);
 
-		LogRecord logRecord = logRecords.get(0);
+			Assert.assertEquals(1, logRecords.size());
 
-		Assert.assertEquals("Unable to dispatch", logRecord.getMessage());
+			LogRecord logRecord = logRecords.get(0);
 
-		Throwable throwable = logRecord.getThrown();
+			Assert.assertEquals("Unable to dispatch", logRecord.getMessage());
 
-		Assert.assertEquals(Exception.class, throwable.getClass());
+			Throwable throwable = logRecord.getThrown();
 
-		logRecords = JDKLoggerTestUtil.configureJDKLogger(
-			BaseAsyncDatagramReceiveHandler.class.getName(), Level.OFF);
-
-		errorAsyncDatagramReceiveHandler =
-			new ErrorAsyncDatagramReceiveHandler();
-
-		errorAsyncDatagramReceiveHandler.receive(null, null);
-
-		Assert.assertTrue(logRecords.isEmpty());
+			Assert.assertEquals(Exception.class, throwable.getClass());
+		}
 	}
 
 	@AdviseWith(adviceClasses = {PortalExecutorManagerUtilAdvice.class})
@@ -76,7 +84,7 @@ public class BaseAsyncDatagramReceiveHandlerTest {
 		DummyAsyncDatagramReceiveHandler dummyAsyncDatagramReceiveHandler =
 			new DummyAsyncDatagramReceiveHandler();
 
-		dummyAsyncDatagramReceiveHandler.doReceive(null, null);
+		dummyAsyncDatagramReceiveHandler.receive(null, null);
 
 		Assert.assertTrue(dummyAsyncDatagramReceiveHandler._received);
 	}

@@ -14,44 +14,42 @@
 
 package com.liferay.portlet.social.service;
 
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.kernel.transaction.Transactional;
-import com.liferay.portal.test.EnvironmentExecutionTestListener;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.TransactionalExecutionTestListener;
-import com.liferay.portal.util.PortalUtil;
-import com.liferay.portlet.social.model.SocialActivityDefinition;
-import com.liferay.portlet.social.util.SocialConfigurationUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.social.kernel.model.SocialActivityDefinition;
+import com.liferay.social.kernel.service.SocialActivitySettingLocalServiceUtil;
+import com.liferay.social.kernel.util.SocialConfigurationUtil;
 
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Zsolt Berentey
  */
-@ExecutionTestListeners(
-	listeners = {
-		EnvironmentExecutionTestListener.class,
-		TransactionalExecutionTestListener.class
-	})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
 public class SocialActivitySettingLocalServiceTest
 	extends BaseSocialActivityTestCase {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Test
 	public void testGetActivityDefinition() throws Exception {
 		SocialActivitySettingLocalServiceUtil.updateActivitySetting(
-			_group.getGroupId(), TEST_MODEL, true);
+			group.getGroupId(), TEST_MODEL, true);
 
 		SocialActivityDefinition defaultActivityDefinition =
 			SocialConfigurationUtil.getActivityDefinition(TEST_MODEL, 1);
 
 		SocialActivityDefinition activityDefinition =
 			SocialActivitySettingLocalServiceUtil.getActivityDefinition(
-				_group.getGroupId(), TEST_MODEL, 1);
+				group.getGroupId(), TEST_MODEL, 1);
 
 		Assert.assertEquals(defaultActivityDefinition, activityDefinition);
 
@@ -63,7 +61,7 @@ public class SocialActivitySettingLocalServiceTest
 
 		List<SocialActivityDefinition> activityDefinitions =
 			SocialActivitySettingLocalServiceUtil.getActivityDefinitions(
-				_group.getGroupId(), TEST_MODEL);
+				group.getGroupId(), TEST_MODEL);
 
 		Assert.assertNotNull(activityDefinitions);
 		Assert.assertFalse(activityDefinitions.isEmpty());
@@ -74,33 +72,32 @@ public class SocialActivitySettingLocalServiceTest
 	}
 
 	@Test
-	@Transactional
 	public void testUpdateActivitySettings() throws Exception {
 		SocialActivitySettingLocalServiceUtil.updateActivitySetting(
-			_group.getGroupId(), TEST_MODEL, true);
+			group.getGroupId(), TEST_MODEL, true);
 
 		long classNameId = PortalUtil.getClassNameId(TEST_MODEL);
 
 		Assert.assertTrue(
 			SocialActivitySettingLocalServiceUtil.isEnabled(
-				_group.getGroupId(), classNameId));
+				group.getGroupId(), classNameId));
 
 		SocialActivitySettingLocalServiceUtil.updateActivitySetting(
-			_group.getGroupId(), TEST_MODEL, false);
+			group.getGroupId(), TEST_MODEL, false);
 
 		Assert.assertFalse(
 			SocialActivitySettingLocalServiceUtil.isEnabled(
-				_group.getGroupId(), classNameId));
+				group.getGroupId(), classNameId));
 		Assert.assertTrue(
 			SocialActivitySettingLocalServiceUtil.isEnabled(
-				_group.getGroupId(), classNameId, 1));
+				group.getGroupId(), classNameId, 1));
 
 		SocialActivitySettingLocalServiceUtil.updateActivitySetting(
-			_group.getGroupId(), TEST_MODEL, 1, false);
+			group.getGroupId(), TEST_MODEL, 1, false);
 
 		Assert.assertFalse(
 			SocialActivitySettingLocalServiceUtil.isEnabled(
-				_group.getGroupId(), classNameId, 1));
+				group.getGroupId(), classNameId, 1));
 	}
 
 }

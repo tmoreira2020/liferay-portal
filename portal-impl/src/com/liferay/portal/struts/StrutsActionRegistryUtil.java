@@ -24,6 +24,7 @@ import com.liferay.registry.ServiceRegistration;
 import com.liferay.registry.ServiceTracker;
 import com.liferay.registry.ServiceTrackerCustomizer;
 import com.liferay.registry.collections.StringServiceRegistrationMap;
+import com.liferay.registry.collections.StringServiceRegistrationMapImpl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -96,14 +97,15 @@ public class StrutsActionRegistryUtil {
 	private void _register(String path, StrutsAction strutsAction) {
 		Registry registry = RegistryUtil.getRegistry();
 
-		Map<String, Object> properties = new HashMap<String, Object>();
+		Map<String, Object> properties = new HashMap<>();
 
 		properties.put("path", path);
 
-		ServiceRegistration<?> serviceRegistration = registry.registerService(
-			StrutsAction.class, strutsAction, properties);
+		ServiceRegistration<StrutsAction> serviceRegistration =
+			registry.registerService(
+				StrutsAction.class, strutsAction, properties);
 
-		_serviceRegistrations.put(path, serviceRegistration);
+		_strutsActionServiceRegistrations.put(path, serviceRegistration);
 	}
 
 	private void _register(
@@ -111,33 +113,44 @@ public class StrutsActionRegistryUtil {
 
 		Registry registry = RegistryUtil.getRegistry();
 
-		Map<String, Object> properties = new HashMap<String, Object>();
+		Map<String, Object> properties = new HashMap<>();
 
 		properties.put("path", path);
 
-		ServiceRegistration<?> serviceRegistration = registry.registerService(
-			StrutsPortletAction.class, strutsPortletAction, properties);
+		ServiceRegistration<StrutsPortletAction> serviceRegistration =
+			registry.registerService(
+				StrutsPortletAction.class, strutsPortletAction, properties);
 
-		_serviceRegistrations.put(path, serviceRegistration);
+		_strutsPortletActionServiceRegistrations.put(path, serviceRegistration);
 	}
 
 	private void _unregister(String path) {
 		ServiceRegistration<?> serviceRegistration =
-			_serviceRegistrations.remove(path);
+			_strutsActionServiceRegistrations.remove(path);
+
+		if (serviceRegistration != null) {
+			serviceRegistration.unregister();
+		}
+
+		serviceRegistration = _strutsPortletActionServiceRegistrations.remove(
+			path);
 
 		if (serviceRegistration != null) {
 			serviceRegistration.unregister();
 		}
 	}
 
-	private static StrutsActionRegistryUtil _instance =
+	private static final StrutsActionRegistryUtil _instance =
 		new StrutsActionRegistryUtil();
 
-	private Map<String, Action> _actions =
-		new ConcurrentHashMap<String, Action>();
-	private StringServiceRegistrationMap<?> _serviceRegistrations =
-		new StringServiceRegistrationMap<Object>();
-	private ServiceTracker<?, Action> _serviceTracker;
+	private final Map<String, Action> _actions = new ConcurrentHashMap<>();
+	private final ServiceTracker<?, Action> _serviceTracker;
+	private final StringServiceRegistrationMap<StrutsAction>
+		_strutsActionServiceRegistrations =
+			new StringServiceRegistrationMapImpl<>();
+	private final StringServiceRegistrationMap<StrutsPortletAction>
+		_strutsPortletActionServiceRegistrations =
+			new StringServiceRegistrationMapImpl<>();
 
 	private class ActionServiceTrackerCustomizer
 		implements ServiceTrackerCustomizer<Object, Action> {
@@ -157,9 +170,11 @@ public class StrutsActionRegistryUtil {
 				action = new PortletActionAdapter((StrutsPortletAction)service);
 			}
 
-			String path = (String)serviceReference.getProperty("path");
+			String[] paths = _getPaths(serviceReference);
 
-			_actions.put(path, action);
+			for (String path : paths) {
+				_actions.put(path, action);
+			}
 
 			return action;
 		}
@@ -177,9 +192,22 @@ public class StrutsActionRegistryUtil {
 
 			registry.ungetService(serviceReference);
 
-			String path = (String)serviceReference.getProperty("path");
+			String[] paths = _getPaths(serviceReference);
 
-			_actions.remove(path);
+			for (String path : paths) {
+				_actions.remove(path);
+			}
+		}
+
+		private String[] _getPaths(ServiceReference<Object> serviceReference) {
+			Object object = serviceReference.getProperty("path");
+
+			if (object instanceof String[]) {
+				return (String[])object;
+			}
+			else {
+				return new String[] {(String)object};
+			}
 		}
 
 	}

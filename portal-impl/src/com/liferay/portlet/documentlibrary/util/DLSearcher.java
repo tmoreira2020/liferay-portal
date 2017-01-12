@@ -14,10 +14,11 @@
 
 package com.liferay.portlet.documentlibrary.util;
 
+import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.portal.kernel.search.BaseSearcher;
+import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Indexer;
-import com.liferay.portlet.documentlibrary.model.DLFileEntry;
-import com.liferay.portlet.documentlibrary.model.DLFolder;
 
 /**
  * @author Julio Camarero
@@ -29,17 +30,21 @@ public class DLSearcher extends BaseSearcher {
 		DLFileEntry.class.getName(), DLFolder.class.getName()
 	};
 
-	public static Indexer getInstance() {
+	public static Indexer<?> getInstance() {
 		return new DLSearcher();
 	}
 
 	public DLSearcher() {
+		setDefaultSelectedFieldNames(
+			Field.CLASS_NAME_ID, Field.CLASS_PK, Field.COMPANY_ID,
+			Field.CONTENT, Field.DESCRIPTION, Field.ENTRY_CLASS_NAME,
+			Field.ENTRY_CLASS_PK, Field.TITLE, Field.VERSION, Field.UID);
 		setFilterSearch(true);
 		setPermissionAware(true);
 	}
 
 	@Override
-	public String[] getClassNames() {
+	public String[] getSearchClassNames() {
 		return CLASS_NAMES;
 	}
 

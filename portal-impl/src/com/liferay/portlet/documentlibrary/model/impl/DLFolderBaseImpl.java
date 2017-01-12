@@ -14,13 +14,14 @@
 
 package com.liferay.portlet.documentlibrary.model.impl;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.document.library.kernel.model.DLFolder;
+import com.liferay.document.library.kernel.service.DLFolderLocalServiceUtil;
+
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-
-import com.liferay.portlet.documentlibrary.model.DLFolder;
-import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,9 +35,10 @@ import java.util.List;
  *
  * @author Brian Wing Shun Chan
  * @see DLFolderImpl
- * @see com.liferay.portlet.documentlibrary.model.DLFolder
+ * @see DLFolder
  * @generated
  */
+@ProviderType
 public abstract class DLFolderBaseImpl extends DLFolderModelImpl
 	implements DLFolder {
 	/*
@@ -45,7 +47,7 @@ public abstract class DLFolderBaseImpl extends DLFolderModelImpl
 	 * Never modify or reference this class directly. All methods that expect a document library folder model instance should use the {@link DLFolder} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			DLFolderLocalServiceUtil.addDLFolder(this);
 		}
@@ -56,7 +58,7 @@ public abstract class DLFolderBaseImpl extends DLFolderModelImpl
 
 	@Override
 	@SuppressWarnings("unused")
-	public String buildTreePath() throws PortalException, SystemException {
+	public String buildTreePath() throws PortalException {
 		List<DLFolder> dlFolders = new ArrayList<DLFolder>();
 
 		DLFolder dlFolder = this;
@@ -82,7 +84,7 @@ public abstract class DLFolderBaseImpl extends DLFolderModelImpl
 	}
 
 	@Override
-	public void updateTreePath(String treePath) throws SystemException {
+	public void updateTreePath(String treePath) {
 		DLFolder dlFolder = this;
 
 		dlFolder.setTreePath(treePath);

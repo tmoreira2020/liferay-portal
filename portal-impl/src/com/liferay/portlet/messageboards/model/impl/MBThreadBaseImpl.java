@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.messageboards.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.messageboards.model.MBThread;
-import com.liferay.portlet.messageboards.service.MBThreadLocalServiceUtil;
+import com.liferay.message.boards.kernel.model.MBThread;
+import com.liferay.message.boards.kernel.service.MBThreadLocalServiceUtil;
 
 /**
  * The extended model base implementation for the MBThread service. Represents a row in the &quot;MBThread&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.messageboards.service.MBThreadLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see MBThreadImpl
- * @see com.liferay.portlet.messageboards.model.MBThread
+ * @see MBThread
  * @generated
  */
+@ProviderType
 public abstract class MBThreadBaseImpl extends MBThreadModelImpl
 	implements MBThread {
 	/*
@@ -39,7 +40,7 @@ public abstract class MBThreadBaseImpl extends MBThreadModelImpl
 	 * Never modify or reference this class directly. All methods that expect a message boards thread model instance should use the {@link MBThread} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			MBThreadLocalServiceUtil.addMBThread(this);
 		}

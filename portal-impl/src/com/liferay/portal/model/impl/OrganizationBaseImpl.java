@@ -14,12 +14,13 @@
 
 package com.liferay.portal.model.impl;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.Organization;
+import com.liferay.portal.kernel.service.OrganizationLocalServiceUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.Organization;
-import com.liferay.portal.service.OrganizationLocalServiceUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,9 +34,10 @@ import java.util.List;
  *
  * @author Brian Wing Shun Chan
  * @see OrganizationImpl
- * @see com.liferay.portal.model.Organization
+ * @see Organization
  * @generated
  */
+@ProviderType
 public abstract class OrganizationBaseImpl extends OrganizationModelImpl
 	implements Organization {
 	/*
@@ -44,7 +46,7 @@ public abstract class OrganizationBaseImpl extends OrganizationModelImpl
 	 * Never modify or reference this class directly. All methods that expect a organization model instance should use the {@link Organization} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			OrganizationLocalServiceUtil.addOrganization(this);
 		}
@@ -55,7 +57,7 @@ public abstract class OrganizationBaseImpl extends OrganizationModelImpl
 
 	@Override
 	@SuppressWarnings("unused")
-	public String buildTreePath() throws PortalException, SystemException {
+	public String buildTreePath() throws PortalException {
 		List<Organization> organizations = new ArrayList<Organization>();
 
 		Organization organization = this;
@@ -81,7 +83,7 @@ public abstract class OrganizationBaseImpl extends OrganizationModelImpl
 	}
 
 	@Override
-	public void updateTreePath(String treePath) throws SystemException {
+	public void updateTreePath(String treePath) {
 		Organization organization = this;
 
 		organization.setTreePath(treePath);

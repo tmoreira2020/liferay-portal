@@ -14,30 +14,28 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.DuplicatePasswordPolicyException;
-import com.liferay.portal.PasswordPolicyNameException;
-import com.liferay.portal.RequiredPasswordPolicyException;
-import com.liferay.portal.kernel.cache.ThreadLocalCachable;
+import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCachable;
+import com.liferay.portal.kernel.exception.DuplicatePasswordPolicyException;
+import com.liferay.portal.kernel.exception.PasswordPolicyNameException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.exception.RequiredPasswordPolicyException;
+import com.liferay.portal.kernel.model.Organization;
+import com.liferay.portal.kernel.model.PasswordPolicy;
+import com.liferay.portal.kernel.model.PasswordPolicyRel;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.SystemEventConstants;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.ldap.LDAPSettingsUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.Organization;
-import com.liferay.portal.model.PasswordPolicy;
-import com.liferay.portal.model.PasswordPolicyRel;
-import com.liferay.portal.model.ResourceConstants;
-import com.liferay.portal.model.SystemEventConstants;
-import com.liferay.portal.model.User;
-import com.liferay.portal.security.auth.CompanyThreadLocal;
-import com.liferay.portal.security.ldap.LDAPSettingsUtil;
-import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.base.PasswordPolicyLocalServiceBaseImpl;
 import com.liferay.portal.util.PropsValues;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -45,36 +43,6 @@ import java.util.List;
  */
 public class PasswordPolicyLocalServiceImpl
 	extends PasswordPolicyLocalServiceBaseImpl {
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #addPasswordPolicy(long,
-	 *             boolean, String, String, boolean, boolean, long, boolean,
-	 *             boolean, int, int, int, int, int, int, String, boolean, int,
-	 *             boolean, long, long, int, boolean, int, long, long, long,
-	 *             ServiceContext)}
-	 */
-	@Deprecated
-	@Override
-	public PasswordPolicy addPasswordPolicy(
-			long userId, boolean defaultPolicy, String name, String description,
-			boolean changeable, boolean changeRequired, long minAge,
-			boolean checkSyntax, boolean allowDictionaryWords,
-			int minAlphanumeric, int minLength, int minLowerCase,
-			int minNumbers, int minSymbols, int minUpperCase, boolean history,
-			int historyCount, boolean expireable, long maxAge, long warningTime,
-			int graceLimit, boolean lockout, int maxFailure,
-			long lockoutDuration, long resetFailureCount,
-			long resetTicketMaxAge)
-		throws PortalException, SystemException {
-
-		return addPasswordPolicy(
-			userId, defaultPolicy, name, description, changeable,
-			changeRequired, minAge, checkSyntax, allowDictionaryWords,
-			minAlphanumeric, minLength, minLowerCase, minNumbers, minSymbols,
-			minUpperCase, null, history, historyCount, expireable, maxAge,
-			warningTime, graceLimit, lockout, maxFailure, lockoutDuration,
-			resetFailureCount, resetTicketMaxAge, new ServiceContext());
-	}
 
 	@Override
 	public PasswordPolicy addPasswordPolicy(
@@ -87,12 +55,11 @@ public class PasswordPolicyLocalServiceImpl
 			long warningTime, int graceLimit, boolean lockout, int maxFailure,
 			long lockoutDuration, long resetFailureCount,
 			long resetTicketMaxAge, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		// Password policy
 
 		User user = userPersistence.findByPrimaryKey(userId);
-		Date now = new Date();
 
 		validate(0, user.getCompanyId(), name);
 
@@ -105,8 +72,6 @@ public class PasswordPolicyLocalServiceImpl
 		passwordPolicy.setCompanyId(user.getCompanyId());
 		passwordPolicy.setUserId(userId);
 		passwordPolicy.setUserName(user.getFullName());
-		passwordPolicy.setCreateDate(serviceContext.getCreateDate(now));
-		passwordPolicy.setModifiedDate(serviceContext.getModifiedDate(now));
 		passwordPolicy.setDefaultPolicy(defaultPolicy);
 		passwordPolicy.setName(name);
 		passwordPolicy.setDescription(description);
@@ -140,18 +105,22 @@ public class PasswordPolicyLocalServiceImpl
 
 		// Resources
 
-		if (!user.isDefaultUser()) {
-			resourceLocalService.addResources(
-				user.getCompanyId(), 0, userId, PasswordPolicy.class.getName(),
-				passwordPolicy.getPasswordPolicyId(), false, false, false);
+		long ownerId = userId;
+
+		if (user.isDefaultUser()) {
+			ownerId = 0;
 		}
+
+		resourceLocalService.addResources(
+			user.getCompanyId(), 0, ownerId, PasswordPolicy.class.getName(),
+			passwordPolicy.getPasswordPolicyId(), false, false, false);
 
 		return passwordPolicy;
 	}
 
 	@Override
 	public void checkDefaultPasswordPolicy(long companyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		String defaultPasswordPolicyName =
 			PropsValues.PASSWORDS_DEFAULT_POLICY_NAME;
@@ -195,7 +164,7 @@ public class PasswordPolicyLocalServiceImpl
 
 	@Override
 	public void deleteNondefaultPasswordPolicies(long companyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		List<PasswordPolicy> passwordPolicies =
 			passwordPolicyPersistence.findByCompanyId(companyId);
@@ -209,7 +178,7 @@ public class PasswordPolicyLocalServiceImpl
 
 	@Override
 	public PasswordPolicy deletePasswordPolicy(long passwordPolicyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		PasswordPolicy passwordPolicy =
 			passwordPolicyPersistence.findByPrimaryKey(passwordPolicyId);
@@ -220,9 +189,10 @@ public class PasswordPolicyLocalServiceImpl
 	@Override
 	@SystemEvent(
 		action = SystemEventConstants.ACTION_SKIP,
-		type = SystemEventConstants.TYPE_DELETE)
+		type = SystemEventConstants.TYPE_DELETE
+	)
 	public PasswordPolicy deletePasswordPolicy(PasswordPolicy passwordPolicy)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (passwordPolicy.isDefaultPolicy() &&
 			!CompanyThreadLocal.isDeleteInProcess()) {
@@ -248,15 +218,13 @@ public class PasswordPolicyLocalServiceImpl
 	}
 
 	@Override
-	public PasswordPolicy fetchPasswordPolicy(long companyId, String name)
-		throws SystemException {
-
+	public PasswordPolicy fetchPasswordPolicy(long companyId, String name) {
 		return passwordPolicyPersistence.fetchByC_N(companyId, name);
 	}
 
 	@Override
 	public PasswordPolicy getDefaultPasswordPolicy(long companyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (LDAPSettingsUtil.isPasswordPolicyEnabled(companyId)) {
 			return null;
@@ -265,23 +233,10 @@ public class PasswordPolicyLocalServiceImpl
 		return passwordPolicyPersistence.findByC_DP(companyId, true);
 	}
 
-	/**
-	 * @deprecated As of 6.1.0
-	 */
-	@Deprecated
-	@Override
-	public PasswordPolicy getPasswordPolicy(
-			long companyId, long organizationId, long locationId)
-		throws PortalException, SystemException {
-
-		return getPasswordPolicy(
-			companyId, new long[] {organizationId, locationId});
-	}
-
 	@Override
 	public PasswordPolicy getPasswordPolicy(
 			long companyId, long[] organizationIds)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (LDAPSettingsUtil.isPasswordPolicyEnabled(companyId)) {
 			return null;
@@ -314,7 +269,7 @@ public class PasswordPolicyLocalServiceImpl
 	@Override
 	@ThreadLocalCachable
 	public PasswordPolicy getPasswordPolicyByUserId(long userId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
@@ -332,20 +287,12 @@ public class PasswordPolicyLocalServiceImpl
 			return getPasswordPolicy(passwordPolicyRel.getPasswordPolicyId());
 		}
 
-		List<Organization> organizations = userPersistence.getOrganizations(
+		long[] organizationIds = userPersistence.getOrganizationPrimaryKeys(
 			userId);
 
-		if (organizations.isEmpty()) {
+		if (organizationIds.length == 0) {
 			return passwordPolicyPersistence.findByC_DP(
 				user.getCompanyId(), true);
-		}
-
-		long[] organizationIds = new long[organizations.size()];
-
-		for (int i = 0; i < organizationIds.length; i++) {
-			Organization organization = organizations.get(i);
-
-			organizationIds[i] = organization.getOrganizationId();
 		}
 
 		return getPasswordPolicy(user.getCompanyId(), organizationIds);
@@ -353,46 +300,15 @@ public class PasswordPolicyLocalServiceImpl
 
 	@Override
 	public List<PasswordPolicy> search(
-			long companyId, String name, int start, int end,
-			OrderByComparator obc)
-		throws SystemException {
+		long companyId, String name, int start, int end,
+		OrderByComparator<PasswordPolicy> obc) {
 
 		return passwordPolicyFinder.findByC_N(companyId, name, start, end, obc);
 	}
 
 	@Override
-	public int searchCount(long companyId, String name) throws SystemException {
+	public int searchCount(long companyId, String name) {
 		return passwordPolicyFinder.countByC_N(companyId, name);
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #updatePasswordPolicy(long,
-	 *             String, String, boolean, boolean, long, boolean, boolean,
-	 *             int, int, int, int, int, int, String, boolean, int, boolean,
-	 *             long, long, int, boolean, int, long, long, long,
-	 *             ServiceContext)}
-	 */
-	@Deprecated
-	@Override
-	public PasswordPolicy updatePasswordPolicy(
-			long passwordPolicyId, String name, String description,
-			boolean changeable, boolean changeRequired, long minAge,
-			boolean checkSyntax, boolean allowDictionaryWords,
-			int minAlphanumeric, int minLength, int minLowerCase,
-			int minNumbers, int minSymbols, int minUpperCase, boolean history,
-			int historyCount, boolean expireable, long maxAge, long warningTime,
-			int graceLimit, boolean lockout, int maxFailure,
-			long lockoutDuration, long resetFailureCount,
-			long resetTicketMaxAge)
-		throws PortalException, SystemException {
-
-		return updatePasswordPolicy(
-			passwordPolicyId, name, description, changeable, changeRequired,
-			minAge, checkSyntax, allowDictionaryWords, minAlphanumeric,
-			minLength, minLowerCase, minNumbers, minSymbols, minUpperCase, null,
-			history, historyCount, expireable, maxAge, warningTime, graceLimit,
-			lockout, maxFailure, lockoutDuration, resetFailureCount,
-			resetTicketMaxAge, new ServiceContext());
 	}
 
 	@Override
@@ -406,9 +322,7 @@ public class PasswordPolicyLocalServiceImpl
 			long warningTime, int graceLimit, boolean lockout, int maxFailure,
 			long lockoutDuration, long resetFailureCount,
 			long resetTicketMaxAge, ServiceContext serviceContext)
-		throws PortalException, SystemException {
-
-		Date now = new Date();
+		throws PortalException {
 
 		PasswordPolicy passwordPolicy =
 			passwordPolicyPersistence.findByPrimaryKey(passwordPolicyId);
@@ -419,7 +333,6 @@ public class PasswordPolicyLocalServiceImpl
 			passwordPolicy.setName(name);
 		}
 
-		passwordPolicy.setModifiedDate(serviceContext.getModifiedDate(now));
 		passwordPolicy.setDescription(description);
 		passwordPolicy.setChangeable(changeable);
 		passwordPolicy.setChangeRequired(changeRequired);
@@ -453,7 +366,7 @@ public class PasswordPolicyLocalServiceImpl
 	}
 
 	protected void validate(long passwordPolicyId, long companyId, String name)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (Validator.isNull(name) || Validator.isNumber(name) ||
 			(name.indexOf(CharPool.COMMA) != -1) ||

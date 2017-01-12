@@ -31,27 +31,14 @@ public class ModuleFrameworkClassLoader extends URLClassLoader {
 
 	public ModuleFrameworkClassLoader(URL[] urls, ClassLoader parent) {
 		super(urls, parent);
-
-		// Some application servers include their own OSGi framework in the
-		// bootstrap class loader
-
-		//_systemClassLoader = getSystemClassLoader();
 	}
 
 	@Override
 	public URL getResource(String name) {
-		URL url = null;
-
-		if (_systemClassLoader != null) {
-			url = _systemClassLoader.getResource(name);
-		}
+		URL url = findResource(name);
 
 		if (url == null) {
-			url = findResource(name);
-
-			if (url == null) {
-				url = super.getResource(name);
-			}
+			url = super.getResource(name);
 		}
 
 		return url;
@@ -59,15 +46,9 @@ public class ModuleFrameworkClassLoader extends URLClassLoader {
 
 	@Override
 	public Enumeration<URL> getResources(String name) throws IOException {
-		final List<URL> urls = new ArrayList<URL>();
+		final List<URL> urls = new ArrayList<>();
 
-		Enumeration<URL> systemURLs = null;
-
-		if (_systemClassLoader != null) {
-			systemURLs = _systemClassLoader.getResources(name);
-		}
-
-		urls.addAll(_buildURLs(systemURLs));
+		urls.addAll(_buildURLs(null));
 
 		Enumeration<URL> localURLs = findResources(name);
 
@@ -84,35 +65,30 @@ public class ModuleFrameworkClassLoader extends URLClassLoader {
 		urls.addAll(_buildURLs(parentURLs));
 
 		return new Enumeration<URL>() {
-			final Iterator<URL> iterator = urls.iterator();
 
 			@Override
 			public boolean hasMoreElements() {
-				return iterator.hasNext();
+				return _iterator.hasNext();
 			}
 
 			@Override
 			public URL nextElement() {
-				return iterator.next();
+				return _iterator.next();
 			}
+
+			private final Iterator<URL> _iterator = urls.iterator();
 
 		};
 	}
 
 	@Override
-	protected synchronized Class<?> loadClass(String name, boolean resolve)
+	protected Class<?> loadClass(String name, boolean resolve)
 		throws ClassNotFoundException {
 
-		Class<?> clazz = findLoadedClass(name);
+		Object lock = getClassLoadingLock(name);
 
-		if (clazz == null) {
-			if (_systemClassLoader != null) {
-				try {
-					clazz = _systemClassLoader.loadClass(name);
-				}
-				catch (ClassNotFoundException cnfe) {
-				}
-			}
+		synchronized (lock) {
+			Class<?> clazz = findLoadedClass(name);
 
 			if (clazz == null) {
 				try {
@@ -122,21 +98,21 @@ public class ModuleFrameworkClassLoader extends URLClassLoader {
 					clazz = super.loadClass(name, resolve);
 				}
 			}
-		}
 
-		if (resolve) {
-			resolveClass(clazz);
-		}
+			if (resolve) {
+				resolveClass(clazz);
+			}
 
-		return clazz;
+			return clazz;
+		}
 	}
 
 	private List<URL> _buildURLs(Enumeration<URL> url) {
 		if (url == null) {
-			return new ArrayList<URL>();
+			return new ArrayList<>();
 		}
 
-		List<URL> urls = new ArrayList<URL>();
+		List<URL> urls = new ArrayList<>();
 
 		while (url.hasMoreElements()) {
 			urls.add(url.nextElement());
@@ -145,6 +121,8 @@ public class ModuleFrameworkClassLoader extends URLClassLoader {
 		return urls;
 	}
 
-	private ClassLoader _systemClassLoader;
+	static {
+		ClassLoader.registerAsParallelCapable();
+	}
 
 }

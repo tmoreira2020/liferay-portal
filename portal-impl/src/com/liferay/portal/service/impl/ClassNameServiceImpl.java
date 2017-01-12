@@ -14,28 +14,24 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.ClassName;
+import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
+import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.service.base.ClassNameServiceBaseImpl;
 
 /**
  * @author Brian Wing Shun Chan
  */
+@JSONWebService
 public class ClassNameServiceImpl extends ClassNameServiceBaseImpl {
 
 	@Override
-	public ClassName fetchClassName(String value) throws SystemException {
+	public ClassName fetchByClassNameId(long classNameId) {
+		return classNameLocalService.fetchByClassNameId(classNameId);
+	}
+
+	@Override
+	public ClassName fetchClassName(String value) {
 		return classNameLocalService.fetchClassName(value);
-	}
-
-	@Override
-	public long fetchClassNameId(Class<?> clazz) {
-		return classNameLocalService.fetchClassNameId(clazz);
-	}
-
-	@Override
-	public long fetchClassNameId(String value) {
-		return classNameLocalService.fetchClassNameId(value);
 	}
 
 }

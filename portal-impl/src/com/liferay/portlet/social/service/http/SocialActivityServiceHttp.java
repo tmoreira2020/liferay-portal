@@ -14,21 +14,23 @@
 
 package com.liferay.portlet.social.service.http;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.HttpPrincipal;
+import com.liferay.portal.kernel.service.http.TunnelUtil;
 import com.liferay.portal.kernel.util.MethodHandler;
 import com.liferay.portal.kernel.util.MethodKey;
-import com.liferay.portal.security.auth.HttpPrincipal;
-import com.liferay.portal.service.http.TunnelUtil;
 
-import com.liferay.portlet.social.service.SocialActivityServiceUtil;
+import com.liferay.social.kernel.service.SocialActivityServiceUtil;
 
 /**
  * Provides the HTTP utility for the
- * {@link com.liferay.portlet.social.service.SocialActivityServiceUtil} service utility. The
+ * {@link SocialActivityServiceUtil} service utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it requires an additional
- * {@link com.liferay.portal.security.auth.HttpPrincipal} parameter.
+ * {@link HttpPrincipal} parameter.
  *
  * <p>
  * The benefits of using the HTTP utility is that it is fast and allows for
@@ -47,15 +49,15 @@ import com.liferay.portlet.social.service.SocialActivityServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see SocialActivityServiceSoap
- * @see com.liferay.portal.security.auth.HttpPrincipal
- * @see com.liferay.portlet.social.service.SocialActivityServiceUtil
+ * @see HttpPrincipal
+ * @see SocialActivityServiceUtil
  * @generated
  */
+@ProviderType
 public class SocialActivityServiceHttp {
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getActivities(
 		HttpPrincipal httpPrincipal, long classNameId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivities", _getActivitiesParameterTypes0);
@@ -73,14 +75,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -89,11 +87,10 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getActivities(
 		HttpPrincipal httpPrincipal, long mirrorActivityId, long classNameId,
 		long classPK, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivities", _getActivitiesParameterTypes1);
@@ -111,14 +108,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -127,11 +120,10 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getActivities(
 		HttpPrincipal httpPrincipal, long mirrorActivityId,
 		java.lang.String className, long classPK, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivities", _getActivitiesParameterTypes2);
@@ -149,14 +141,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -165,11 +153,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getActivities(
 		HttpPrincipal httpPrincipal, java.lang.String className, int start,
-		int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		int end) throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivities", _getActivitiesParameterTypes3);
@@ -187,14 +173,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -204,8 +186,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getActivitiesCount(HttpPrincipal httpPrincipal,
-		long classNameId)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		long classNameId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivitiesCount", _getActivitiesCountParameterTypes4);
@@ -219,10 +200,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -236,8 +213,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getActivitiesCount(HttpPrincipal httpPrincipal,
-		long mirrorActivityId, long classNameId, long classPK)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		long mirrorActivityId, long classNameId, long classPK) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivitiesCount", _getActivitiesCountParameterTypes5);
@@ -251,10 +227,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -268,8 +240,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getActivitiesCount(HttpPrincipal httpPrincipal,
-		long mirrorActivityId, java.lang.String className, long classPK)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		long mirrorActivityId, java.lang.String className, long classPK) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivitiesCount", _getActivitiesCountParameterTypes6);
@@ -283,10 +254,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -300,8 +267,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getActivitiesCount(HttpPrincipal httpPrincipal,
-		java.lang.String className)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		java.lang.String className) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivitiesCount", _getActivitiesCountParameterTypes7);
@@ -314,10 +280,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -330,10 +292,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static com.liferay.portlet.social.model.SocialActivity getActivity(
+	public static com.liferay.social.kernel.model.SocialActivity getActivity(
 		HttpPrincipal httpPrincipal, long activityId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivity", _getActivityParameterTypes8);
@@ -351,14 +312,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (com.liferay.portlet.social.model.SocialActivity)returnObj;
+			return (com.liferay.social.kernel.model.SocialActivity)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -367,10 +324,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getActivitySetActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getActivitySetActivities(
 		HttpPrincipal httpPrincipal, long activitySetId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getActivitySetActivities",
@@ -389,14 +345,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -405,10 +357,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getGroupActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getGroupActivities(
 		HttpPrincipal httpPrincipal, long groupId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getGroupActivities", _getGroupActivitiesParameterTypes10);
@@ -426,14 +377,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -443,8 +390,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getGroupActivitiesCount(HttpPrincipal httpPrincipal,
-		long groupId)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		long groupId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getGroupActivitiesCount",
@@ -458,10 +404,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -474,10 +416,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getGroupUsersActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getGroupUsersActivities(
 		HttpPrincipal httpPrincipal, long groupId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getGroupUsersActivities",
@@ -496,14 +437,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -513,8 +450,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getGroupUsersActivitiesCount(
-		HttpPrincipal httpPrincipal, long groupId)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		HttpPrincipal httpPrincipal, long groupId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getGroupUsersActivitiesCount",
@@ -528,10 +464,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -544,10 +476,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static com.liferay.portlet.social.model.SocialActivity getMirrorActivity(
+	public static com.liferay.social.kernel.model.SocialActivity getMirrorActivity(
 		HttpPrincipal httpPrincipal, long mirrorActivityId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getMirrorActivity", _getMirrorActivityParameterTypes14);
@@ -565,14 +496,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (com.liferay.portlet.social.model.SocialActivity)returnObj;
+			return (com.liferay.social.kernel.model.SocialActivity)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -581,10 +508,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getOrganizationActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getOrganizationActivities(
 		HttpPrincipal httpPrincipal, long organizationId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getOrganizationActivities",
@@ -603,14 +529,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -620,8 +542,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getOrganizationActivitiesCount(
-		HttpPrincipal httpPrincipal, long organizationId)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		HttpPrincipal httpPrincipal, long organizationId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getOrganizationActivitiesCount",
@@ -636,10 +557,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -652,10 +569,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getOrganizationUsersActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getOrganizationUsersActivities(
 		HttpPrincipal httpPrincipal, long organizationId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getOrganizationUsersActivities",
@@ -674,14 +590,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -691,8 +603,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getOrganizationUsersActivitiesCount(
-		HttpPrincipal httpPrincipal, long organizationId)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		HttpPrincipal httpPrincipal, long organizationId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getOrganizationUsersActivitiesCount",
@@ -707,10 +618,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -723,10 +630,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getRelationActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getRelationActivities(
 		HttpPrincipal httpPrincipal, long userId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getRelationActivities",
@@ -745,14 +651,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -761,10 +663,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getRelationActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getRelationActivities(
 		HttpPrincipal httpPrincipal, long userId, int type, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getRelationActivities",
@@ -783,14 +684,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -800,7 +697,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getRelationActivitiesCount(HttpPrincipal httpPrincipal,
-		long userId) throws com.liferay.portal.kernel.exception.SystemException {
+		long userId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getRelationActivitiesCount",
@@ -814,10 +711,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -831,8 +724,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getRelationActivitiesCount(HttpPrincipal httpPrincipal,
-		long userId, int type)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		long userId, int type) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getRelationActivitiesCount",
@@ -847,10 +739,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -863,10 +751,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getUserActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getUserActivities(
 		HttpPrincipal httpPrincipal, long userId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getUserActivities", _getUserActivitiesParameterTypes23);
@@ -884,14 +771,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -901,7 +784,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getUserActivitiesCount(HttpPrincipal httpPrincipal,
-		long userId) throws com.liferay.portal.kernel.exception.SystemException {
+		long userId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getUserActivitiesCount",
@@ -915,10 +798,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -931,10 +810,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getUserGroupsActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getUserGroupsActivities(
 		HttpPrincipal httpPrincipal, long userId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getUserGroupsActivities",
@@ -953,14 +831,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -970,8 +844,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getUserGroupsActivitiesCount(
-		HttpPrincipal httpPrincipal, long userId)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		HttpPrincipal httpPrincipal, long userId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getUserGroupsActivitiesCount",
@@ -985,10 +858,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -1001,10 +870,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getUserGroupsAndOrganizationsActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getUserGroupsAndOrganizationsActivities(
 		HttpPrincipal httpPrincipal, long userId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getUserGroupsAndOrganizationsActivities",
@@ -1023,14 +891,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -1040,8 +904,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getUserGroupsAndOrganizationsActivitiesCount(
-		HttpPrincipal httpPrincipal, long userId)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		HttpPrincipal httpPrincipal, long userId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getUserGroupsAndOrganizationsActivitiesCount",
@@ -1055,10 +918,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
@@ -1071,10 +930,9 @@ public class SocialActivityServiceHttp {
 		}
 	}
 
-	public static java.util.List<com.liferay.portlet.social.model.SocialActivity> getUserOrganizationsActivities(
+	public static java.util.List<com.liferay.social.kernel.model.SocialActivity> getUserOrganizationsActivities(
 		HttpPrincipal httpPrincipal, long userId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getUserOrganizationsActivities",
@@ -1093,14 +951,10 @@ public class SocialActivityServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (java.util.List<com.liferay.portlet.social.model.SocialActivity>)returnObj;
+			return (java.util.List<com.liferay.social.kernel.model.SocialActivity>)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);
@@ -1110,8 +964,7 @@ public class SocialActivityServiceHttp {
 	}
 
 	public static int getUserOrganizationsActivitiesCount(
-		HttpPrincipal httpPrincipal, long userId)
-		throws com.liferay.portal.kernel.exception.SystemException {
+		HttpPrincipal httpPrincipal, long userId) {
 		try {
 			MethodKey methodKey = new MethodKey(SocialActivityServiceUtil.class,
 					"getUserOrganizationsActivitiesCount",
@@ -1125,10 +978,6 @@ public class SocialActivityServiceHttp {
 				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
 			}
 			catch (Exception e) {
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 

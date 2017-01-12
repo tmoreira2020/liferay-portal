@@ -17,24 +17,29 @@
 <%@ include file="/html/taglib/aui/translation_manager/init.jsp" %>
 
 <div class="lfr-translation-manager" id="<%= namespace + id %>">
-	<div class="lfr-translation-manager-content nobr">
+	<div class="lfr-translation-manager-content">
 		<label class="lfr-translation-manager-default-locale-label" for="<portlet:namespace />defaultLanguageId"><liferay-ui:message key="web-content-default-language" />:</label>
 
-		<span class="lfr-translation-manager-default-locale-text lfr-translation-manager-translation lfr-translation-manager-translation-editing">
-			<img src='<%= HtmlUtil.escapeAttribute(themeDisplay.getPathThemeImages() + "/language/" + defaultLanguageId + ".png") %>' />
-
-			<%= LocaleUtil.fromLanguageId(defaultLanguageId).getDisplayName(locale) %>
-		</span>
-
-		<select class="hide lfr-translation-manager-default-locale">
+		<span class="label label-default label-lg lfr-translation-manager-default-locale-text lfr-translation-manager-translation lfr-translation-manager-translation-editing">
 
 			<%
-			Locale[] locales = LanguageUtil.getAvailableLocales(themeDisplay.getSiteGroupId());
-
-			for (int i = 0; i < locales.length; i++) {
+			Locale defaultLocale = LocaleUtil.fromLanguageId(defaultLanguageId);
 			%>
 
-				<aui:option label="<%= locales[i].getDisplayName(locale) %>" selected="<%= defaultLanguageId.equals(LocaleUtil.toLanguageId(locales[i])) %>" value="<%= LocaleUtil.toLanguageId(locales[i]) %>" />
+			<img alt="<%= HtmlUtil.escapeAttribute(defaultLocale.getDisplayName(locale)) %>" src="<%= HtmlUtil.escapeAttribute(themeDisplay.getPathThemeImages() + "/language/" + defaultLanguageId + ".png") %>" />
+
+			<%= defaultLocale.getDisplayName(locale) %>
+		</span>
+
+		<select class="form-control hide lfr-translation-manager-default-locale">
+
+			<%
+			Set<Locale> locales = LanguageUtil.getAvailableLocales(themeDisplay.getSiteGroupId());
+
+			for (Locale curLocale : locales) {
+			%>
+
+				<aui:option label="<%= curLocale.getDisplayName(locale) %>" selected="<%= defaultLanguageId.equals(LocaleUtil.toLanguageId(curLocale)) %>" value="<%= LocaleUtil.toLanguageId(curLocale) %>" />
 
 			<%
 			}
@@ -42,37 +47,42 @@
 
 		</select>
 
-		<a class="lfr-translation-manager-change-default-locale" href="javascript:;"><liferay-ui:message key="change" /></a>
+		<c:if test="<%= changeableDefaultLanguage %>">
+			<a class="label label-default label-lg lfr-translation-manager-change-default-locale" href="javascript:;"><liferay-ui:message key="change" /></a>
+		</c:if>
 
 		<c:if test="<%= !readOnly %>">
-			<span class="lfr-translation-manager-add-menu">
-				<liferay-ui:icon-menu
-					cssClass="lfr-translation-manager-icon-menu"
-					direction="down"
-					icon='<%= themeDisplay.getPathThemeImages() + "/common/add.png" %>'
-					message='<%= LanguageUtil.get(pageContext, "add-translation") %>'
-					showArrow="<%= true %>"
-					showWhenSingleIcon="<%= true %>"
-				>
+			<liferay-ui:icon-menu
+				cssClass="lfr-translation-manager-icon-menu"
+				direction="down"
+				icon="../aui/plus"
+				message='<%= LanguageUtil.get(resourceBundle, "add-translation") %>'
+				showArrow="<%= true %>"
+				showWhenSingleIcon="<%= true %>"
+			>
 
-					<%
-					for (int i = 0; i < locales.length; i++) {
-					%>
+				<%
+				for (Locale curLocale : locales) {
+				%>
 
-						<liferay-ui:icon
-							cssClass="lfr-translation-manager-translation-item"
-							image='<%= "../language/" + LocaleUtil.toLanguageId(locales[i]) %>'
-							lang="<%= LocaleUtil.toLanguageId(locales[i]) %>"
-							message="<%= locales[i].getDisplayName(locale) %>"
-							url="javascript:;"
-						/>
+					<liferay-ui:icon
+						cssClass="lfr-translation-manager-translation-item"
+						id="<%= LocaleUtil.toLanguageId(curLocale) %>"
+						image='<%= "../language/" + LocaleUtil.toLanguageId(curLocale) %>'
+						lang="<%= LocaleUtil.toLanguageId(curLocale) %>"
+						message="<%= curLocale.getDisplayName(locale) %>"
+						url="javascript:;"
+					/>
 
-					<%
-					}
-					%>
+				<%
+				}
+				%>
 
-				</liferay-ui:icon-menu>
-			</span>
+			</liferay-ui:icon-menu>
+
+			<div class="alert alert-info hide lfr-translation-manager-translations-message" id="<portlet:namespace />translationsMessage">
+				<liferay-ui:message key="the-changes-in-your-translations-will-be-available-once-the-content-is-published" />
+			</div>
 
 			<c:if test="<%= availableLocales.length > 1 %>">
 				<div class="lfr-translation-manager-available-translations">
@@ -87,12 +97,12 @@
 							}
 						%>
 
-							<span class="lfr-translation-manager-translation" locale="<%= availableLocales[i] %>">
-								<img src="<%= themeDisplay.getPathThemeImages() %>/language/<%= LocaleUtil.toLanguageId(availableLocales[i]) %>.png">
+							<span class="label label-default label-lg lfr-translation-manager-translation" locale="<%= availableLocales[i] %>">
+								<img alt="<%= HtmlUtil.escapeAttribute(availableLocales[i].getDisplayName(locale)) %>" src="<%= themeDisplay.getPathThemeImages() %>/language/<%= LocaleUtil.toLanguageId(availableLocales[i]) %>.png" />
 
 								<%= availableLocales[i].getDisplayName(locale) %>
 
-								<a class="lfr-translation-manager-translation-delete" href="javascript:;">x</a>
+								<aui:icon cssClass="lfr-translation-manager-delete-translation" image="remove" />
 							</span>
 
 						<%
@@ -117,8 +127,8 @@
 
 	JSONObject localesMapJSONObject = JSONFactoryUtil.createJSONObject();
 
-	for (int i = 0; i < locales.length; i++) {
-		localesMapJSONObject.put(LocaleUtil.toLanguageId(locales[i]), locales[i].getDisplayName(locale));
+	for (Locale curLocale : locales) {
+		localesMapJSONObject.put(LocaleUtil.toLanguageId(curLocale), curLocale.getDisplayName(locale));
 	}
 	%>
 
@@ -128,11 +138,11 @@
 		Liferay.component(
 			'<%= namespace + id %>',
 			function() {
-
 				if (!translationManager) {
 					translationManager = new Liferay.TranslationManager(
 						{
 							availableLocales: <%= availableLocalesJSONArray.toString() %>,
+							changeableDefaultLanguage: <%= changeableDefaultLanguage %>,
 							boundingBox: '#<%= namespace + id %>',
 							defaultLocale: '<%= HtmlUtil.escapeJS(defaultLanguageId) %>',
 							editingLocale: '<%= HtmlUtil.escapeJS(editingLanguageId) %>',

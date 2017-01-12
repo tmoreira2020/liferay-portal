@@ -14,11 +14,14 @@
 
 package com.liferay.portal.model.impl;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.CacheModel;
+import com.liferay.portal.kernel.model.MVCCModel;
+import com.liferay.portal.kernel.model.RepositoryEntry;
+import com.liferay.portal.kernel.util.HashUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.CacheModel;
-import com.liferay.portal.model.MVCCModel;
-import com.liferay.portal.model.RepositoryEntry;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -34,8 +37,36 @@ import java.util.Date;
  * @see RepositoryEntry
  * @generated
  */
+@ProviderType
 public class RepositoryEntryCacheModel implements CacheModel<RepositoryEntry>,
 	Externalizable, MVCCModel {
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof RepositoryEntryCacheModel)) {
+			return false;
+		}
+
+		RepositoryEntryCacheModel repositoryEntryCacheModel = (RepositoryEntryCacheModel)obj;
+
+		if ((repositoryEntryId == repositoryEntryCacheModel.repositoryEntryId) &&
+				(mvccVersion == repositoryEntryCacheModel.mvccVersion)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		int hashCode = HashUtil.hash(0, repositoryEntryId);
+
+		return HashUtil.hash(hashCode, mvccVersion);
+	}
+
 	@Override
 	public long getMvccVersion() {
 		return mvccVersion;
@@ -48,7 +79,7 @@ public class RepositoryEntryCacheModel implements CacheModel<RepositoryEntry>,
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(25);
+		StringBundler sb = new StringBundler(27);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -74,6 +105,8 @@ public class RepositoryEntryCacheModel implements CacheModel<RepositoryEntry>,
 		sb.append(mappedId);
 		sb.append(", manualCheckInRequired=");
 		sb.append(manualCheckInRequired);
+		sb.append(", lastPublishDate=");
+		sb.append(lastPublishDate);
 		sb.append("}");
 
 		return sb.toString();
@@ -129,6 +162,13 @@ public class RepositoryEntryCacheModel implements CacheModel<RepositoryEntry>,
 
 		repositoryEntryImpl.setManualCheckInRequired(manualCheckInRequired);
 
+		if (lastPublishDate == Long.MIN_VALUE) {
+			repositoryEntryImpl.setLastPublishDate(null);
+		}
+		else {
+			repositoryEntryImpl.setLastPublishDate(new Date(lastPublishDate));
+		}
+
 		repositoryEntryImpl.resetOriginalValues();
 
 		return repositoryEntryImpl;
@@ -138,16 +178,23 @@ public class RepositoryEntryCacheModel implements CacheModel<RepositoryEntry>,
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
 		uuid = objectInput.readUTF();
+
 		repositoryEntryId = objectInput.readLong();
+
 		groupId = objectInput.readLong();
+
 		companyId = objectInput.readLong();
+
 		userId = objectInput.readLong();
 		userName = objectInput.readUTF();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
+
 		repositoryId = objectInput.readLong();
 		mappedId = objectInput.readUTF();
+
 		manualCheckInRequired = objectInput.readBoolean();
+		lastPublishDate = objectInput.readLong();
 	}
 
 	@Override
@@ -163,8 +210,11 @@ public class RepositoryEntryCacheModel implements CacheModel<RepositoryEntry>,
 		}
 
 		objectOutput.writeLong(repositoryEntryId);
+
 		objectOutput.writeLong(groupId);
+
 		objectOutput.writeLong(companyId);
+
 		objectOutput.writeLong(userId);
 
 		if (userName == null) {
@@ -176,6 +226,7 @@ public class RepositoryEntryCacheModel implements CacheModel<RepositoryEntry>,
 
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
+
 		objectOutput.writeLong(repositoryId);
 
 		if (mappedId == null) {
@@ -186,6 +237,7 @@ public class RepositoryEntryCacheModel implements CacheModel<RepositoryEntry>,
 		}
 
 		objectOutput.writeBoolean(manualCheckInRequired);
+		objectOutput.writeLong(lastPublishDate);
 	}
 
 	public long mvccVersion;
@@ -200,4 +252,5 @@ public class RepositoryEntryCacheModel implements CacheModel<RepositoryEntry>,
 	public long repositoryId;
 	public String mappedId;
 	public boolean manualCheckInRequired;
+	public long lastPublishDate;
 }

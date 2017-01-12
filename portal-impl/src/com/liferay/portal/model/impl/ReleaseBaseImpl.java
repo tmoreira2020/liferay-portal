@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.Release;
-import com.liferay.portal.service.ReleaseLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.Release;
+import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil;
 
 /**
  * The extended model base implementation for the Release service. Represents a row in the &quot;Release_&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.ReleaseLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see ReleaseImpl
- * @see com.liferay.portal.model.Release
+ * @see Release
  * @generated
  */
+@ProviderType
 public abstract class ReleaseBaseImpl extends ReleaseModelImpl
 	implements Release {
 	/*
@@ -38,7 +40,7 @@ public abstract class ReleaseBaseImpl extends ReleaseModelImpl
 	 * Never modify or reference this class directly. All methods that expect a release model instance should use the {@link Release} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			ReleaseLocalServiceUtil.addRelease(this);
 		}

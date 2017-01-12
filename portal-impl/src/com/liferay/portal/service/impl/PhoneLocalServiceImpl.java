@@ -14,23 +14,22 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.PhoneNumberException;
+import com.liferay.portal.kernel.exception.PhoneNumberException;
+import com.liferay.portal.kernel.exception.PhoneNumberExtensionException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.format.PhoneNumberFormatUtil;
+import com.liferay.portal.kernel.model.Account;
+import com.liferay.portal.kernel.model.Contact;
+import com.liferay.portal.kernel.model.ListTypeConstants;
+import com.liferay.portal.kernel.model.Organization;
+import com.liferay.portal.kernel.model.Phone;
+import com.liferay.portal.kernel.model.SystemEventConstants;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.Account;
-import com.liferay.portal.model.Contact;
-import com.liferay.portal.model.ListTypeConstants;
-import com.liferay.portal.model.Organization;
-import com.liferay.portal.model.Phone;
-import com.liferay.portal.model.SystemEventConstants;
-import com.liferay.portal.model.User;
-import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.base.PhoneLocalServiceBaseImpl;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,32 +37,15 @@ import java.util.List;
  */
 public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #addPhone(long, String, long,
-	 *             String, String, int, boolean, ServiceContext)}
-	 */
-	@Deprecated
 	@Override
 	public Phone addPhone(
 			long userId, String className, long classPK, String number,
-			String extension, int typeId, boolean primary)
-		throws PortalException, SystemException {
-
-		return addPhone(
-			userId, className, classPK, number, extension, typeId, primary,
-			new ServiceContext());
-	}
-
-	@Override
-	public Phone addPhone(
-			long userId, String className, long classPK, String number,
-			String extension, int typeId, boolean primary,
+			String extension, long typeId, boolean primary,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		User user = userPersistence.findByPrimaryKey(userId);
 		long classNameId = classNameLocalService.getClassNameId(className);
-		Date now = new Date();
 
 		validate(
 			0, user.getCompanyId(), classNameId, classPK, number, extension,
@@ -77,8 +59,6 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 		phone.setCompanyId(user.getCompanyId());
 		phone.setUserId(user.getUserId());
 		phone.setUserName(user.getFullName());
-		phone.setCreateDate(serviceContext.getCreateDate(now));
-		phone.setModifiedDate(serviceContext.getModifiedDate(now));
 		phone.setClassNameId(classNameId);
 		phone.setClassPK(classPK);
 		phone.setNumber(number);
@@ -92,9 +72,7 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 	}
 
 	@Override
-	public Phone deletePhone(long phoneId)
-		throws PortalException, SystemException {
-
+	public Phone deletePhone(long phoneId) throws PortalException {
 		Phone phone = phonePersistence.findByPrimaryKey(phoneId);
 
 		return phoneLocalService.deletePhone(phone);
@@ -103,17 +81,16 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 	@Override
 	@SystemEvent(
 		action = SystemEventConstants.ACTION_SKIP,
-		type = SystemEventConstants.TYPE_DELETE)
-	public Phone deletePhone(Phone phone) throws SystemException {
+		type = SystemEventConstants.TYPE_DELETE
+	)
+	public Phone deletePhone(Phone phone) {
 		phonePersistence.remove(phone);
 
 		return phone;
 	}
 
 	@Override
-	public void deletePhones(long companyId, String className, long classPK)
-		throws SystemException {
-
+	public void deletePhones(long companyId, String className, long classPK) {
 		long classNameId = classNameLocalService.getClassNameId(className);
 
 		List<Phone> phones = phonePersistence.findByC_C_C(
@@ -125,13 +102,13 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 	}
 
 	@Override
-	public List<Phone> getPhones() throws SystemException {
+	public List<Phone> getPhones() {
 		return phonePersistence.findAll();
 	}
 
 	@Override
-	public List<Phone> getPhones(long companyId, String className, long classPK)
-		throws SystemException {
+	public List<Phone> getPhones(
+		long companyId, String className, long classPK) {
 
 		long classNameId = classNameLocalService.getClassNameId(className);
 
@@ -140,15 +117,14 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 
 	@Override
 	public Phone updatePhone(
-			long phoneId, String number, String extension, int typeId,
+			long phoneId, String number, String extension, long typeId,
 			boolean primary)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		validate(phoneId, 0, 0, 0, number, extension, typeId, primary);
 
 		Phone phone = phonePersistence.findByPrimaryKey(phoneId);
 
-		phone.setModifiedDate(new Date());
 		phone.setNumber(number);
 		phone.setExtension(extension);
 		phone.setTypeId(typeId);
@@ -160,9 +136,8 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 	}
 
 	protected void validate(
-			long phoneId, long companyId, long classNameId, long classPK,
-			boolean primary)
-		throws SystemException {
+		long phoneId, long companyId, long classNameId, long classPK,
+		boolean primary) {
 
 		// Check to make sure there isn't another phone with the same company
 		// id, class name, and class pk that also has primary set to true
@@ -183,8 +158,8 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 
 	protected void validate(
 			long phoneId, long companyId, long classNameId, long classPK,
-			String number, String extension, int typeId, boolean primary)
-		throws PortalException, SystemException {
+			String number, String extension, long typeId, boolean primary)
+		throws PortalException {
 
 		if (!PhoneNumberFormatUtil.validate(number)) {
 			throw new PhoneNumberException();
@@ -193,7 +168,7 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 		if (Validator.isNotNull(extension)) {
 			for (int i = 0; i < extension.length(); i++) {
 				if (!Character.isDigit(extension.charAt(i))) {
-					throw new PhoneNumberException();
+					throw new PhoneNumberExtensionException();
 				}
 			}
 		}
@@ -213,7 +188,7 @@ public class PhoneLocalServiceImpl extends PhoneLocalServiceBaseImpl {
 			(classNameId ==
 				classNameLocalService.getClassNameId(Organization.class))) {
 
-			listTypeService.validate(
+			listTypeLocalService.validate(
 				typeId, classNameId, ListTypeConstants.PHONE);
 		}
 

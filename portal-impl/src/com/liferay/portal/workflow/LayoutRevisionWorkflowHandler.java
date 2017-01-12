@@ -15,15 +15,14 @@
 package com.liferay.portal.workflow;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.LayoutRevision;
+import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
+import com.liferay.portal.kernel.service.LayoutRevisionLocalServiceUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.BaseWorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.model.LayoutRevision;
-import com.liferay.portal.security.permission.ResourceActionsUtil;
-import com.liferay.portal.service.LayoutRevisionLocalServiceUtil;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.theme.ThemeDisplay;
 
 import java.io.Serializable;
 
@@ -33,7 +32,9 @@ import java.util.Map;
 /**
  * @author Raymond Augé
  */
-public class LayoutRevisionWorkflowHandler extends BaseWorkflowHandler {
+@OSGiBeanProperties
+public class LayoutRevisionWorkflowHandler
+	extends BaseWorkflowHandler<LayoutRevision> {
 
 	@Override
 	public String getClassName() {
@@ -46,9 +47,9 @@ public class LayoutRevisionWorkflowHandler extends BaseWorkflowHandler {
 	}
 
 	@Override
-	public Object updateStatus(
+	public LayoutRevision updateStatus(
 			int status, Map<String, Serializable> workflowContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		long userId = GetterUtil.getLong(
 			(String)workflowContext.get(WorkflowConstants.CONTEXT_USER_ID));
@@ -61,11 +62,6 @@ public class LayoutRevisionWorkflowHandler extends BaseWorkflowHandler {
 
 		return LayoutRevisionLocalServiceUtil.updateStatus(
 			userId, layoutRevisionId, status, serviceContext);
-	}
-
-	@Override
-	protected String getIconPath(ThemeDisplay themeDisplay) {
-		return themeDisplay.getPathThemeImages() + "/common/pages.png";
 	}
 
 }

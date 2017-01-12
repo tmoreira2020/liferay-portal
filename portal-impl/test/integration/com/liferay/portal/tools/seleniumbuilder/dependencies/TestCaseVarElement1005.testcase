@@ -1,3 +1,0 @@
-<definition component-name="portal-collaboration">
-	<var name="name" value="value" fail="fail" />
-</definition>

@@ -14,13 +14,12 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.NoSuchLayoutException;
+import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.service.GroupLocalServiceUtil;
-import com.liferay.portal.service.LayoutLocalServiceUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 
 import java.util.List;
 
@@ -29,24 +28,21 @@ import java.util.List;
  */
 public class LayoutPrototypeImpl extends LayoutPrototypeBaseImpl {
 
-	public LayoutPrototypeImpl() {
-	}
-
 	@Override
-	public Group getGroup() throws PortalException, SystemException {
+	public Group getGroup() throws PortalException {
 		return GroupLocalServiceUtil.getLayoutPrototypeGroup(
 			getCompanyId(), getLayoutPrototypeId());
 	}
 
 	@Override
-	public long getGroupId() throws PortalException, SystemException {
+	public long getGroupId() throws PortalException {
 		Group group = getGroup();
 
 		return group.getGroupId();
 	}
 
 	@Override
-	public Layout getLayout() throws PortalException, SystemException {
+	public Layout getLayout() throws PortalException {
 		Group group = getGroup();
 
 		if (group.getPrivateLayoutsPageCount() > 0) {
@@ -57,6 +53,11 @@ public class LayoutPrototypeImpl extends LayoutPrototypeBaseImpl {
 		}
 
 		throw new NoSuchLayoutException("{groupId=" + group.getGroupId() + "}");
+	}
+
+	@Override
+	public boolean hasSetModifiedDate() {
+		return true;
 	}
 
 }

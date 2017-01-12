@@ -14,42 +14,40 @@
 
 package com.liferay.portal.util;
 
+import com.liferay.portal.kernel.model.EmailAddress;
+import com.liferay.portal.kernel.service.EmailAddressLocalServiceUtil;
+import com.liferay.portal.kernel.service.persistence.EmailAddressUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.ServiceBeanMethodInvocationFactoryUtil;
-import com.liferay.portal.model.EmailAddress;
-import com.liferay.portal.service.EmailAddressLocalServiceUtil;
-import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.service.persistence.EmailAddressUtil;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.lang.reflect.Method;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Brian Wing Shun Chan
  * @author Wesley Gong
  * @see    OrderByComparatorFactoryImplTest
  */
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
 public class ServiceBeanMethodInvocationFactoryImplTest {
 
-	@After
-	public void tearDown() throws Exception {
-		for (EmailAddress emailAddress : _emailAddresses) {
-			EmailAddressLocalServiceUtil.deleteEmailAddress(emailAddress);
-		}
-
-		_emailAddresses.clear();
-	}
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Test
 	public void testRollback() throws Exception {
@@ -98,7 +96,7 @@ public class ServiceBeanMethodInvocationFactoryImplTest {
 	}
 
 	protected EmailAddress newEmailAddress(String address) throws Exception {
-		long emailAddressId = ServiceTestUtil.nextLong();
+		long emailAddressId = RandomTestUtil.nextLong();
 
 		EmailAddress emailAddress = EmailAddressUtil.create(emailAddressId);
 
@@ -122,6 +120,7 @@ public class ServiceBeanMethodInvocationFactoryImplTest {
 		}
 	}
 
-	private Set<EmailAddress> _emailAddresses = new HashSet<EmailAddress>();
+	@DeleteAfterTestRun
+	private final Set<EmailAddress> _emailAddresses = new HashSet<>();
 
 }

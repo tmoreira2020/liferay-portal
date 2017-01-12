@@ -30,7 +30,7 @@ if (Validator.isNull(displayStyle)) {
 %>
 
 <aui:fieldset>
-	<aui:input name="preferences--enableSocialBookmarks--" type="checkbox" value="<%= enabled %>" />
+	<aui:input name="preferences--enableSocialBookmarks--" type="toggle-switch" value="<%= enabled %>" />
 
 	<div class="social-boomarks-options" id="<portlet:namespace />socialBookmarksOptions">
 		<aui:select label="display-style" name="preferences--socialBookmarksDisplayStyle--">
@@ -39,7 +39,7 @@ if (Validator.isNull(displayStyle)) {
 			for (String curDisplayStyle : PropsUtil.getArray(PropsKeys.SOCIAL_BOOKMARK_DISPLAY_STYLES)) {
 			%>
 
-			<aui:option label="<%= curDisplayStyle %>" selected="<%= displayStyle.equals(curDisplayStyle) %>" />
+				<aui:option label="<%= curDisplayStyle %>" selected="<%= displayStyle.equals(curDisplayStyle) %>" />
 
 			<%
 			}
@@ -61,7 +61,7 @@ if (Validator.isNull(displayStyle)) {
 				for (String type : PropsUtil.getArray(PropsKeys.SOCIAL_BOOKMARK_TYPES)) {
 				%>
 
-					<aui:input checked="<%= ArrayUtil.contains(typesArray, type) %>" id='<%= "socialBookmarksTypes" + type %>' ignoreRequestValue="<%= true %>" includeHiddenField="<%= false %>" label="<%= type %>" name="preferences--socialBookmarksTypes--" type="checkbox" value="<%= type %>" />
+					<aui:input checked="<%= ArrayUtil.contains(typesArray, type) %>" id='<%= "socialBookmarksTypes" + type %>' ignoreRequestValue="<%= true %>" label="<%= type %>" name="preferences--socialBookmarksTypes--" type="checkbox" value="<%= type %>" />
 
 				<%
 				}
@@ -73,5 +73,5 @@ if (Validator.isNull(displayStyle)) {
 </aui:fieldset>
 
 <aui:script use="aui-base">
-	Liferay.Util.toggleBoxes('<portlet:namespace />enableSocialBookmarksCheckbox','<portlet:namespace />socialBookmarksOptions');
+	Liferay.Util.toggleBoxes('<portlet:namespace />enableSocialBookmarks','<portlet:namespace />socialBookmarksOptions');
 </aui:script>

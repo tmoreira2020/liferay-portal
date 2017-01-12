@@ -14,19 +14,18 @@
 
 package com.liferay.portal.util;
 
-import com.liferay.portal.kernel.cache.Lifecycle;
-import com.liferay.portal.kernel.cache.ThreadLocalCache;
-import com.liferay.portal.kernel.cache.ThreadLocalCacheManager;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.cache.thread.local.Lifecycle;
+import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCache;
+import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.model.LayoutConstants;
 import com.liferay.portal.model.impl.LayoutImpl;
-import com.liferay.portal.service.LayoutLocalServiceUtil;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -42,9 +41,8 @@ import java.util.Locale;
 public class LayoutListUtil {
 
 	public static List<LayoutDescription> getLayoutDescriptions(
-			long groupId, boolean privateLayout, String rootNodeName,
-			Locale locale)
-		throws SystemException {
+		long groupId, boolean privateLayout, String rootNodeName,
+		Locale locale) {
 
 		ThreadLocalCache<List<LayoutDescription>> threadLocalCache =
 			ThreadLocalCacheManager.getThreadLocalCache(
@@ -84,18 +82,15 @@ public class LayoutListUtil {
 	}
 
 	protected static List<LayoutDescription> doGetLayoutDescriptions(
-			long groupId, boolean privateLayout, String rootNodeName,
-			Locale locale)
-		throws SystemException {
+		long groupId, boolean privateLayout, String rootNodeName,
+		Locale locale) {
 
-		List<LayoutDescription> layoutDescriptions =
-			new ArrayList<LayoutDescription>();
+		List<LayoutDescription> layoutDescriptions = new ArrayList<>();
 
-		List<Layout> layouts = new ArrayList<Layout>(
+		List<Layout> layouts = new ArrayList<>(
 			LayoutLocalServiceUtil.getLayouts(groupId, privateLayout));
 
-		Deque<ObjectValuePair<Layout, Integer>> deque =
-			new LinkedList<ObjectValuePair<Layout, Integer>>();
+		Deque<ObjectValuePair<Layout, Integer>> deque = new LinkedList<>();
 
 		Layout rootLayout = new LayoutImpl();
 

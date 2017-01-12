@@ -74,9 +74,9 @@ public class BrowserSnifferImplTest {
 
 		mockHttpServletRequest.addHeader(
 			HttpHeaders.USER_AGENT,
-			"Safari 6, 6.0, 536.26, mozilla/5.0 (ipad; cpu os 6_0 like mac os" +
-				" x) applewebkit/536.26 (khtml, like gecko) version/6.0" +
-					" mobile/10a5355d safari/8536.25");
+			"Safari 6, 6.0, 536.26, mozilla/5.0 (ipad; cpu os 6_0 like mac " +
+				"os x) applewebkit/536.26 (khtml, like gecko) version/6.0 " +
+					"mobile/10a5355d safari/8536.25");
 
 		Assert.assertFalse(
 			_browserSnifferImpl.isAndroid(mockHttpServletRequest));
@@ -123,8 +123,8 @@ public class BrowserSnifferImplTest {
 
 		mockHttpServletRequest.addHeader(
 			HttpHeaders.USER_AGENT,
-			"Opera 12 var1, 12.14, 9.80, opera/9.80 (windows nt 6.0)" +
-				" presto/2.12.388 version/12.14");
+			"Opera 12 var1, 12.14, 9.80, opera/9.80 (windows nt 6.0) " +
+				"presto/2.12.388 version/12.14");
 
 		Assert.assertFalse(_browserSnifferImpl.isIe(mockHttpServletRequest));
 	}
@@ -170,8 +170,8 @@ public class BrowserSnifferImplTest {
 
 		mockHttpServletRequest.addHeader(
 			HttpHeaders.USER_AGENT,
-			"IE 6 var4, , 6.0, mozilla/5.0 (compatible; msie 6.0; windows" +
-				" nt 5.1)");
+			"IE 6 var4, , 6.0, mozilla/5.0 (compatible; msie 6.0; windows nt " +
+				"5.1)");
 
 		Assert.assertFalse(
 			_browserSnifferImpl.isMobile(mockHttpServletRequest));
@@ -179,41 +179,44 @@ public class BrowserSnifferImplTest {
 
 	@Test
 	public void testParseVersion() throws IOException {
-		UnsyncBufferedReader unsyncBufferedReader = new UnsyncBufferedReader(
-			new InputStreamReader(getClass().getResourceAsStream(
-				"dependencies/user_agents.csv")));
+		Class<?> clazz = getClass();
 
-		String line = null;
+		try (UnsyncBufferedReader unsyncBufferedReader =
+				new UnsyncBufferedReader(
+					new InputStreamReader(
+						clazz.getResourceAsStream(
+							"dependencies/user_agents.csv")))) {
 
-		while ((line = unsyncBufferedReader.readLine()) != null) {
-			line = line.trim();
+			String line = null;
 
-			if (line.isEmpty() || (line.charAt(0) == CharPool.POUND)) {
-				continue;
+			while ((line = unsyncBufferedReader.readLine()) != null) {
+				line = line.trim();
+
+				if (line.isEmpty() || (line.charAt(0) == CharPool.POUND)) {
+					continue;
+				}
+
+				String[] parts = StringUtil.split(line, CharPool.COMMA);
+
+				if (parts.length != 4) {
+					continue;
+				}
+
+				String userAgent = parts[3].trim();
+
+				Assert.assertEquals(
+					parts[0].trim() + " version", parts[1].trim(),
+					BrowserSnifferImpl.parseVersion(
+						userAgent, BrowserSnifferImpl.versionLeadings,
+						BrowserSnifferImpl.versionSeparators));
+
+				Assert.assertEquals(
+					parts[0].trim() + " revision", parts[2].trim(),
+					BrowserSnifferImpl.parseVersion(
+						userAgent, BrowserSnifferImpl.revisionLeadings,
+						BrowserSnifferImpl.revisionSeparators));
 			}
-
-			String[] parts = StringUtil.split(line, CharPool.COMMA);
-
-			if (parts.length != 4) {
-				continue;
-			}
-
-			String userAgent = parts[3].trim();
-
-			Assert.assertEquals(
-				parts[0].trim() + " version", parts[1].trim(),
-				BrowserSnifferImpl.parseVersion(
-					userAgent, BrowserSnifferImpl.versionLeadings,
-					BrowserSnifferImpl.versionSeparators));
-
-			Assert.assertEquals(
-				parts[0].trim() + " revision", parts[2].trim(),
-				BrowserSnifferImpl.parseVersion(
-					userAgent, BrowserSnifferImpl.revisionLeadings,
-					BrowserSnifferImpl.revisionSeparators));
 		}
-
-		unsyncBufferedReader.close();
 	}
 
 	protected UnsyncBufferedReader getResourceAsUnsyncBufferedReader(
@@ -226,6 +229,7 @@ public class BrowserSnifferImplTest {
 				clazz.getResourceAsStream("dependencies/user_agents.csv")));
 	}
 
-	private BrowserSnifferImpl _browserSnifferImpl = new BrowserSnifferImpl();
+	private final BrowserSnifferImpl _browserSnifferImpl =
+		new BrowserSnifferImpl();
 
 }

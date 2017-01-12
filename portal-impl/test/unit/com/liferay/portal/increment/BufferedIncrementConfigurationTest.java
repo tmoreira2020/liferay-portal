@@ -15,12 +15,15 @@
 package com.liferay.portal.increment;
 
 import com.liferay.portal.kernel.configuration.Filter;
-import com.liferay.portal.kernel.test.CodeCoverageAssertor;
+import com.liferay.portal.kernel.test.CaptureHandler;
 import com.liferay.portal.kernel.test.JDKLoggerTestUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.kernel.test.rule.NewEnv;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.test.AdviseWith;
-import com.liferay.portal.test.AspectJMockingNewClassLoaderJUnitTestRunner;
+import com.liferay.portal.test.rule.AdviseWith;
+import com.liferay.portal.test.rule.AspectJNewEnvTestRule;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,53 +37,61 @@ import org.aspectj.lang.annotation.Aspect;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Shuyang Zhou
  */
-@RunWith(AspectJMockingNewClassLoaderJUnitTestRunner.class)
+@NewEnv(type = NewEnv.Type.CLASSLOADER)
 public class BufferedIncrementConfigurationTest {
 
 	@ClassRule
-	public static CodeCoverageAssertor codeCoverageAssertor =
-		new CodeCoverageAssertor();
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			CodeCoverageAssertor.INSTANCE, AspectJNewEnvTestRule.INSTANCE);
 
 	@AdviseWith(adviceClasses = PropsUtilAdvice.class)
 	@Test
 	public void testInvalidSettingWithLog() {
-		List<LogRecord> logRecords = _doTestInvalidSetting(Level.WARNING);
+		try (CaptureHandler captureHandler =
+				_testInvalidSetting(Level.WARNING)) {
 
-		Assert.assertEquals(2, logRecords.size());
+			List<LogRecord> logRecords = captureHandler.getLogRecords();
 
-		LogRecord logRecord1 = logRecords.get(0);
+			Assert.assertEquals(2, logRecords.size());
 
-		Assert.assertEquals(
-			PropsKeys.BUFFERED_INCREMENT_THREADPOOL_KEEP_ALIVE_TIME +
-				"[]=-3. Auto reset to 0.",
-			logRecord1.getMessage());
+			LogRecord logRecord1 = logRecords.get(0);
 
-		LogRecord logRecord2 = logRecords.get(1);
+			Assert.assertEquals(
+				PropsKeys.BUFFERED_INCREMENT_THREADPOOL_KEEP_ALIVE_TIME +
+					"[]=-3. Auto reset to 0.",
+				logRecord1.getMessage());
 
-		Assert.assertEquals(
-			PropsKeys.BUFFERED_INCREMENT_THREADPOOL_MAX_SIZE +
-				"[]=-4. Auto reset to 1.",
-			logRecord2.getMessage());
+			LogRecord logRecord2 = logRecords.get(1);
+
+			Assert.assertEquals(
+				PropsKeys.BUFFERED_INCREMENT_THREADPOOL_MAX_SIZE +
+					"[]=-4. Auto reset to 1.",
+				logRecord2.getMessage());
+		}
 	}
 
 	@AdviseWith(adviceClasses = PropsUtilAdvice.class)
 	@Test
 	public void testInvalidSettingWithoutLog() {
-		List<LogRecord> logRecords = _doTestInvalidSetting(Level.OFF);
+		try (CaptureHandler captureHandler = _testInvalidSetting(Level.OFF)) {
+			List<LogRecord> logRecords = captureHandler.getLogRecords();
 
-		Assert.assertTrue(logRecords.isEmpty());
+			Assert.assertTrue(logRecords.isEmpty());
+		}
 	}
 
 	@AdviseWith(adviceClasses = PropsUtilAdvice.class)
 	@Test
 	public void testValidSetting() {
-		Map<String, String> props = new HashMap<String, String>();
+		Map<String, String> props = new HashMap<>();
 
 		props.put(PropsKeys.BUFFERED_INCREMENT_ENABLED, "false");
 		props.put(PropsKeys.BUFFERED_INCREMENT_STANDBY_QUEUE_THRESHOLD, "10");
@@ -153,7 +164,8 @@ public class BufferedIncrementConfigurationTest {
 		@Around(
 			"execution(public static String com.liferay.portal.util." +
 				"PropsUtil.get(String, com.liferay.portal.kernel." +
-					"configuration.Filter)) && args(key, filter)")
+					"configuration.Filter)) && args(key, filter)"
+		)
 		public Object get(String key, Filter filter) {
 			return _props.get(key);
 		}
@@ -162,8 +174,8 @@ public class BufferedIncrementConfigurationTest {
 
 	}
 
-	private List<LogRecord> _doTestInvalidSetting(Level level) {
-		Map<String, String> props = new HashMap<String, String>();
+	private CaptureHandler _testInvalidSetting(Level level) {
+		Map<String, String> props = new HashMap<>();
 
 		props.put(PropsKeys.BUFFERED_INCREMENT_ENABLED, "false");
 
@@ -186,7 +198,7 @@ public class BufferedIncrementConfigurationTest {
 
 		PropsUtilAdvice.setProps(props);
 
-		List<LogRecord> logRecords = JDKLoggerTestUtil.configureJDKLogger(
+		CaptureHandler captureHandler = JDKLoggerTestUtil.configureJDKLogger(
 			BufferedIncrementConfiguration.class.getName(), level);
 
 		BufferedIncrementConfiguration bufferedIncrementConfiguration =
@@ -220,7 +232,7 @@ public class BufferedIncrementConfigurationTest {
 			Assert.assertEquals("Standby is disabled", ise.getMessage());
 		}
 
-		return logRecords;
+		return captureHandler;
 	}
 
 }

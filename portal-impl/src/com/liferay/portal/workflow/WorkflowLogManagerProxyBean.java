@@ -15,6 +15,7 @@
 package com.liferay.portal.workflow;
 
 import com.liferay.portal.kernel.messaging.proxy.BaseProxyBean;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.WorkflowLog;
 import com.liferay.portal.kernel.workflow.WorkflowLogManager;
@@ -26,6 +27,9 @@ import java.util.List;
  * @author Shuyang Zhou
  * @author Brian Wing Shun Chan
  */
+@OSGiBeanProperties(
+	property = "proxy.bean=true", service = WorkflowLogManager.class
+)
 public class WorkflowLogManagerProxyBean
 	extends BaseProxyBean implements WorkflowLogManager {
 
@@ -46,7 +50,7 @@ public class WorkflowLogManagerProxyBean
 	@Override
 	public List<WorkflowLog> getWorkflowLogsByWorkflowInstance(
 		long companyId, long workflowInstanceId, List<Integer> logTypes,
-		int start, int end, OrderByComparator orderByComparator) {
+		int start, int end, OrderByComparator<WorkflowLog> orderByComparator) {
 
 		throw new UnsupportedOperationException();
 	}
@@ -54,7 +58,7 @@ public class WorkflowLogManagerProxyBean
 	@Override
 	public List<WorkflowLog> getWorkflowLogsByWorkflowTask(
 		long companyId, long workflowTaskId, List<Integer> logTypes, int start,
-		int end, OrderByComparator orderByComparator) {
+		int end, OrderByComparator<WorkflowLog> orderByComparator) {
 
 		throw new UnsupportedOperationException();
 	}

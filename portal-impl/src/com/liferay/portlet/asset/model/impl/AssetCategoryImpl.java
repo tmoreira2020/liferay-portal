@@ -14,15 +14,14 @@
 
 package com.liferay.portlet.asset.model.impl;
 
+import com.liferay.asset.kernel.model.AssetCategory;
+import com.liferay.asset.kernel.model.AssetVocabulary;
+import com.liferay.asset.kernel.service.AssetCategoryLocalServiceUtil;
+import com.liferay.asset.kernel.service.AssetVocabularyLocalServiceUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portlet.asset.model.AssetCategory;
-import com.liferay.portlet.asset.model.AssetVocabulary;
-import com.liferay.portlet.asset.service.AssetCategoryLocalServiceUtil;
-import com.liferay.portlet.asset.service.AssetVocabularyLocalServiceUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,14 +32,9 @@ import java.util.Locale;
  */
 public class AssetCategoryImpl extends AssetCategoryBaseImpl {
 
-	public AssetCategoryImpl() {
-	}
-
 	@Override
-	public List<AssetCategory> getAncestors()
-		throws PortalException, SystemException {
-
-		List<AssetCategory> categories = new ArrayList<AssetCategory>();
+	public List<AssetCategory> getAncestors() throws PortalException {
+		List<AssetCategory> categories = new ArrayList<>();
 
 		AssetCategory category = this;
 
@@ -55,9 +49,13 @@ public class AssetCategoryImpl extends AssetCategoryBaseImpl {
 	}
 
 	@Override
-	public String getPath(Locale locale)
-		throws PortalException, SystemException {
+	public AssetCategory getParentCategory() {
+		return AssetCategoryLocalServiceUtil.fetchCategory(
+			getParentCategoryId());
+	}
 
+	@Override
+	public String getPath(Locale locale) throws PortalException {
 		List<AssetCategory> categories = getAncestors();
 
 		StringBundler sb = new StringBundler((categories.size() * 4) + 1);

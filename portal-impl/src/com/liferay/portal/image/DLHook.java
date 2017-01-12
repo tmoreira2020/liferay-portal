@@ -14,14 +14,15 @@
 
 package com.liferay.portal.image;
 
-import com.liferay.portal.NoSuchImageException;
+import com.liferay.document.library.kernel.exception.NoSuchFileException;
+import com.liferay.document.library.kernel.store.DLStoreUtil;
+import com.liferay.document.library.kernel.util.DLValidatorUtil;
+import com.liferay.portal.kernel.exception.NoSuchImageException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.Image;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.Image;
-import com.liferay.portlet.documentlibrary.NoSuchFileException;
-import com.liferay.portlet.documentlibrary.store.DLStoreUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,9 +33,7 @@ import java.io.InputStream;
 public class DLHook extends BaseHook {
 
 	@Override
-	public void deleteImage(Image image)
-		throws PortalException, SystemException {
-
+	public void deleteImage(Image image) throws PortalException {
 		String fileName = getFileName(image.getImageId(), image.getType());
 
 		try {
@@ -46,9 +45,7 @@ public class DLHook extends BaseHook {
 	}
 
 	@Override
-	public byte[] getImageAsBytes(Image image)
-		throws PortalException, SystemException {
-
+	public byte[] getImageAsBytes(Image image) throws PortalException {
 		String fileName = getFileName(image.getImageId(), image.getType());
 
 		InputStream is = DLStoreUtil.getFileAsStream(
@@ -67,9 +64,7 @@ public class DLHook extends BaseHook {
 	}
 
 	@Override
-	public InputStream getImageAsStream(Image image)
-		throws PortalException, SystemException {
-
+	public InputStream getImageAsStream(Image image) throws PortalException {
 		String fileName = getFileName(image.getImageId(), image.getType());
 
 		return DLStoreUtil.getFileAsStream(
@@ -78,9 +73,11 @@ public class DLHook extends BaseHook {
 
 	@Override
 	public void updateImage(Image image, String type, byte[] bytes)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		String fileName = getFileName(image.getImageId(), image.getType());
+
+		DLValidatorUtil.validateFileSize(fileName, bytes);
 
 		if (DLStoreUtil.hasFile(_COMPANY_ID, _REPOSITORY_ID, fileName)) {
 			DLStoreUtil.deleteFile(_COMPANY_ID, _REPOSITORY_ID, fileName);

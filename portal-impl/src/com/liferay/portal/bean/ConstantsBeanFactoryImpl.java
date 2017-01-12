@@ -15,17 +15,16 @@
 package com.liferay.portal.bean;
 
 import com.liferay.portal.kernel.bean.ConstantsBeanFactory;
-import com.liferay.portal.kernel.memory.EqualityWeakReference;
+import com.liferay.portal.kernel.concurrent.ConcurrentReferenceKeyHashMap;
+import com.liferay.portal.kernel.concurrent.ConcurrentReferenceValueHashMap;
+import com.liferay.portal.kernel.memory.FinalizeManager;
 import com.liferay.portal.kernel.util.ReflectionUtil;
 
 import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.objectweb.asm.ClassWriter;
@@ -40,34 +39,12 @@ public class ConstantsBeanFactoryImpl implements ConstantsBeanFactory {
 
 	@Override
 	public Object getConstantsBean(Class<?> constantsClass) {
-		Reference<?> constantsBeanReference = constantsBeans.get(
-			new EqualityWeakReference<Class<?>>(constantsClass));
-
-		Object constantsBean = null;
-
-		if (constantsBeanReference != null) {
-			constantsBean = constantsBeanReference.get();
-		}
+		Object constantsBean = constantsBeans.get(constantsClass);
 
 		if (constantsBean == null) {
 			constantsBean = createConstantsBean(constantsClass);
 
-			constantsBeans.put(
-				new EqualityWeakReference<Class<?>>(
-					constantsClass, constantsClassReferenceQueue),
-				new WeakReference<Object>(constantsBean));
-		}
-
-		while (true) {
-			EqualityWeakReference<Class<?>> staleConstantsClassReference =
-				(EqualityWeakReference<Class<?>>)
-					constantsClassReferenceQueue.poll();
-
-			if (staleConstantsClassReference == null) {
-				break;
-			}
-
-			constantsBeans.remove(staleConstantsClassReference);
+			constantsBeans.put(constantsClass, constantsBean);
 		}
 
 		return constantsBean;
@@ -90,22 +67,18 @@ public class ConstantsBeanFactoryImpl implements ConstantsBeanFactory {
 
 			try {
 				if (constantsBeanClass == null) {
-					Method defineClassMethod = ReflectionUtil.getDeclaredMethod(
-						ClassLoader.class, "defineClass", String.class,
-						byte[].class, int.class, int.class);
-
 					byte[] classData = generateConstantsBeanClassData(
 						constantsClass);
 
-					constantsBeanClass = (Class<?>)defineClassMethod.invoke(
+					constantsBeanClass = (Class<?>)_defineClassMethod.invoke(
 						classLoader, constantsBeanClassName, classData, 0,
 						classData.length);
 				}
 
 				return constantsBeanClass.newInstance();
 			}
-			catch (Exception e) {
-				throw new RuntimeException(e);
+			catch (Throwable t) {
+				throw new RuntimeException(t);
 			}
 		}
 	}
@@ -119,7 +92,7 @@ public class ConstantsBeanFactoryImpl implements ConstantsBeanFactory {
 
 		String objectClassBinaryName = getClassBinaryName(Object.class);
 
-		ClassWriter classWriter = new ClassWriter(0);
+		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
 		classWriter.visit(
 			Opcodes.V1_6, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER,
@@ -137,26 +110,62 @@ public class ConstantsBeanFactoryImpl implements ConstantsBeanFactory {
 		methodVisitor.visitMaxs(1, 1);
 		methodVisitor.visitEnd();
 
-		Field[] fields = constantsClass.getFields();
-
-		for (Field field :fields) {
-			if (Modifier.isStatic(field.getModifiers())) {
-				Type fieldType = Type.getType(field.getType());
-
-				methodVisitor = classWriter.visitMethod(
-					Opcodes.ACC_PUBLIC, "get" + field.getName(),
-					"()" + fieldType.getDescriptor(), null, null);
-
-				methodVisitor.visitCode();
-				methodVisitor.visitFieldInsn(
-					Opcodes.GETSTATIC, constantsClassBinaryName,
-					field.getName(), fieldType.getDescriptor());
-
-				methodVisitor.visitInsn(fieldType.getOpcode(Opcodes.IRETURN));
-
-				methodVisitor.visitMaxs(fieldType.getSize(), 1);
-				methodVisitor.visitEnd();
+		for (Field field : constantsClass.getFields()) {
+			if (!Modifier.isStatic(field.getModifiers())) {
+				continue;
 			}
+
+			Type fieldType = Type.getType(field.getType());
+
+			methodVisitor = classWriter.visitMethod(
+				Opcodes.ACC_PUBLIC, "get" + field.getName(),
+				"()" + fieldType.getDescriptor(), null, null);
+
+			methodVisitor.visitCode();
+			methodVisitor.visitFieldInsn(
+				Opcodes.GETSTATIC, constantsClassBinaryName, field.getName(),
+				fieldType.getDescriptor());
+
+			methodVisitor.visitInsn(fieldType.getOpcode(Opcodes.IRETURN));
+
+			methodVisitor.visitMaxs(fieldType.getSize(), 1);
+
+			methodVisitor.visitEnd();
+		}
+
+		for (Method method : constantsClass.getMethods()) {
+			if (!Modifier.isStatic(method.getModifiers())) {
+				continue;
+			}
+
+			String methodDescriptor = Type.getMethodDescriptor(method);
+
+			methodVisitor = classWriter.visitMethod(
+				Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, method.getName(),
+				methodDescriptor, null, null);
+
+			methodVisitor.visitCode();
+
+			int i = 0;
+
+			for (Type parameterType : Type.getArgumentTypes(method)) {
+				methodVisitor.visitVarInsn(
+					parameterType.getOpcode(Opcodes.ILOAD), i);
+
+				i += parameterType.getSize();
+			}
+
+			methodVisitor.visitMethodInsn(
+				Opcodes.INVOKESTATIC, constantsClassBinaryName,
+				method.getName(), methodDescriptor, false);
+
+			Type returnType = Type.getType(method.getReturnType());
+
+			methodVisitor.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
+
+			methodVisitor.visitMaxs(0, 0);
+
+			methodVisitor.visitEnd();
 		}
 
 		classWriter.visitEnd();
@@ -170,12 +179,23 @@ public class ConstantsBeanFactoryImpl implements ConstantsBeanFactory {
 		return className.replace('.', '/');
 	}
 
-	protected static ConcurrentMap
-		<EqualityWeakReference<Class<?>>, Reference<?>>
-			constantsBeans =
-				new ConcurrentHashMap
-					<EqualityWeakReference<Class<?>>, Reference<?>>();
-	protected static ReferenceQueue<Class<?>> constantsClassReferenceQueue =
-		new ReferenceQueue<Class<?>>();
+	protected static ConcurrentMap<Class<?>, Object> constantsBeans =
+		new ConcurrentReferenceKeyHashMap<Class<?>, Object>(
+			new ConcurrentReferenceValueHashMap<Reference<Class<?>>, Object>(
+				FinalizeManager.WEAK_REFERENCE_FACTORY),
+			FinalizeManager.WEAK_REFERENCE_FACTORY);
+
+	private static final Method _defineClassMethod;
+
+	static {
+		try {
+			_defineClassMethod = ReflectionUtil.getDeclaredMethod(
+				ClassLoader.class, "defineClass", String.class, byte[].class,
+				int.class, int.class);
+		}
+		catch (Throwable t) {
+			throw new ExceptionInInitializerError(t);
+		}
+	}
 
 }

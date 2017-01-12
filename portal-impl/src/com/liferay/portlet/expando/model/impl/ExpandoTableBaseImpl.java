@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.expando.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.expando.model.ExpandoTable;
-import com.liferay.portlet.expando.service.ExpandoTableLocalServiceUtil;
+import com.liferay.expando.kernel.model.ExpandoTable;
+import com.liferay.expando.kernel.service.ExpandoTableLocalServiceUtil;
 
 /**
  * The extended model base implementation for the ExpandoTable service. Represents a row in the &quot;ExpandoTable&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.expando.service.ExpandoTableLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see ExpandoTableImpl
- * @see com.liferay.portlet.expando.model.ExpandoTable
+ * @see ExpandoTable
  * @generated
  */
+@ProviderType
 public abstract class ExpandoTableBaseImpl extends ExpandoTableModelImpl
 	implements ExpandoTable {
 	/*
@@ -39,7 +40,7 @@ public abstract class ExpandoTableBaseImpl extends ExpandoTableModelImpl
 	 * Never modify or reference this class directly. All methods that expect a expando table model instance should use the {@link ExpandoTable} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			ExpandoTableLocalServiceUtil.addExpandoTable(this);
 		}

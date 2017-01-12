@@ -95,17 +95,22 @@
 	font-style: italic;
 }
 
-.alert-block .lfr-inline-code {
+.alert-warning .lfr-inline-code {
 	background-color: #EEB;
 	color: #333;
 }
 
-.ie6 #wrapper {
-	width: 600px;
+.rtl #banner .configuration-title {
+	float: left;
+}
+
+.rtl #banner .logo {
+	margin-left: 20px;
+	margin-right: 0;
 }
 
 @media (max-width: 767px) {
-	.aui #wrapper {
+	#wrapper {
 		padding: 1em 1.1em 0;
 	}
 

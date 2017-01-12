@@ -14,19 +14,19 @@
 
 package com.liferay.portlet.documentlibrary.service.impl;
 
-import com.liferay.portal.kernel.dao.orm.Session;
+import com.liferay.document.library.kernel.exception.NoSuchFileVersionException;
+import com.liferay.document.library.kernel.model.DLFileEntryConstants;
+import com.liferay.document.library.kernel.model.DLFileVersion;
+import com.liferay.document.library.kernel.util.comparator.DLFileVersionVersionComparator;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.Property;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.TreePathUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portlet.documentlibrary.NoSuchFileVersionException;
-import com.liferay.portlet.documentlibrary.model.DLFileEntryConstants;
-import com.liferay.portlet.documentlibrary.model.DLFileVersion;
-import com.liferay.portlet.documentlibrary.model.impl.DLFileVersionModelImpl;
-import com.liferay.portlet.documentlibrary.model.impl.DLFolderModelImpl;
 import com.liferay.portlet.documentlibrary.service.base.DLFileVersionLocalServiceBaseImpl;
-import com.liferay.portlet.documentlibrary.util.comparator.FileVersionVersionComparator;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,72 +38,19 @@ public class DLFileVersionLocalServiceImpl
 	extends DLFileVersionLocalServiceBaseImpl {
 
 	@Override
-	public DLFileVersion getFileVersion(long fileVersionId)
-		throws PortalException, SystemException {
-
-		return dlFileVersionPersistence.findByPrimaryKey(fileVersionId);
-	}
-
-	@Override
-	public DLFileVersion getFileVersion(long fileEntryId, String version)
-		throws PortalException, SystemException {
-
-		return dlFileVersionPersistence.findByF_V(fileEntryId, version);
-	}
-
-	@Override
-	public DLFileVersion getFileVersionByUuidAndGroupId(
-			String uuid, long groupId)
-		throws SystemException {
-
-		return dlFileVersionPersistence.fetchByUUID_G(uuid, groupId);
-	}
-
-	@Override
-	public List<DLFileVersion> getFileVersions(long fileEntryId, int status)
-		throws SystemException {
-
-		List<DLFileVersion> dlFileVersions = null;
-
-		if (status == WorkflowConstants.STATUS_ANY) {
-			dlFileVersions = dlFileVersionPersistence.findByFileEntryId(
-				fileEntryId);
-		}
-		else {
-			dlFileVersions = dlFileVersionPersistence.findByF_S(
-				fileEntryId, status);
-		}
-
-		dlFileVersions = ListUtil.copy(dlFileVersions);
-
-		Collections.sort(dlFileVersions, new FileVersionVersionComparator());
-
-		return dlFileVersions;
-	}
-
-	@Override
-	public int getFileVersionsCount(long fileEntryId, int status)
-		throws SystemException {
-
-		return dlFileVersionPersistence.countByF_S(fileEntryId, status);
-	}
-
-	@Override
-	public DLFileVersion getLatestFileVersion(
-			long fileEntryId, boolean excludeWorkingCopy)
-		throws PortalException, SystemException {
+	public DLFileVersion fetchLatestFileVersion(
+		long fileEntryId, boolean excludeWorkingCopy) {
 
 		List<DLFileVersion> dlFileVersions =
 			dlFileVersionPersistence.findByFileEntryId(fileEntryId);
 
 		if (dlFileVersions.isEmpty()) {
-			throw new NoSuchFileVersionException(
-				"No file versions found for fileEntryId " + fileEntryId);
+			return null;
 		}
 
 		dlFileVersions = ListUtil.copy(dlFileVersions);
 
-		Collections.sort(dlFileVersions, new FileVersionVersionComparator());
+		Collections.sort(dlFileVersions, new DLFileVersionVersionComparator());
 
 		DLFileVersion dlFileVersion = dlFileVersions.get(0);
 
@@ -119,8 +66,70 @@ public class DLFileVersionLocalServiceImpl
 	}
 
 	@Override
+	public DLFileVersion getFileVersion(long fileVersionId)
+		throws PortalException {
+
+		return dlFileVersionPersistence.findByPrimaryKey(fileVersionId);
+	}
+
+	@Override
+	public DLFileVersion getFileVersion(long fileEntryId, String version)
+		throws PortalException {
+
+		return dlFileVersionPersistence.findByF_V(fileEntryId, version);
+	}
+
+	@Override
+	public DLFileVersion getFileVersionByUuidAndGroupId(
+		String uuid, long groupId) {
+
+		return dlFileVersionPersistence.fetchByUUID_G(uuid, groupId);
+	}
+
+	@Override
+	public List<DLFileVersion> getFileVersions(long fileEntryId, int status) {
+		List<DLFileVersion> dlFileVersions = null;
+
+		if (status == WorkflowConstants.STATUS_ANY) {
+			dlFileVersions = dlFileVersionPersistence.findByFileEntryId(
+				fileEntryId);
+		}
+		else {
+			dlFileVersions = dlFileVersionPersistence.findByF_S(
+				fileEntryId, status);
+		}
+
+		dlFileVersions = ListUtil.copy(dlFileVersions);
+
+		Collections.sort(dlFileVersions, new DLFileVersionVersionComparator());
+
+		return dlFileVersions;
+	}
+
+	@Override
+	public int getFileVersionsCount(long fileEntryId, int status) {
+		return dlFileVersionPersistence.countByF_S(fileEntryId, status);
+	}
+
+	@Override
+	public DLFileVersion getLatestFileVersion(
+			long fileEntryId, boolean excludeWorkingCopy)
+		throws PortalException {
+
+		DLFileVersion dlFileVersion = fetchLatestFileVersion(
+			fileEntryId, excludeWorkingCopy);
+
+		if (dlFileVersion == null) {
+			throw new NoSuchFileVersionException(
+				"No file versions found for fileEntryId " + fileEntryId);
+		}
+
+		return dlFileVersion;
+	}
+
+	@Override
 	public DLFileVersion getLatestFileVersion(long userId, long fileEntryId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		boolean excludeWorkingCopy = true;
 
@@ -133,21 +142,55 @@ public class DLFileVersionLocalServiceImpl
 	}
 
 	@Override
-	public void rebuildTree(long companyId) throws SystemException {
+	public void rebuildTree(long companyId) throws PortalException {
 		dlFolderLocalService.rebuildTree(companyId);
+	}
 
-		Session session = dlFileVersionPersistence.openSession();
+	@Override
+	public void setTreePaths(final long folderId, final String treePath)
+		throws PortalException {
 
-		try {
-			TreePathUtil.rebuildTree(
-				session, companyId, DLFileVersionModelImpl.TABLE_NAME,
-				DLFolderModelImpl.TABLE_NAME, "folderId", true);
+		if (treePath == null) {
+			throw new IllegalArgumentException("Tree path is null");
 		}
-		finally {
-			dlFileVersionPersistence.closeSession(session);
 
-			dlFileVersionPersistence.clearCache();
-		}
+		ActionableDynamicQuery actionableDynamicQuery =
+			getActionableDynamicQuery();
+
+		actionableDynamicQuery.setAddCriteriaMethod(
+			new ActionableDynamicQuery.AddCriteriaMethod() {
+
+				@Override
+				public void addCriteria(DynamicQuery dynamicQuery) {
+					Property folderIdProperty = PropertyFactoryUtil.forName(
+						"folderId");
+
+					dynamicQuery.add(folderIdProperty.eq(folderId));
+
+					Property treePathProperty = PropertyFactoryUtil.forName(
+						"treePath");
+
+					dynamicQuery.add(
+						RestrictionsFactoryUtil.or(
+							treePathProperty.isNull(),
+							treePathProperty.ne(treePath)));
+				}
+
+			});
+
+		actionableDynamicQuery.setPerformActionMethod(
+			new ActionableDynamicQuery.PerformActionMethod<DLFileVersion>() {
+
+				@Override
+				public void performAction(DLFileVersion dlFileVersion) {
+					dlFileVersion.setTreePath(treePath);
+
+					updateDLFileVersion(dlFileVersion);
+				}
+
+			});
+
+		actionableDynamicQuery.performActions();
 	}
 
 }

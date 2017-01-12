@@ -14,38 +14,41 @@
 
 package com.liferay.portlet.messageboards.service.impl;
 
+import com.liferay.message.boards.kernel.exception.LockedThreadException;
+import com.liferay.message.boards.kernel.model.MBCategory;
+import com.liferay.message.boards.kernel.model.MBCategoryConstants;
+import com.liferay.message.boards.kernel.model.MBMessage;
+import com.liferay.message.boards.kernel.model.MBMessageConstants;
+import com.liferay.message.boards.kernel.model.MBMessageDisplay;
+import com.liferay.message.boards.kernel.model.MBThread;
+import com.liferay.message.boards.kernel.model.MBThreadConstants;
+import com.liferay.message.boards.kernel.util.comparator.MessageCreateDateComparator;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.lock.LockManagerUtil;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.parsers.bbcode.BBCodeTranslatorUtil;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.model.Company;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.User;
-import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.messageboards.LockedThreadException;
-import com.liferay.portlet.messageboards.model.MBCategory;
-import com.liferay.portlet.messageboards.model.MBCategoryConstants;
-import com.liferay.portlet.messageboards.model.MBMessage;
-import com.liferay.portlet.messageboards.model.MBMessageConstants;
-import com.liferay.portlet.messageboards.model.MBMessageDisplay;
-import com.liferay.portlet.messageboards.model.MBThread;
-import com.liferay.portlet.messageboards.model.MBThreadConstants;
 import com.liferay.portlet.messageboards.service.base.MBMessageServiceBaseImpl;
 import com.liferay.portlet.messageboards.service.permission.MBCategoryPermission;
 import com.liferay.portlet.messageboards.service.permission.MBDiscussionPermission;
 import com.liferay.portlet.messageboards.service.permission.MBMessagePermission;
 import com.liferay.portlet.messageboards.util.MBUtil;
-import com.liferay.portlet.messageboards.util.comparator.MessageCreateDateComparator;
 import com.liferay.util.RSSUtil;
 
 import com.sun.syndication.feed.synd.SyndContent;
@@ -58,6 +61,9 @@ import com.sun.syndication.feed.synd.SyndLink;
 import com.sun.syndication.feed.synd.SyndLinkImpl;
 import com.sun.syndication.io.FeedException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import java.util.ArrayList;
@@ -74,42 +80,21 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 	@Override
 	public MBMessage addDiscussionMessage(
-			long groupId, String className, long classPK,
-			String permissionClassName, long permissionClassPK,
-			long permissionOwnerId, long threadId, long parentMessageId,
-			String subject, String body, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+			long groupId, String className, long classPK, long threadId,
+			long parentMessageId, String subject, String body,
+			ServiceContext serviceContext)
+		throws PortalException {
 
 		User user = getGuestOrUser();
 
 		MBDiscussionPermission.check(
 			getPermissionChecker(), user.getCompanyId(),
-			serviceContext.getScopeGroupId(), permissionClassName,
-			permissionClassPK, permissionOwnerId, ActionKeys.ADD_DISCUSSION);
+			serviceContext.getScopeGroupId(), className, classPK,
+			ActionKeys.ADD_DISCUSSION);
 
 		return mbMessageLocalService.addDiscussionMessage(
 			user.getUserId(), null, groupId, className, classPK, threadId,
 			parentMessageId, subject, body, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #addMessage(long, String,
-	 *             String, String, java.util.List, boolean, double, boolean,
-	 *             com.liferay.portal.service.ServiceContext)}
-	 */
-	@Deprecated
-	@Override
-	public MBMessage addMessage(
-			long groupId, long categoryId, long threadId, long parentMessageId,
-			String subject, String body, String format,
-			List<ObjectValuePair<String, InputStream>> inputStreamOVPs,
-			boolean anonymous, double priority, boolean allowPingbacks,
-			ServiceContext serviceContext)
-		throws PortalException, SystemException {
-
-		return addMessage(
-			parentMessageId, subject, body, format, inputStreamOVPs, anonymous,
-			priority, allowPingbacks, serviceContext);
 	}
 
 	@Override
@@ -119,7 +104,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			List<ObjectValuePair<String, InputStream>> inputStreamOVPs,
 			boolean anonymous, double priority, boolean allowPingbacks,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		MBCategoryPermission.check(
 			getPermissionChecker(), groupId, categoryId,
@@ -147,9 +132,32 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 	@Override
 	public MBMessage addMessage(
+			long groupId, long categoryId, String subject, String body,
+			String format, String fileName, File file, boolean anonymous,
+			double priority, boolean allowPingbacks,
+			ServiceContext serviceContext)
+		throws FileNotFoundException, PortalException {
+
+		List<ObjectValuePair<String, InputStream>> inputStreamOVPs =
+			new ArrayList<>();
+
+		InputStream inputStream = new FileInputStream(file);
+
+		ObjectValuePair<String, InputStream> inputStreamOVP =
+			new ObjectValuePair<>(fileName, inputStream);
+
+		inputStreamOVPs.add(inputStreamOVP);
+
+		return addMessage(
+			groupId, categoryId, subject, body, format, inputStreamOVPs,
+			anonymous, priority, allowPingbacks, serviceContext);
+	}
+
+	@Override
+	public MBMessage addMessage(
 			long categoryId, String subject, String body,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		MBCategory category = mbCategoryPersistence.findByPrimaryKey(
 			categoryId);
@@ -169,7 +177,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			List<ObjectValuePair<String, InputStream>> inputStreamOVPs,
 			boolean anonymous, double priority, boolean allowPingbacks,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		MBMessage parentMessage = mbMessagePersistence.findByPrimaryKey(
 			parentMessageId);
@@ -189,10 +197,17 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 				getPermissionChecker(), parentMessageId, ActionKeys.UPDATE);
 		}
 
-		if (lockLocalService.isLocked(
+		if (LockManagerUtil.isLocked(
 				MBThread.class.getName(), parentMessage.getThreadId())) {
 
-			throw new LockedThreadException();
+			StringBundler sb = new StringBundler(4);
+
+			sb.append("Thread is locked for class name ");
+			sb.append(MBThread.class.getName());
+			sb.append(" and class PK ");
+			sb.append(parentMessage.getThreadId());
+
+			throw new LockedThreadException(sb.toString());
 		}
 
 		if (!MBCategoryPermission.contains(
@@ -218,26 +233,58 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	}
 
 	@Override
-	public void deleteDiscussionMessage(
-			long groupId, String className, long classPK,
-			String permissionClassName, long permissionClassPK,
-			long permissionOwnerId, long messageId)
-		throws PortalException, SystemException {
+	public void addMessageAttachment(
+			long messageId, String fileName, File file, String mimeType)
+		throws PortalException {
 
-		User user = getUser();
+		MBMessage message = mbMessageLocalService.getMBMessage(messageId);
 
+		if (LockManagerUtil.isLocked(
+				MBThread.class.getName(), message.getThreadId())) {
+
+			StringBundler sb = new StringBundler(4);
+
+			sb.append("Thread is locked for class name ");
+			sb.append(MBThread.class.getName());
+			sb.append(" and class PK ");
+			sb.append(message.getThreadId());
+
+			throw new LockedThreadException(sb.toString());
+		}
+
+		MBCategoryPermission.contains(
+			getPermissionChecker(), message.getGroupId(),
+			message.getCategoryId(), ActionKeys.ADD_FILE);
+
+		mbMessageLocalService.addMessageAttachment(
+			getUserId(), messageId, fileName, file, mimeType);
+	}
+
+	@Override
+	public void deleteDiscussionMessage(long messageId) throws PortalException {
 		MBDiscussionPermission.check(
-			getPermissionChecker(), user.getCompanyId(), groupId,
-			permissionClassName, permissionClassPK, messageId,
-			permissionOwnerId, ActionKeys.DELETE_DISCUSSION);
+			getPermissionChecker(), messageId, ActionKeys.DELETE_DISCUSSION);
 
 		mbMessageLocalService.deleteDiscussionMessage(messageId);
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, replaced by {@link
+	 *             #deleteDiscussionMessage(long)}
+	 */
+	@Deprecated
 	@Override
-	public void deleteMessage(long messageId)
-		throws PortalException, SystemException {
+	public void deleteDiscussionMessage(
+			long groupId, String className, long classPK,
+			String permissionClassName, long permissionClassPK,
+			long permissionOwnerId, long messageId)
+		throws PortalException {
 
+		deleteDiscussionMessage(messageId);
+	}
+
+	@Override
+	public void deleteMessage(long messageId) throws PortalException {
 		MBMessagePermission.check(
 			getPermissionChecker(), messageId, ActionKeys.DELETE);
 
@@ -245,8 +292,18 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	}
 
 	@Override
+	public void deleteMessageAttachment(long messageId, String fileName)
+		throws PortalException {
+
+		MBMessagePermission.check(
+			getPermissionChecker(), messageId, ActionKeys.UPDATE);
+
+		mbMessageLocalService.deleteMessageAttachment(messageId, fileName);
+	}
+
+	@Override
 	public void deleteMessageAttachments(long messageId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		MBMessagePermission.check(
 			getPermissionChecker(), messageId, ActionKeys.DELETE);
@@ -255,11 +312,19 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	}
 
 	@Override
+	public void emptyMessageAttachments(long messageId) throws PortalException {
+		MBMessagePermission.check(
+			getPermissionChecker(), messageId, ActionKeys.DELETE);
+
+		mbMessageLocalService.emptyMessageAttachments(messageId);
+	}
+
+	@Override
 	public List<MBMessage> getCategoryMessages(
 			long groupId, long categoryId, int status, int start, int end)
-		throws PortalException, SystemException {
+		throws PortalException {
 
-		List<MBMessage> messages = new ArrayList<MBMessage>();
+		List<MBMessage> messages = new ArrayList<>();
 
 		List<MBMessage> categoryMessages =
 			mbMessageLocalService.getCategoryMessages(
@@ -278,8 +343,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 	@Override
 	public int getCategoryMessagesCount(
-			long groupId, long categoryId, int status)
-		throws SystemException {
+		long groupId, long categoryId, int status) {
 
 		return mbMessageLocalService.getCategoryMessagesCount(
 			groupId, categoryId, status);
@@ -290,7 +354,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			long groupId, long categoryId, int status, int max, String type,
 			double version, String displayStyle, String feedURL,
 			String entryURL, ThemeDisplay themeDisplay)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		String name = StringPool.BLANK;
 		String description = StringPool.BLANK;
@@ -302,6 +366,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			Group group = groupLocalService.getGroup(categoryId);
 
 			groupId = group.getGroupId();
+
 			categoryId = MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID;
 			name = group.getDescriptiveName();
 			description = group.getDescription();
@@ -312,7 +377,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			description = category.getDescription();
 		}
 
-		List<MBMessage> messages = new ArrayList<MBMessage>();
+		List<MBMessage> messages = new ArrayList<>();
 
 		int lastIntervalStart = 0;
 		boolean listNotExhausted = true;
@@ -326,7 +391,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 					lastIntervalStart + max, comparator);
 
 			lastIntervalStart += max;
-			listNotExhausted = (messageList.size() == max);
+			listNotExhausted = messageList.size() == max;
 
 			for (MBMessage message : messageList) {
 				if (messages.size() >= max) {
@@ -351,14 +416,14 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			long companyId, int status, int max, String type, double version,
 			String displayStyle, String feedURL, String entryURL,
 			ThemeDisplay themeDisplay)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		Company company = companyPersistence.findByPrimaryKey(companyId);
 
 		String name = company.getName();
 		String description = company.getName();
 
-		List<MBMessage> messages = new ArrayList<MBMessage>();
+		List<MBMessage> messages = new ArrayList<>();
 
 		int lastIntervalStart = 0;
 		boolean listNotExhausted = true;
@@ -372,7 +437,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 					lastIntervalStart + max, comparator);
 
 			lastIntervalStart += max;
-			listNotExhausted = (messageList.size() == max);
+			listNotExhausted = messageList.size() == max;
 
 			for (MBMessage message : messageList) {
 				if (messages.size() >= max) {
@@ -393,9 +458,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	}
 
 	@Override
-	public int getGroupMessagesCount(long groupId, int status)
-		throws SystemException {
-
+	public int getGroupMessagesCount(long groupId, int status) {
 		if (status == WorkflowConstants.STATUS_ANY) {
 			return mbMessagePersistence.filterCountByGroupId(groupId);
 		}
@@ -409,12 +472,12 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			long groupId, int status, int max, String type, double version,
 			String displayStyle, String feedURL, String entryURL,
 			ThemeDisplay themeDisplay)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		String name = StringPool.BLANK;
 		String description = StringPool.BLANK;
 
-		List<MBMessage> messages = new ArrayList<MBMessage>();
+		List<MBMessage> messages = new ArrayList<>();
 
 		int lastIntervalStart = 0;
 		boolean listNotExhausted = true;
@@ -428,7 +491,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 					comparator);
 
 			lastIntervalStart += max;
-			listNotExhausted = (messageList.size() == max);
+			listNotExhausted = messageList.size() == max;
 
 			for (MBMessage message : messageList) {
 				if (messages.size() >= max) {
@@ -460,12 +523,12 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			long groupId, long userId, int status, int max, String type,
 			double version, String displayStyle, String feedURL,
 			String entryURL, ThemeDisplay themeDisplay)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		String name = StringPool.BLANK;
 		String description = StringPool.BLANK;
 
-		List<MBMessage> messages = new ArrayList<MBMessage>();
+		List<MBMessage> messages = new ArrayList<>();
 
 		int lastIntervalStart = 0;
 		boolean listNotExhausted = true;
@@ -479,7 +542,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 					lastIntervalStart + max, comparator);
 
 			lastIntervalStart += max;
-			listNotExhausted = (messageList.size() == max);
+			listNotExhausted = messageList.size() == max;
 
 			for (MBMessage message : messageList) {
 				if (messages.size() >= max) {
@@ -507,9 +570,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	}
 
 	@Override
-	public MBMessage getMessage(long messageId)
-		throws PortalException, SystemException {
-
+	public MBMessage getMessage(long messageId) throws PortalException {
 		MBMessagePermission.check(
 			getPermissionChecker(), messageId, ActionKeys.VIEW);
 
@@ -517,10 +578,26 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	}
 
 	@Override
+	public MBMessageDisplay getMessageDisplay(long messageId, int status)
+		throws PortalException {
+
+		MBMessagePermission.check(
+			getPermissionChecker(), messageId, ActionKeys.VIEW);
+
+		return mbMessageLocalService.getMessageDisplay(
+			getGuestOrUserId(), messageId, status);
+	}
+
+	/**
+	 * @deprecated As of 7.0.0, replaced by {@link #getMessageDisplay(long,
+	 *             int)}
+	 */
+	@Deprecated
+	@Override
 	public MBMessageDisplay getMessageDisplay(
 			long messageId, int status, String threadView,
 			boolean includePrevAndNext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		MBMessagePermission.check(
 			getPermissionChecker(), messageId, ActionKeys.VIEW);
@@ -532,8 +609,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 	@Override
 	public int getThreadAnswersCount(
-			long groupId, long categoryId, long threadId)
-		throws SystemException {
+		long groupId, long categoryId, long threadId) {
 
 		return mbMessagePersistence.filterCountByG_C_T_A(
 			groupId, categoryId, threadId, true);
@@ -541,9 +617,8 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 	@Override
 	public List<MBMessage> getThreadMessages(
-			long groupId, long categoryId, long threadId, int status, int start,
-			int end)
-		throws SystemException {
+		long groupId, long categoryId, long threadId, int status, int start,
+		int end) {
 
 		if (status == WorkflowConstants.STATUS_ANY) {
 			return mbMessagePersistence.filterFindByG_C_T(
@@ -557,8 +632,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 	@Override
 	public int getThreadMessagesCount(
-			long groupId, long categoryId, long threadId, int status)
-		throws SystemException {
+		long groupId, long categoryId, long threadId, int status) {
 
 		if (status == WorkflowConstants.STATUS_ANY) {
 			return mbMessagePersistence.filterCountByG_C_T(
@@ -575,12 +649,12 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			long threadId, int status, int max, String type, double version,
 			String displayStyle, String feedURL, String entryURL,
 			ThemeDisplay themeDisplay)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		String name = StringPool.BLANK;
 		String description = StringPool.BLANK;
 
-		List<MBMessage> messages = new ArrayList<MBMessage>();
+		List<MBMessage> messages = new ArrayList<>();
 
 		MBThread thread = mbThreadLocalService.getThread(threadId);
 
@@ -623,7 +697,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	@Override
 	public void restoreMessageAttachmentFromTrash(
 			long messageId, String fileName)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		MBMessage message = mbMessagePersistence.findByPrimaryKey(messageId);
 
@@ -636,9 +710,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	}
 
 	@Override
-	public void subscribeMessage(long messageId)
-		throws PortalException, SystemException {
-
+	public void subscribeMessage(long messageId) throws PortalException {
 		MBMessagePermission.check(
 			getPermissionChecker(), messageId, ActionKeys.SUBSCRIBE);
 
@@ -646,9 +718,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	}
 
 	@Override
-	public void unsubscribeMessage(long messageId)
-		throws PortalException, SystemException {
-
+	public void unsubscribeMessage(long messageId) throws PortalException {
 		MBMessagePermission.check(
 			getPermissionChecker(), messageId, ActionKeys.SUBSCRIBE);
 
@@ -657,25 +727,25 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 	@Override
 	public void updateAnswer(long messageId, boolean answer, boolean cascade)
-		throws PortalException, SystemException {
+		throws PortalException {
+
+		MBMessage message = mbMessagePersistence.findByPrimaryKey(messageId);
+
+		MBMessagePermission.check(
+			getPermissionChecker(), message.getRootMessageId(),
+			ActionKeys.UPDATE);
 
 		mbMessageLocalService.updateAnswer(messageId, answer, cascade);
 	}
 
 	@Override
 	public MBMessage updateDiscussionMessage(
-			String className, long classPK, String permissionClassName,
-			long permissionClassPK, long permissionOwnerId, long messageId,
-			String subject, String body, ServiceContext serviceContext)
-		throws PortalException, SystemException {
-
-		User user = getUser();
+			String className, long classPK, long messageId, String subject,
+			String body, ServiceContext serviceContext)
+		throws PortalException {
 
 		MBDiscussionPermission.check(
-			getPermissionChecker(), user.getCompanyId(),
-			serviceContext.getScopeGroupId(), permissionClassName,
-			permissionClassPK, messageId, permissionOwnerId,
-			ActionKeys.UPDATE_DISCUSSION);
+			getPermissionChecker(), messageId, ActionKeys.UPDATE_DISCUSSION);
 
 		return mbMessageLocalService.updateDiscussionMessage(
 			getUserId(), messageId, className, classPK, subject, body,
@@ -688,7 +758,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 			List<ObjectValuePair<String, InputStream>> inputStreamOVPs,
 			List<String> existingFiles, double priority, boolean allowPingbacks,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		MBMessage message = mbMessagePersistence.findByPrimaryKey(messageId);
 
@@ -707,10 +777,17 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 				getPermissionChecker(), messageId, ActionKeys.UPDATE);
 		}
 
-		if (lockLocalService.isLocked(
+		if (LockManagerUtil.isLocked(
 				MBThread.class.getName(), message.getThreadId())) {
 
-			throw new LockedThreadException();
+			StringBundler sb = new StringBundler(4);
+
+			sb.append("Thread is locked for class name ");
+			sb.append(MBThread.class.getName());
+			sb.append(" and class PK ");
+			sb.append(message.getThreadId());
+
+			throw new LockedThreadException(sb.toString());
 		}
 
 		if (!MBCategoryPermission.contains(
@@ -737,41 +814,43 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 	protected void checkReplyToPermission(
 			long groupId, long categoryId, long parentMessageId)
-		throws PortalException, SystemException {
+		throws PortalException {
+
+		PermissionChecker permissionChecker = getPermissionChecker();
 
 		if (parentMessageId > 0) {
 			if (MBCategoryPermission.contains(
-					getPermissionChecker(), groupId, categoryId,
+					permissionChecker, groupId, categoryId,
 					ActionKeys.ADD_MESSAGE)) {
 
 				return;
 			}
 
 			if (!MBCategoryPermission.contains(
-					getPermissionChecker(), groupId, categoryId,
+					permissionChecker, groupId, categoryId,
 					ActionKeys.REPLY_TO_MESSAGE)) {
 
-				throw new PrincipalException();
+				throw new PrincipalException.MustHavePermission(
+					permissionChecker, MBCategory.class.getName(), categoryId,
+					ActionKeys.REPLY_TO_MESSAGE);
 			}
 		}
 		else {
 			MBCategoryPermission.check(
-				getPermissionChecker(), groupId, categoryId,
-				ActionKeys.ADD_MESSAGE);
+				permissionChecker, groupId, categoryId, ActionKeys.ADD_MESSAGE);
 		}
 	}
 
 	protected String exportToRSS(
-			String name, String description, String type, double version,
-			String displayStyle, String feedURL, String entryURL,
-			List<MBMessage> messages, ThemeDisplay themeDisplay)
-		throws SystemException {
+		String name, String description, String type, double version,
+		String displayStyle, String feedURL, String entryURL,
+		List<MBMessage> messages, ThemeDisplay themeDisplay) {
 
 		SyndFeed syndFeed = new SyndFeedImpl();
 
 		syndFeed.setDescription(description);
 
-		List<SyndEntry> syndEntries = new ArrayList<SyndEntry>();
+		List<SyndEntry> syndEntries = new ArrayList<>();
 
 		syndFeed.setEntries(syndEntries);
 
@@ -824,7 +903,7 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 
 		syndFeed.setFeedType(RSSUtil.getFeedType(type, version));
 
-		List<SyndLink> syndLinks = new ArrayList<SyndLink>();
+		List<SyndLink> syndLinks = new ArrayList<>();
 
 		syndFeed.setLinks(syndLinks);
 

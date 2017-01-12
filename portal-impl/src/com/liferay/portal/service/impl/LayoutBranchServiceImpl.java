@@ -15,13 +15,15 @@
 package com.liferay.portal.service.impl;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.LayoutBranch;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.kernel.model.LayoutBranch;
+import com.liferay.portal.kernel.model.LayoutRevision;
+import com.liferay.portal.kernel.model.LayoutSetBranch;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
+import com.liferay.portal.kernel.service.permission.LayoutBranchPermissionUtil;
 import com.liferay.portal.service.base.LayoutBranchServiceBaseImpl;
-import com.liferay.portal.service.permission.GroupPermissionUtil;
-import com.liferay.portal.service.permission.LayoutBranchPermissionUtil;
 
 /**
  * @author Brian Wing Shun Chan
@@ -33,21 +35,31 @@ public class LayoutBranchServiceImpl extends LayoutBranchServiceBaseImpl {
 	public LayoutBranch addLayoutBranch(
 			long layoutRevisionId, String name, String description,
 			boolean master, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
-		long groupId = serviceContext.getScopeGroupId();
+		PermissionChecker permissionChecker = getPermissionChecker();
 
 		GroupPermissionUtil.check(
-			getPermissionChecker(), groupId, ActionKeys.ADD_LAYOUT_BRANCH);
+			permissionChecker, serviceContext.getScopeGroupId(),
+			ActionKeys.ADD_LAYOUT_BRANCH);
+
+		LayoutRevision layoutRevision =
+			layoutRevisionPersistence.findByPrimaryKey(layoutRevisionId);
+
+		LayoutSetBranch layoutSetBranch =
+			layoutSetBranchPersistence.findByPrimaryKey(
+				layoutRevision.getLayoutSetBranchId());
+
+		GroupPermissionUtil.check(
+			permissionChecker, layoutSetBranch.getGroupId(),
+			ActionKeys.ADD_LAYOUT_BRANCH);
 
 		return layoutBranchLocalService.addLayoutBranch(
 			layoutRevisionId, name, description, false, serviceContext);
 	}
 
 	@Override
-	public void deleteLayoutBranch(long layoutBranchId)
-		throws PortalException, SystemException {
-
+	public void deleteLayoutBranch(long layoutBranchId) throws PortalException {
 		LayoutBranchPermissionUtil.check(
 			getPermissionChecker(), layoutBranchId, ActionKeys.DELETE);
 
@@ -58,7 +70,7 @@ public class LayoutBranchServiceImpl extends LayoutBranchServiceBaseImpl {
 	public LayoutBranch updateLayoutBranch(
 			long layoutBranchId, String name, String description,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		LayoutBranchPermissionUtil.check(
 			getPermissionChecker(), layoutBranchId, ActionKeys.UPDATE);

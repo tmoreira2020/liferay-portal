@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.PasswordPolicy;
-import com.liferay.portal.service.PasswordPolicyLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.PasswordPolicy;
+import com.liferay.portal.kernel.service.PasswordPolicyLocalServiceUtil;
 
 /**
  * The extended model base implementation for the PasswordPolicy service. Represents a row in the &quot;PasswordPolicy&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.PasswordPolicyLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see PasswordPolicyImpl
- * @see com.liferay.portal.model.PasswordPolicy
+ * @see PasswordPolicy
  * @generated
  */
+@ProviderType
 public abstract class PasswordPolicyBaseImpl extends PasswordPolicyModelImpl
 	implements PasswordPolicy {
 	/*
@@ -38,7 +40,7 @@ public abstract class PasswordPolicyBaseImpl extends PasswordPolicyModelImpl
 	 * Never modify or reference this class directly. All methods that expect a password policy model instance should use the {@link PasswordPolicy} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			PasswordPolicyLocalServiceUtil.addPasswordPolicy(this);
 		}

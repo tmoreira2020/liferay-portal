@@ -14,59 +14,65 @@
 
 package com.liferay.portlet.asset.service;
 
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.kernel.transaction.Transactional;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.test.EnvironmentExecutionTestListener;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.TransactionalExecutionTestListener;
-import com.liferay.portal.util.GroupTestUtil;
-import com.liferay.portal.util.TestPropsValues;
+import com.liferay.asset.kernel.service.AssetTagLocalServiceUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Mate Thurzo
  */
-@ExecutionTestListeners(
-	listeners = {
-		EnvironmentExecutionTestListener.class,
-		TransactionalExecutionTestListener.class
-	})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
-@Transactional
 public class AssetTagServiceTest {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
+
+	@Before
+	public void setUp() throws Exception {
+		_group = GroupTestUtil.addGroup();
+	}
 
 	@Test
 	public void testDeleteGroupTags() throws Exception {
-		Group group = GroupTestUtil.addGroup();
-
-		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
-			group.getGroupId());
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
 
 		int initialTagsCount = AssetTagLocalServiceUtil.getGroupTagsCount(
-			group.getGroupId());
+			_group.getGroupId());
 
 		AssetTagLocalServiceUtil.addTag(
-			TestPropsValues.getUserId(), ServiceTestUtil.randomString(), null,
-			serviceContext);
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			RandomTestUtil.randomString(), serviceContext);
 		AssetTagLocalServiceUtil.addTag(
-			TestPropsValues.getUserId(), ServiceTestUtil.randomString(), null,
-			serviceContext);
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			RandomTestUtil.randomString(), serviceContext);
 
 		Assert.assertEquals(
 			initialTagsCount + 2,
-			AssetTagLocalServiceUtil.getGroupTagsCount(group.getGroupId()));
+			AssetTagLocalServiceUtil.getGroupTagsCount(_group.getGroupId()));
 
-		AssetTagLocalServiceUtil.deleteGroupTags(group.getGroupId());
+		AssetTagLocalServiceUtil.deleteGroupTags(_group.getGroupId());
 
 		Assert.assertEquals(
 			initialTagsCount,
-			AssetTagLocalServiceUtil.getGroupTagsCount(group.getGroupId()));
+			AssetTagLocalServiceUtil.getGroupTagsCount(_group.getGroupId()));
 	}
+
+	@DeleteAfterTestRun
+	private Group _group;
 
 }

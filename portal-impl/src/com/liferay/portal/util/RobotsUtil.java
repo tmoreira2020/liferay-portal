@@ -15,12 +15,12 @@
 package com.liferay.portal.util;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.LayoutSet;
 import com.liferay.util.ContentUtil;
 
 /**
@@ -45,9 +45,7 @@ public class RobotsUtil {
 		return ContentUtil.get(PropsValues.ROBOTS_TXT_WITHOUT_SITEMAP);
 	}
 
-	public static String getRobots(LayoutSet layoutSet)
-		throws PortalException, SystemException {
-
+	public static String getRobots(LayoutSet layoutSet) throws PortalException {
 		if (layoutSet == null) {
 			return getDefaultRobots(null);
 		}
@@ -57,7 +55,7 @@ public class RobotsUtil {
 		return GetterUtil.get(
 			group.getTypeSettingsProperty(
 				layoutSet.isPrivateLayout() + "-robots.txt"),
-				getDefaultRobots(PortalUtil.getVirtualHostname(layoutSet)));
+			getDefaultRobots(PortalUtil.getVirtualHostname(layoutSet)));
 	}
 
 }

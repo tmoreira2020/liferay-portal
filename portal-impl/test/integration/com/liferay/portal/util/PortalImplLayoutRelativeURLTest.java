@@ -14,18 +14,32 @@
 
 package com.liferay.portal.util;
 
-import com.liferay.portal.model.LayoutSet;
-import com.liferay.portal.service.VirtualHostLocalServiceUtil;
-import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.kernel.exception.NoSuchLayoutException;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutSet;
+import com.liferay.portal.kernel.service.VirtualHostLocalServiceUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.util.test.LayoutTestUtil;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * @author Akos Thurzo
+ * @author Manuel de la Peña
  */
 public class PortalImplLayoutRelativeURLTest extends PortalImplBaseURLTestCase {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Before
 	@Override
@@ -47,51 +61,54 @@ public class PortalImplLayoutRelativeURLTest extends PortalImplBaseURLTestCase {
 	}
 
 	@Test
-	public void testPrivateLayoutFromCompanyVirtualHost() throws Exception {
-		ThemeDisplay themeDisplay = initThemeDisplay(
-			company, group, privateLayout, LOCALHOST);
-
-		Assert.assertEquals(
-			privateLayoutRelativeURL,
-			PortalUtil.getLayoutRelativeURL(privateLayout, themeDisplay));
-	}
-
-	@Test
-	public void testPrivateLayoutURLFromPublicLayoutSetVirtualHost()
-		throws Exception {
-
-		ThemeDisplay themeDisplay = initThemeDisplay(
-			company, group, privateLayout, LOCALHOST, VIRTUAL_HOSTNAME);
-
-		Assert.assertEquals(
-			privateLayoutRelativeURL,
-			PortalUtil.getLayoutRelativeURL(privateLayout, themeDisplay));
-	}
-
-	@Test
-	public void testPublicLayoutFromCompanyVirtualHost() throws Exception {
-		ThemeDisplay themeDisplay = initThemeDisplay(
-			company, group, publicLayout, LOCALHOST);
-
-		Assert.assertEquals(
-			publicLayoutRelativeURL,
-			PortalUtil.getLayoutRelativeURL(publicLayout, themeDisplay));
-	}
-
-	@Test
-	public void testPublicLayoutURLFromPublicLayoutSetVirtualHost()
-		throws Exception {
-
-		ThemeDisplay themeDisplay = initThemeDisplay(
-			company, group, publicLayout, LOCALHOST, VIRTUAL_HOSTNAME);
+	public void testGetLayoutRelativeURL() throws Exception {
+		testGetLayoutRelativeURL(
+			initThemeDisplay(company, group, privateLayout, LOCALHOST),
+			privateLayout, privateLayoutRelativeURL);
+		testGetLayoutRelativeURL(
+			initThemeDisplay(
+				company, group, privateLayout, LOCALHOST, VIRTUAL_HOSTNAME),
+			privateLayout, privateLayoutRelativeURL);
+		testGetLayoutRelativeURL(
+			initThemeDisplay(company, group, publicLayout, LOCALHOST),
+			publicLayout, publicLayoutRelativeURL);
 
 		String publicLayoutFriendlyURL = publicLayout.getFriendlyURL();
 		String layoutRelativeURL = PortalUtil.getLayoutRelativeURL(
-			publicLayout, themeDisplay);
+			publicLayout,
+			initThemeDisplay(
+				company, group, publicLayout, LOCALHOST, VIRTUAL_HOSTNAME));
 
 		Assert.assertTrue(
 			publicLayoutFriendlyURL.equals(layoutRelativeURL) ||
 			publicLayoutRelativeURL.equals(layoutRelativeURL));
+	}
+
+	protected void testGetLayoutRelativeURL(
+			ThemeDisplay themeDisplay, Layout layout, String layoutRelativeURL)
+		throws Exception {
+
+		Assert.assertEquals(
+			layoutRelativeURL,
+			PortalUtil.getLayoutRelativeURL(layout, themeDisplay));
+
+		Layout childLayout = LayoutTestUtil.addLayout(group);
+
+		themeDisplay.setRefererPlid(childLayout.getPlid());
+
+		Assert.assertEquals(
+			layoutRelativeURL,
+			PortalUtil.getLayoutRelativeURL(layout, themeDisplay));
+
+		themeDisplay.setRefererPlid(1);
+
+		try {
+			PortalUtil.getLayoutRelativeURL(privateLayout, themeDisplay);
+
+			Assert.fail();
+		}
+		catch (NoSuchLayoutException nsle) {
+		}
 	}
 
 	protected String privateLayoutRelativeURL;

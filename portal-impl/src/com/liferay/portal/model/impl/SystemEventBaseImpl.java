@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.SystemEvent;
-import com.liferay.portal.service.SystemEventLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.SystemEvent;
+import com.liferay.portal.kernel.service.SystemEventLocalServiceUtil;
 
 /**
  * The extended model base implementation for the SystemEvent service. Represents a row in the &quot;SystemEvent&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.SystemEventLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see SystemEventImpl
- * @see com.liferay.portal.model.SystemEvent
+ * @see SystemEvent
  * @generated
  */
+@ProviderType
 public abstract class SystemEventBaseImpl extends SystemEventModelImpl
 	implements SystemEvent {
 	/*
@@ -38,7 +40,7 @@ public abstract class SystemEventBaseImpl extends SystemEventModelImpl
 	 * Never modify or reference this class directly. All methods that expect a system event model instance should use the {@link SystemEvent} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			SystemEventLocalServiceUtil.addSystemEvent(this);
 		}

@@ -19,22 +19,22 @@
 <%
 String signature = ParamUtil.getString(request, "signature");
 
-Set<String> contextPaths = JSONWebServiceActionsManagerUtil.getContextPaths();
+Set<String> contextNames = JSONWebServiceActionsManagerUtil.getContextNames();
 %>
 
-<c:if test="<%= contextPaths.size() > 1 %>">
-	<aui:select cssClass="lfr-api-context" label="context-path" name="contextPath">
+<c:if test="<%= contextNames.size() > 1 %>">
+	<aui:select cssClass="lfr-api-context" label="context-name" name="contextName">
 
 		<%
-		for (String curContextPath : contextPaths) {
-			String curContextPathView = curContextPath;
+		for (String curContextName : contextNames) {
+			String curContextNameView = curContextName;
 
-			if (Validator.isNull(curContextPath)) {
-				curContextPathView = StringPool.SLASH;
+			if (Validator.isNull(curContextName)) {
+				curContextNameView = "portal";
 			}
 		%>
 
-			<aui:option label="<%= curContextPathView %>" selected="<%= contextPath.equals(curContextPath) %>" value="<%= curContextPath %>" />
+			<aui:option label="<%= curContextNameView %>" localizeLabel="<%= false %>" selected="<%= contextName.equals(curContextName) %>" value="<%= curContextName %>" />
 
 		<%
 		}
@@ -50,7 +50,7 @@ Set<String> contextPaths = JSONWebServiceActionsManagerUtil.getContextPaths();
 	<%
 	Map<String, Set> jsonWebServiceClasses = new LinkedHashMap<String, Set>();
 
-	List<JSONWebServiceActionMapping> jsonWebServiceActionMappings = JSONWebServiceActionsManagerUtil.getJSONWebServiceActionMappings(contextPath);
+	List<JSONWebServiceActionMapping> jsonWebServiceActionMappings = JSONWebServiceActionsManagerUtil.getJSONWebServiceActionMappings(contextName);
 
 	for (JSONWebServiceActionMapping jsonWebServiceActionMapping : jsonWebServiceActionMappings) {
 		Class<?> actionClass = jsonWebServiceActionMapping.getActionClass();
@@ -72,21 +72,23 @@ Set<String> contextPaths = JSONWebServiceActionsManagerUtil.getContextPaths();
 		jsonWebServiceMappings.add(jsonWebServiceActionMapping);
 	}
 
-	for (String jsonWebServiceClassName : jsonWebServiceClasses.keySet()) {
-		Set<JSONWebServiceActionMapping> jsonWebServiceMappings = jsonWebServiceClasses.get(jsonWebServiceClassName);
+	for (Map.Entry<String, Set> entry : jsonWebServiceClasses.entrySet()) {
+		String jsonWebServiceClassName = entry.getKey();
+		Set<JSONWebServiceActionMapping> jsonWebServiceMappings = entry.getValue();
 
 		String panelTitle = jsonWebServiceClassName;
 
 		if (panelTitle.endsWith("Impl")) {
 			panelTitle = panelTitle.substring(0, panelTitle.length() - 4);
 		}
+
 		if (panelTitle.endsWith("Service")) {
 			panelTitle = panelTitle.substring(0, panelTitle.length() - 7);
 		}
 	%>
 
 		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id='<%= "apiService" + jsonWebServiceClassName + "Panel" %>' persistState="<%= true %>" title="<%= panelTitle %>">
-			<ul class="unstyled">
+			<ul class="list-unstyled">
 
 				<%
 				for (JSONWebServiceActionMapping jsonWebServiceActionMapping : jsonWebServiceMappings) {
@@ -105,7 +107,7 @@ Set<String> contextPaths = JSONWebServiceActionsManagerUtil.getContextPaths();
 						String methodURL = HttpUtil.addParameter(jsonWSContextPath, "signature", serviceSignature);
 						%>
 
-						<a class="method-name lfr-api-service-result" data-metaData="<%= jsonWebServiceClassName %>" href="<%= methodURL %>">
+						<a class="lfr-api-service-result method-name" data-metaData="<%= jsonWebServiceClassName %>" href="<%= methodURL %>">
 							<%= path %>
 						</a>
 					</li>
@@ -132,20 +134,16 @@ Set<String> contextPaths = JSONWebServiceActionsManagerUtil.getContextPaths();
 
 	var AArray = A.Array;
 
-	<c:if test="<%= contextPaths.size() > 1 %>">
-		var contextPathSelector = A.one('#<portlet:namespace />contextPath');
+	<c:if test="<%= contextNames.size() > 1 %>">
+		var contextNameSelector = A.one('#<portlet:namespace />contextName');
 
-		if (contextPathSelector) {
-			contextPathSelector.on(
+		if (contextNameSelector) {
+			contextNameSelector.on(
 				'change',
 				function(event) {
-					var contextPath = contextPathSelector.val();
+					var contextName = contextNameSelector.val();
 
-					var location = '<%= jsonWSPath %>';
-
-					if (contextPath && (contextPath != '/')) {
-						location = Liferay.Util.addParams('contextPath=' + contextPath, location);
-					}
+					var location = Liferay.Util.addParams('contextName=' + contextName, '<%= jsonWSPath %>');
 
 					window.location.href = location;
 				}
@@ -177,12 +175,12 @@ Set<String> contextPaths = JSONWebServiceActionsManagerUtil.getContextPaths();
 	var results = [];
 
 	servicesClone.all('.lfr-api-service-result').each(
-		function(item, index, collection) {
+		function(item, index) {
 			results.push(
 				{
 					el: item._node,
 					node: item,
-					text: Lang.trim(item.text())
+					text: item.text().trim()
 				}
 			);
 		}
@@ -200,16 +198,16 @@ Set<String> contextPaths = JSONWebServiceActionsManagerUtil.getContextPaths();
 			resultFilters: function(query, results) {
 				query = query.toLowerCase().replace(replaceRE, '');
 
-				return AArray.filter(
-					results,
-					function(item, index, collection) {
+				return results.filter(
+					function(item, index) {
 						var node = item.raw.node;
+
 						var guid = node.guid();
 
 						var text = cache[guid];
 
 						if (!text) {
-							text = (node.attr('data-metaData') + '/' + item.text);
+							text = node.attr('data-metaData') + '/' + item.text;
 							text = text.toLowerCase().replace(replaceRE, '');
 
 							cache[guid] = text;
@@ -225,9 +223,8 @@ Set<String> contextPaths = JSONWebServiceActionsManagerUtil.getContextPaths();
 				if (!cachedResults) {
 					var queryChars = AArray.dedupe(query.toLowerCase().split(''));
 
-					cachedResults = AArray.map(
-						results,
-						function(item, index, collection) {
+					cachedResults = results.map(
+						function(item, index) {
 							return A.Highlight.all(item.text, queryChars);
 						}
 					);
@@ -267,10 +264,10 @@ Set<String> contextPaths = JSONWebServiceActionsManagerUtil.getContextPaths();
 				var activeServiceNode = services;
 
 				if (query) {
-					AArray.each(
-						results,
-						function(item, index, collection) {
+					results.forEach(
+						function(item, index) {
 							var raw = item.raw;
+
 							var el = raw.el;
 							var node = raw.node;
 							var serviceNode = raw.serviceNode;

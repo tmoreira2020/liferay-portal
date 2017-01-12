@@ -14,31 +14,30 @@
 
 package com.liferay.portal.service;
 
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.kernel.transaction.Transactional;
-import com.liferay.portal.model.Organization;
-import com.liferay.portal.model.OrganizationConstants;
-import com.liferay.portal.model.TreeModel;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.MainServletExecutionTestListener;
-import com.liferay.portal.test.TransactionalExecutionTestListener;
-import com.liferay.portal.util.OrganizationTestUtil;
-import com.liferay.portal.util.TestPropsValues;
+import com.liferay.portal.kernel.model.Organization;
+import com.liferay.portal.kernel.model.OrganizationConstants;
+import com.liferay.portal.kernel.model.TreeModel;
+import com.liferay.portal.kernel.service.OrganizationLocalServiceUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.OrganizationTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.service.test.BaseLocalServiceTreeTestCase;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import org.junit.runner.RunWith;
+import org.junit.ClassRule;
+import org.junit.Rule;
 
 /**
  * @author Shinn Lok
  */
-@ExecutionTestListeners(
-	listeners = {
-		MainServletExecutionTestListener.class,
-		TransactionalExecutionTestListener.class
-	})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
-@Transactional
 public class OrganizationLocalServiceTreeTest
 	extends BaseLocalServiceTreeTestCase {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Override
 	protected TreeModel addTreeModel(TreeModel parentTreeModel)
@@ -54,7 +53,7 @@ public class OrganizationLocalServiceTreeTest
 		}
 
 		Organization organization = OrganizationTestUtil.addOrganization(
-			parentOrganizationId, ServiceTestUtil.randomString(), false);
+			parentOrganizationId, RandomTestUtil.randomString(), false);
 
 		organization.setTreePath(null);
 

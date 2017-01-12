@@ -14,43 +14,54 @@
 
 package com.liferay.portlet.documentlibrary.model.impl;
 
+import com.liferay.document.library.kernel.model.DLFolder;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.document.library.kernel.service.DLAppLocalServiceUtil;
+import com.liferay.document.library.kernel.service.DLFolderLocalServiceUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.repository.model.Folder;
-import com.liferay.portal.model.Repository;
+import com.liferay.portal.kernel.service.RepositoryLocalServiceUtil;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.repository.liferayrepository.model.LiferayFolder;
-import com.liferay.portal.service.RepositoryLocalServiceUtil;
-import com.liferay.portlet.documentlibrary.model.DLFolder;
-import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
-import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 /**
  * @author Brian Wing Shun Chan
  */
 public class DLFileShortcutImpl extends DLFileShortcutBaseImpl {
 
-	public DLFileShortcutImpl() {
-	}
-
 	@Override
-	public String buildTreePath() throws PortalException, SystemException {
+	public String buildTreePath() throws PortalException {
+		if (getFolderId() == DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+			return StringPool.SLASH;
+		}
+
 		DLFolder dlFolder = getDLFolder();
 
 		return dlFolder.buildTreePath();
 	}
 
 	@Override
-	public DLFolder getDLFolder() throws PortalException, SystemException {
+	public DLFolder getDLFolder() throws PortalException {
 		Folder folder = getFolder();
 
 		return (DLFolder)folder.getModel();
 	}
 
 	@Override
-	public Folder getFolder() throws PortalException, SystemException {
+	public FileVersion getFileVersion() throws PortalException {
+		FileEntry fileEntry = DLAppLocalServiceUtil.getFileEntry(
+			getToFileEntryId());
+
+		return fileEntry.getFileVersion();
+	}
+
+	@Override
+	public Folder getFolder() throws PortalException {
 		if (getFolderId() <= 0) {
 			return new LiferayFolder(new DLFolderImpl());
 		}
@@ -95,6 +106,7 @@ public class DLFileShortcutImpl extends DLFileShortcutBaseImpl {
 		return false;
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(DLFileShortcutImpl.class);
+	private static final Log _log = LogFactoryUtil.getLog(
+		DLFileShortcutImpl.class);
 
 }

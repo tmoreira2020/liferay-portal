@@ -17,7 +17,7 @@
 <%@ include file="/html/portal/init.jsp" %>
 
 <%
-if (themeDisplay.isFacebook() || themeDisplay.isStatePopUp() || themeDisplay.isWidget() || layoutTypePortlet.hasStateMax()) {
+if (themeDisplay.isStatePopUp() || themeDisplay.isWidget() || layoutTypePortlet.hasStateMax()) {
 	String ppid = ParamUtil.getString(request, "p_p_id");
 
 	String velocityTemplateId = null;
@@ -35,7 +35,7 @@ if (themeDisplay.isFacebook() || themeDisplay.isStatePopUp() || themeDisplay.isW
 	}
 
 	if (Validator.isNotNull(velocityTemplateContent)) {
-		RuntimePageUtil.processTemplate(pageContext, ppid, new StringTemplateResource(velocityTemplateId, velocityTemplateContent));
+		RuntimePageUtil.processTemplate(request, response, ppid, new StringTemplateResource(velocityTemplateId, velocityTemplateContent));
 	}
 }
 else {
@@ -57,9 +57,9 @@ else {
 	String velocityTemplateContent = LayoutTemplateLocalServiceUtil.getContent(layoutTypePortlet.getLayoutTemplateId(), false, theme.getThemeId());
 
 	if (Validator.isNotNull(velocityTemplateContent)) {
-		RuntimePageUtil.processTemplate(pageContext, new StringTemplateResource(velocityTemplateId, velocityTemplateContent));
+		RuntimePageUtil.processTemplate(request, response, new StringTemplateResource(velocityTemplateId, velocityTemplateContent));
 	}
 }
 %>
 
-<%@ include file="/html/portal/layout/view/common.jspf" %>
+<liferay-ui:layout-common />

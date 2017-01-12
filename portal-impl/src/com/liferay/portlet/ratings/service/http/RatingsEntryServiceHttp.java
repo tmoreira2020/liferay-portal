@@ -14,21 +14,23 @@
 
 package com.liferay.portlet.ratings.service.http;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.HttpPrincipal;
+import com.liferay.portal.kernel.service.http.TunnelUtil;
 import com.liferay.portal.kernel.util.MethodHandler;
 import com.liferay.portal.kernel.util.MethodKey;
-import com.liferay.portal.security.auth.HttpPrincipal;
-import com.liferay.portal.service.http.TunnelUtil;
 
-import com.liferay.portlet.ratings.service.RatingsEntryServiceUtil;
+import com.liferay.ratings.kernel.service.RatingsEntryServiceUtil;
 
 /**
  * Provides the HTTP utility for the
- * {@link com.liferay.portlet.ratings.service.RatingsEntryServiceUtil} service utility. The
+ * {@link RatingsEntryServiceUtil} service utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it requires an additional
- * {@link com.liferay.portal.security.auth.HttpPrincipal} parameter.
+ * {@link HttpPrincipal} parameter.
  *
  * <p>
  * The benefits of using the HTTP utility is that it is fast and allows for
@@ -47,15 +49,15 @@ import com.liferay.portlet.ratings.service.RatingsEntryServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see RatingsEntryServiceSoap
- * @see com.liferay.portal.security.auth.HttpPrincipal
- * @see com.liferay.portlet.ratings.service.RatingsEntryServiceUtil
+ * @see HttpPrincipal
+ * @see RatingsEntryServiceUtil
  * @generated
  */
+@ProviderType
 public class RatingsEntryServiceHttp {
 	public static void deleteEntry(HttpPrincipal httpPrincipal,
 		java.lang.String className, long classPK)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(RatingsEntryServiceUtil.class,
 					"deleteEntry", _deleteEntryParameterTypes0);
@@ -71,10 +73,6 @@ public class RatingsEntryServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 		}
@@ -85,11 +83,10 @@ public class RatingsEntryServiceHttp {
 		}
 	}
 
-	public static com.liferay.portlet.ratings.model.RatingsEntry updateEntry(
+	public static com.liferay.ratings.kernel.model.RatingsEntry updateEntry(
 		HttpPrincipal httpPrincipal, java.lang.String className, long classPK,
 		double score)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.PortalException {
 		try {
 			MethodKey methodKey = new MethodKey(RatingsEntryServiceUtil.class,
 					"updateEntry", _updateEntryParameterTypes1);
@@ -107,14 +104,10 @@ public class RatingsEntryServiceHttp {
 					throw (com.liferay.portal.kernel.exception.PortalException)e;
 				}
 
-				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
-					throw (com.liferay.portal.kernel.exception.SystemException)e;
-				}
-
 				throw new com.liferay.portal.kernel.exception.SystemException(e);
 			}
 
-			return (com.liferay.portlet.ratings.model.RatingsEntry)returnObj;
+			return (com.liferay.ratings.kernel.model.RatingsEntry)returnObj;
 		}
 		catch (com.liferay.portal.kernel.exception.SystemException se) {
 			_log.error(se, se);

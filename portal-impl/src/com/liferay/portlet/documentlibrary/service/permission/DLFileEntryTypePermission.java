@@ -14,14 +14,14 @@
 
 package com.liferay.portlet.documentlibrary.service.permission;
 
+import com.liferay.document.library.kernel.model.DLFileEntryType;
+import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalServiceUtil;
+import com.liferay.exportimport.kernel.staging.permission.StagingPermissionUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.staging.permission.StagingPermissionUtil;
-import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portal.util.PortletKeys;
-import com.liferay.portlet.documentlibrary.model.DLFileEntryType;
-import com.liferay.portlet.documentlibrary.service.DLFileEntryTypeLocalServiceUtil;
+import com.liferay.portal.kernel.portlet.PortletProvider;
+import com.liferay.portal.kernel.portlet.PortletProviderUtil;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 
 /**
  * @author Alexander Chow
@@ -34,17 +34,21 @@ public class DLFileEntryTypePermission {
 		throws PortalException {
 
 		if (!contains(permissionChecker, fileEntryType, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, DLFileEntryType.class.getName(),
+				fileEntryType.getFileEntryTypeId(), actionId);
 		}
 	}
 
 	public static void check(
 			PermissionChecker permissionChecker, long fileEntryTypeId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!contains(permissionChecker, fileEntryTypeId, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, DLFileEntryType.class.getName(),
+				fileEntryTypeId, actionId);
 		}
 	}
 
@@ -52,10 +56,13 @@ public class DLFileEntryTypePermission {
 		PermissionChecker permissionChecker, DLFileEntryType fileEntryType,
 		String actionId) {
 
+		String portletId = PortletProviderUtil.getPortletId(
+			DLFileEntryType.class.getName(), PortletProvider.Action.EDIT);
+
 		Boolean hasPermission = StagingPermissionUtil.hasPermission(
 			permissionChecker, fileEntryType.getGroupId(),
 			DLFileEntryType.class.getName(), fileEntryType.getFileEntryTypeId(),
-			PortletKeys.DOCUMENT_LIBRARY, actionId);
+			portletId, actionId);
 
 		if (hasPermission != null) {
 			return hasPermission.booleanValue();
@@ -77,7 +84,7 @@ public class DLFileEntryTypePermission {
 	public static boolean contains(
 			PermissionChecker permissionChecker, long fileEntryTypeId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		DLFileEntryType fileEntryType =
 			DLFileEntryTypeLocalServiceUtil.getFileEntryType(fileEntryTypeId);

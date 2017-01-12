@@ -17,7 +17,7 @@ package com.liferay.portal.service.impl;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.model.BrowserTracker;
+import com.liferay.portal.kernel.model.BrowserTracker;
 import com.liferay.portal.service.base.BrowserTrackerLocalServiceBaseImpl;
 
 /**
@@ -27,7 +27,7 @@ public class BrowserTrackerLocalServiceImpl
 	extends BrowserTrackerLocalServiceBaseImpl {
 
 	@Override
-	public void deleteUserBrowserTracker(long userId) throws SystemException {
+	public void deleteUserBrowserTracker(long userId) {
 		BrowserTracker browserTracker = browserTrackerPersistence.fetchByUserId(
 			userId);
 
@@ -37,9 +37,7 @@ public class BrowserTrackerLocalServiceImpl
 	}
 
 	@Override
-	public BrowserTracker getBrowserTracker(long userId, long browserKey)
-		throws SystemException {
-
+	public BrowserTracker getBrowserTracker(long userId, long browserKey) {
 		BrowserTracker browserTracker = browserTrackerPersistence.fetchByUserId(
 			userId);
 
@@ -52,9 +50,7 @@ public class BrowserTrackerLocalServiceImpl
 	}
 
 	@Override
-	public BrowserTracker updateBrowserTracker(long userId, long browserKey)
-		throws SystemException {
-
+	public BrowserTracker updateBrowserTracker(long userId, long browserKey) {
 		BrowserTracker browserTracker = browserTrackerPersistence.fetchByUserId(
 			userId);
 
@@ -87,7 +83,7 @@ public class BrowserTrackerLocalServiceImpl
 		return browserTracker;
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		BrowserTrackerLocalServiceImpl.class);
 
 }

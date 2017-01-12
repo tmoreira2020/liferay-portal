@@ -14,31 +14,36 @@
 
 package com.liferay.portlet.social.service.base;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.kernel.bean.BeanReference;
-import com.liferay.portal.kernel.bean.IdentifiableBean;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
+import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
+import com.liferay.portal.kernel.service.persistence.ClassNamePersistence;
+import com.liferay.portal.kernel.service.persistence.UserFinder;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.model.PersistedModel;
-import com.liferay.portal.service.BaseLocalServiceImpl;
-import com.liferay.portal.service.PersistedModelLocalServiceRegistry;
-import com.liferay.portal.service.persistence.ClassNamePersistence;
-import com.liferay.portal.service.persistence.UserFinder;
-import com.liferay.portal.service.persistence.UserPersistence;
-import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 
-import com.liferay.portlet.social.model.SocialRelation;
-import com.liferay.portlet.social.service.SocialRelationLocalService;
-import com.liferay.portlet.social.service.persistence.SocialRelationPersistence;
+import com.liferay.social.kernel.model.SocialRelation;
+import com.liferay.social.kernel.service.SocialRelationLocalService;
+import com.liferay.social.kernel.service.persistence.SocialRelationPersistence;
 
 import java.io.Serializable;
 
@@ -55,16 +60,17 @@ import javax.sql.DataSource;
  *
  * @author Brian Wing Shun Chan
  * @see com.liferay.portlet.social.service.impl.SocialRelationLocalServiceImpl
- * @see com.liferay.portlet.social.service.SocialRelationLocalServiceUtil
+ * @see com.liferay.social.kernel.service.SocialRelationLocalServiceUtil
  * @generated
  */
+@ProviderType
 public abstract class SocialRelationLocalServiceBaseImpl
 	extends BaseLocalServiceImpl implements SocialRelationLocalService,
-		IdentifiableBean {
+		IdentifiableOSGiService {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this class directly. Always use {@link com.liferay.portlet.social.service.SocialRelationLocalServiceUtil} to access the social relation local service.
+	 * Never modify or reference this class directly. Always use {@link com.liferay.social.kernel.service.SocialRelationLocalServiceUtil} to access the social relation local service.
 	 */
 
 	/**
@@ -72,12 +78,10 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 *
 	 * @param socialRelation the social relation
 	 * @return the social relation that was added
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public SocialRelation addSocialRelation(SocialRelation socialRelation)
-		throws SystemException {
+	public SocialRelation addSocialRelation(SocialRelation socialRelation) {
 		socialRelation.setNew(true);
 
 		return socialRelationPersistence.update(socialRelation);
@@ -100,12 +104,11 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * @param relationId the primary key of the social relation
 	 * @return the social relation that was removed
 	 * @throws PortalException if a social relation with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	public SocialRelation deleteSocialRelation(long relationId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return socialRelationPersistence.remove(relationId);
 	}
 
@@ -114,12 +117,10 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 *
 	 * @param socialRelation the social relation
 	 * @return the social relation that was removed
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public SocialRelation deleteSocialRelation(SocialRelation socialRelation)
-		throws SystemException {
+	public SocialRelation deleteSocialRelation(SocialRelation socialRelation) {
 		return socialRelationPersistence.remove(socialRelation);
 	}
 
@@ -136,12 +137,9 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return socialRelationPersistence.findWithDynamicQuery(dynamicQuery);
 	}
 
@@ -156,12 +154,10 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * @param start the lower bound of the range of model instances
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end) {
 		return socialRelationPersistence.findWithDynamicQuery(dynamicQuery,
 			start, end);
 	}
@@ -178,47 +174,41 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end, OrderByComparator<T> orderByComparator) {
 		return socialRelationPersistence.findWithDynamicQuery(dynamicQuery,
 			start, end, orderByComparator);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
-	public long dynamicQueryCount(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return socialRelationPersistence.countWithDynamicQuery(dynamicQuery);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @param projection the projection to apply to the query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
 	public long dynamicQueryCount(DynamicQuery dynamicQuery,
-		Projection projection) throws SystemException {
+		Projection projection) {
 		return socialRelationPersistence.countWithDynamicQuery(dynamicQuery,
 			projection);
 	}
 
 	@Override
-	public SocialRelation fetchSocialRelation(long relationId)
-		throws SystemException {
+	public SocialRelation fetchSocialRelation(long relationId) {
 		return socialRelationPersistence.fetchByPrimaryKey(relationId);
 	}
 
@@ -226,13 +216,12 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * Returns the social relation with the matching UUID and company.
 	 *
 	 * @param uuid the social relation's UUID
-	 * @param  companyId the primary key of the company
+	 * @param companyId the primary key of the company
 	 * @return the matching social relation, or <code>null</code> if a matching social relation could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public SocialRelation fetchSocialRelationByUuidAndCompanyId(String uuid,
-		long companyId) throws SystemException {
+		long companyId) {
 		return socialRelationPersistence.fetchByUuid_C_First(uuid, companyId,
 			null);
 	}
@@ -243,17 +232,60 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * @param relationId the primary key of the social relation
 	 * @return the social relation
 	 * @throws PortalException if a social relation with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public SocialRelation getSocialRelation(long relationId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return socialRelationPersistence.findByPrimaryKey(relationId);
 	}
 
 	@Override
+	public ActionableDynamicQuery getActionableDynamicQuery() {
+		ActionableDynamicQuery actionableDynamicQuery = new DefaultActionableDynamicQuery();
+
+		actionableDynamicQuery.setBaseLocalService(socialRelationLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(SocialRelation.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("relationId");
+
+		return actionableDynamicQuery;
+	}
+
+	@Override
+	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery = new IndexableActionableDynamicQuery();
+
+		indexableActionableDynamicQuery.setBaseLocalService(socialRelationLocalService);
+		indexableActionableDynamicQuery.setClassLoader(getClassLoader());
+		indexableActionableDynamicQuery.setModelClass(SocialRelation.class);
+
+		indexableActionableDynamicQuery.setPrimaryKeyPropertyName("relationId");
+
+		return indexableActionableDynamicQuery;
+	}
+
+	protected void initActionableDynamicQuery(
+		ActionableDynamicQuery actionableDynamicQuery) {
+		actionableDynamicQuery.setBaseLocalService(socialRelationLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(SocialRelation.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("relationId");
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
+		throws PortalException {
+		return socialRelationLocalService.deleteSocialRelation((SocialRelation)persistedModel);
+	}
+
+	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return socialRelationPersistence.findByPrimaryKey(primaryKeyObj);
 	}
 
@@ -261,14 +293,13 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * Returns the social relation with the matching UUID and company.
 	 *
 	 * @param uuid the social relation's UUID
-	 * @param  companyId the primary key of the company
+	 * @param companyId the primary key of the company
 	 * @return the matching social relation
 	 * @throws PortalException if a matching social relation could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public SocialRelation getSocialRelationByUuidAndCompanyId(String uuid,
-		long companyId) throws PortalException, SystemException {
+		long companyId) throws PortalException {
 		return socialRelationPersistence.findByUuid_C_First(uuid, companyId,
 			null);
 	}
@@ -283,11 +314,9 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * @param start the lower bound of the range of social relations
 	 * @param end the upper bound of the range of social relations (not inclusive)
 	 * @return the range of social relations
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<SocialRelation> getSocialRelations(int start, int end)
-		throws SystemException {
+	public List<SocialRelation> getSocialRelations(int start, int end) {
 		return socialRelationPersistence.findAll(start, end);
 	}
 
@@ -295,10 +324,9 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * Returns the number of social relations.
 	 *
 	 * @return the number of social relations
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getSocialRelationsCount() throws SystemException {
+	public int getSocialRelationsCount() {
 		return socialRelationPersistence.countAll();
 	}
 
@@ -307,12 +335,10 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 *
 	 * @param socialRelation the social relation
 	 * @return the social relation that was updated
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public SocialRelation updateSocialRelation(SocialRelation socialRelation)
-		throws SystemException {
+	public SocialRelation updateSocialRelation(SocialRelation socialRelation) {
 		return socialRelationPersistence.update(socialRelation);
 	}
 
@@ -321,7 +347,7 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 *
 	 * @return the social relation local service
 	 */
-	public com.liferay.portlet.social.service.SocialRelationLocalService getSocialRelationLocalService() {
+	public SocialRelationLocalService getSocialRelationLocalService() {
 		return socialRelationLocalService;
 	}
 
@@ -331,7 +357,7 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * @param socialRelationLocalService the social relation local service
 	 */
 	public void setSocialRelationLocalService(
-		com.liferay.portlet.social.service.SocialRelationLocalService socialRelationLocalService) {
+		SocialRelationLocalService socialRelationLocalService) {
 		this.socialRelationLocalService = socialRelationLocalService;
 	}
 
@@ -359,7 +385,7 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 *
 	 * @return the counter local service
 	 */
-	public com.liferay.counter.service.CounterLocalService getCounterLocalService() {
+	public com.liferay.counter.kernel.service.CounterLocalService getCounterLocalService() {
 		return counterLocalService;
 	}
 
@@ -369,7 +395,7 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * @param counterLocalService the counter local service
 	 */
 	public void setCounterLocalService(
-		com.liferay.counter.service.CounterLocalService counterLocalService) {
+		com.liferay.counter.kernel.service.CounterLocalService counterLocalService) {
 		this.counterLocalService = counterLocalService;
 	}
 
@@ -378,7 +404,7 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 *
 	 * @return the class name local service
 	 */
-	public com.liferay.portal.service.ClassNameLocalService getClassNameLocalService() {
+	public com.liferay.portal.kernel.service.ClassNameLocalService getClassNameLocalService() {
 		return classNameLocalService;
 	}
 
@@ -388,27 +414,8 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * @param classNameLocalService the class name local service
 	 */
 	public void setClassNameLocalService(
-		com.liferay.portal.service.ClassNameLocalService classNameLocalService) {
+		com.liferay.portal.kernel.service.ClassNameLocalService classNameLocalService) {
 		this.classNameLocalService = classNameLocalService;
-	}
-
-	/**
-	 * Returns the class name remote service.
-	 *
-	 * @return the class name remote service
-	 */
-	public com.liferay.portal.service.ClassNameService getClassNameService() {
-		return classNameService;
-	}
-
-	/**
-	 * Sets the class name remote service.
-	 *
-	 * @param classNameService the class name remote service
-	 */
-	public void setClassNameService(
-		com.liferay.portal.service.ClassNameService classNameService) {
-		this.classNameService = classNameService;
 	}
 
 	/**
@@ -435,7 +442,7 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 *
 	 * @return the user local service
 	 */
-	public com.liferay.portal.service.UserLocalService getUserLocalService() {
+	public com.liferay.portal.kernel.service.UserLocalService getUserLocalService() {
 		return userLocalService;
 	}
 
@@ -445,27 +452,8 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 * @param userLocalService the user local service
 	 */
 	public void setUserLocalService(
-		com.liferay.portal.service.UserLocalService userLocalService) {
+		com.liferay.portal.kernel.service.UserLocalService userLocalService) {
 		this.userLocalService = userLocalService;
-	}
-
-	/**
-	 * Returns the user remote service.
-	 *
-	 * @return the user remote service
-	 */
-	public com.liferay.portal.service.UserService getUserService() {
-		return userService;
-	}
-
-	/**
-	 * Sets the user remote service.
-	 *
-	 * @param userService the user remote service
-	 */
-	public void setUserService(
-		com.liferay.portal.service.UserService userService) {
-		this.userService = userService;
 	}
 
 	/**
@@ -505,33 +493,23 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	}
 
 	public void afterPropertiesSet() {
-		persistedModelLocalServiceRegistry.register("com.liferay.portlet.social.model.SocialRelation",
+		persistedModelLocalServiceRegistry.register("com.liferay.social.kernel.model.SocialRelation",
 			socialRelationLocalService);
 	}
 
 	public void destroy() {
 		persistedModelLocalServiceRegistry.unregister(
-			"com.liferay.portlet.social.model.SocialRelation");
+			"com.liferay.social.kernel.model.SocialRelation");
 	}
 
 	/**
-	 * Returns the Spring bean ID for this bean.
+	 * Returns the OSGi service identifier.
 	 *
-	 * @return the Spring bean ID for this bean
+	 * @return the OSGi service identifier
 	 */
 	@Override
-	public String getBeanIdentifier() {
-		return _beanIdentifier;
-	}
-
-	/**
-	 * Sets the Spring bean ID for this bean.
-	 *
-	 * @param beanIdentifier the Spring bean ID for this bean
-	 */
-	@Override
-	public void setBeanIdentifier(String beanIdentifier) {
-		_beanIdentifier = beanIdentifier;
+	public String getOSGiServiceIdentifier() {
+		return SocialRelationLocalService.class.getName();
 	}
 
 	protected Class<?> getModelClass() {
@@ -547,17 +525,17 @@ public abstract class SocialRelationLocalServiceBaseImpl
 	 *
 	 * @param sql the sql query
 	 */
-	protected void runSQL(String sql) throws SystemException {
+	protected void runSQL(String sql) {
 		try {
 			DataSource dataSource = socialRelationPersistence.getDataSource();
 
-			DB db = DBFactoryUtil.getDB();
+			DB db = DBManagerUtil.getDB();
 
 			sql = db.buildSQL(sql);
 			sql = PortalUtil.transformSQL(sql);
 
 			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(dataSource,
-					sql, new int[0]);
+					sql);
 
 			sqlUpdate.update();
 		}
@@ -566,27 +544,22 @@ public abstract class SocialRelationLocalServiceBaseImpl
 		}
 	}
 
-	@BeanReference(type = com.liferay.portlet.social.service.SocialRelationLocalService.class)
-	protected com.liferay.portlet.social.service.SocialRelationLocalService socialRelationLocalService;
+	@BeanReference(type = SocialRelationLocalService.class)
+	protected SocialRelationLocalService socialRelationLocalService;
 	@BeanReference(type = SocialRelationPersistence.class)
 	protected SocialRelationPersistence socialRelationPersistence;
-	@BeanReference(type = com.liferay.counter.service.CounterLocalService.class)
-	protected com.liferay.counter.service.CounterLocalService counterLocalService;
-	@BeanReference(type = com.liferay.portal.service.ClassNameLocalService.class)
-	protected com.liferay.portal.service.ClassNameLocalService classNameLocalService;
-	@BeanReference(type = com.liferay.portal.service.ClassNameService.class)
-	protected com.liferay.portal.service.ClassNameService classNameService;
+	@BeanReference(type = com.liferay.counter.kernel.service.CounterLocalService.class)
+	protected com.liferay.counter.kernel.service.CounterLocalService counterLocalService;
+	@BeanReference(type = com.liferay.portal.kernel.service.ClassNameLocalService.class)
+	protected com.liferay.portal.kernel.service.ClassNameLocalService classNameLocalService;
 	@BeanReference(type = ClassNamePersistence.class)
 	protected ClassNamePersistence classNamePersistence;
-	@BeanReference(type = com.liferay.portal.service.UserLocalService.class)
-	protected com.liferay.portal.service.UserLocalService userLocalService;
-	@BeanReference(type = com.liferay.portal.service.UserService.class)
-	protected com.liferay.portal.service.UserService userService;
+	@BeanReference(type = com.liferay.portal.kernel.service.UserLocalService.class)
+	protected com.liferay.portal.kernel.service.UserLocalService userLocalService;
 	@BeanReference(type = UserPersistence.class)
 	protected UserPersistence userPersistence;
 	@BeanReference(type = UserFinder.class)
 	protected UserFinder userFinder;
 	@BeanReference(type = PersistedModelLocalServiceRegistry.class)
 	protected PersistedModelLocalServiceRegistry persistedModelLocalServiceRegistry;
-	private String _beanIdentifier;
 }

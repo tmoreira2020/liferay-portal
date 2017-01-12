@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.service.LayoutLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 
 /**
  * The extended model base implementation for the Layout service. Represents a row in the &quot;Layout&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.LayoutLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see LayoutImpl
- * @see com.liferay.portal.model.Layout
+ * @see Layout
  * @generated
  */
+@ProviderType
 public abstract class LayoutBaseImpl extends LayoutModelImpl implements Layout {
 	/*
 	 * NOTE FOR DEVELOPERS:
@@ -37,7 +39,7 @@ public abstract class LayoutBaseImpl extends LayoutModelImpl implements Layout {
 	 * Never modify or reference this class directly. All methods that expect a layout model instance should use the {@link Layout} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			LayoutLocalServiceUtil.addLayout(this);
 		}

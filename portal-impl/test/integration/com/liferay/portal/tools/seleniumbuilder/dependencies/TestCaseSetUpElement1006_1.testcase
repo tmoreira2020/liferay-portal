@@ -1,9 +1,0 @@
-<definition component-name="portal-collaboration" extends="TestCase">
-	<set-up>
-		<execute test-case="" />
-	</set-up>
-
-	<command name="name" priority="5">
-		<var name="name" value="value" />
-	</command>
-</definition>

@@ -41,7 +41,7 @@ public class DoPrivilegedUtil {
 		return _pacl.wrapWhenActive(t);
 	}
 
-	public static interface PACL {
+	public interface PACL {
 
 		public <T> T wrap(PrivilegedAction<T> privilegedAction);
 
@@ -55,7 +55,7 @@ public class DoPrivilegedUtil {
 
 	}
 
-	private static PACL _pacl = new NoPACL();
+	private static final PACL _pacl = new NoPACL();
 
 	private static class NoPACL implements PACL {
 

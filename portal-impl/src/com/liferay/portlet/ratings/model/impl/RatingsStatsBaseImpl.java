@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.ratings.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.ratings.model.RatingsStats;
-import com.liferay.portlet.ratings.service.RatingsStatsLocalServiceUtil;
+import com.liferay.ratings.kernel.model.RatingsStats;
+import com.liferay.ratings.kernel.service.RatingsStatsLocalServiceUtil;
 
 /**
  * The extended model base implementation for the RatingsStats service. Represents a row in the &quot;RatingsStats&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.ratings.service.RatingsStatsLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see RatingsStatsImpl
- * @see com.liferay.portlet.ratings.model.RatingsStats
+ * @see RatingsStats
  * @generated
  */
+@ProviderType
 public abstract class RatingsStatsBaseImpl extends RatingsStatsModelImpl
 	implements RatingsStats {
 	/*
@@ -39,7 +40,7 @@ public abstract class RatingsStatsBaseImpl extends RatingsStatsModelImpl
 	 * Never modify or reference this class directly. All methods that expect a ratings stats model instance should use the {@link RatingsStats} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			RatingsStatsLocalServiceUtil.addRatingsStats(this);
 		}

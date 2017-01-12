@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.documentlibrary.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.documentlibrary.model.DLFileVersion;
-import com.liferay.portlet.documentlibrary.service.DLFileVersionLocalServiceUtil;
+import com.liferay.document.library.kernel.model.DLFileVersion;
+import com.liferay.document.library.kernel.service.DLFileVersionLocalServiceUtil;
 
 /**
  * The extended model base implementation for the DLFileVersion service. Represents a row in the &quot;DLFileVersion&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.documentlibrary.service.DLFileVersionLocalServiceUtil
  *
  * @author Brian Wing Shun Chan
  * @see DLFileVersionImpl
- * @see com.liferay.portlet.documentlibrary.model.DLFileVersion
+ * @see DLFileVersion
  * @generated
  */
+@ProviderType
 public abstract class DLFileVersionBaseImpl extends DLFileVersionModelImpl
 	implements DLFileVersion {
 	/*
@@ -39,7 +40,7 @@ public abstract class DLFileVersionBaseImpl extends DLFileVersionModelImpl
 	 * Never modify or reference this class directly. All methods that expect a document library file version model instance should use the {@link DLFileVersion} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			DLFileVersionLocalServiceUtil.addDLFileVersion(this);
 		}
@@ -49,7 +50,7 @@ public abstract class DLFileVersionBaseImpl extends DLFileVersionModelImpl
 	}
 
 	@Override
-	public void updateTreePath(String treePath) throws SystemException {
+	public void updateTreePath(String treePath) {
 		DLFileVersion dlFileVersion = this;
 
 		dlFileVersion.setTreePath(treePath);

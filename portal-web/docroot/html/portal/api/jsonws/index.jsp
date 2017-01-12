@@ -25,7 +25,7 @@
 		<div id="heading">
 			<h1 class="site-title">
 				<a class="logo" href="<%= HtmlUtil.escapeAttribute(jsonWSContextPath) %>" title="JSONWS API">
-					<img alt="JSONWS API" height="<%= themeDisplay.getCompanyLogoHeight() %>" src="<%= HtmlUtil.escape(themeDisplay.getCompanyLogo()) %>" width="<%= themeDisplay.getCompanyLogoWidth() %>" />
+					<img alt="<%= HtmlUtil.escapeAttribute("JSONWS API") %>" height="<%= themeDisplay.getCompanyLogoHeight() %>" src="<%= HtmlUtil.escape(themeDisplay.getCompanyLogo()) %>" width="<%= themeDisplay.getCompanyLogoWidth() %>" />
 				</a>
 
 				<span class="site-name">
@@ -41,6 +41,7 @@
 				<aui:col cssClass="lfr-api-navigation" width="<%= 25 %>">
 					<liferay-util:include page="/html/portal/api/jsonws/actions.jsp" />
 				</aui:col>
+
 				<aui:col cssClass="lfr-api-details" width="<%= 75 %>">
 					<liferay-util:include page="/html/portal/api/jsonws/action.jsp" />
 				</aui:col>

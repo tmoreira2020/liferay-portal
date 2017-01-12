@@ -17,8 +17,10 @@ package com.liferay.portal.repository.util;
 import com.liferay.portal.kernel.repository.BaseRepository;
 
 /**
- * @author Mika Koivisto
+ * @author     Mika Koivisto
+ * @deprecated As of 7.0.0, replaced by {@link ExternalRepositoryFactory}
  */
+@Deprecated
 public interface RepositoryFactory {
 
 	public BaseRepository getInstance() throws Exception;

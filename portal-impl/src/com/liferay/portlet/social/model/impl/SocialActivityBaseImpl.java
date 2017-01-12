@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.social.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.social.model.SocialActivity;
-import com.liferay.portlet.social.service.SocialActivityLocalServiceUtil;
+import com.liferay.social.kernel.model.SocialActivity;
+import com.liferay.social.kernel.service.SocialActivityLocalServiceUtil;
 
 /**
  * The extended model base implementation for the SocialActivity service. Represents a row in the &quot;SocialActivity&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.social.service.SocialActivityLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see SocialActivityImpl
- * @see com.liferay.portlet.social.model.SocialActivity
+ * @see SocialActivity
  * @generated
  */
+@ProviderType
 public abstract class SocialActivityBaseImpl extends SocialActivityModelImpl
 	implements SocialActivity {
 	/*
@@ -39,7 +40,7 @@ public abstract class SocialActivityBaseImpl extends SocialActivityModelImpl
 	 * Never modify or reference this class directly. All methods that expect a social activity model instance should use the {@link SocialActivity} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			SocialActivityLocalServiceUtil.addSocialActivity(this);
 		}

@@ -59,23 +59,38 @@ public class SQLServerLimitStringUtil {
 		String innerSelectFrom = _getInnerSelectFrom(
 			selectFrom, innerOrderBy, limit);
 
-		StringBundler sb = new StringBundler(15);
+		StringBundler sb = new StringBundler(12);
 
-		sb.append("select * from (");
-		sb.append("select *, row_number() over (");
+		sb.append("select * from (select *, row_number() over (");
 		sb.append(outerOrderBy);
 		sb.append(") as _page_row_num from (");
 		sb.append(innerSelectFrom);
 		sb.append(selectFromWhere);
 		sb.append(innerOrderBy);
-		sb.append(" ) _temp_table_1 ) _temp_table_2");
-		sb.append(" where _page_row_num between ");
+		sb.append(" ) _temp_table_1 ) _temp_table_2 where _page_row_num ");
+		sb.append("between ");
 		sb.append(offset + 1);
 		sb.append(" and ");
 		sb.append(limit);
 		sb.append(" order by _page_row_num");
 
 		return sb.toString();
+	}
+
+	private static String _getInnerSelectFrom(
+		String selectFrom, String innerOrderBy, int limit) {
+
+		String innerSelectFrom = selectFrom;
+
+		if (Validator.isNotNull(innerOrderBy)) {
+			Matcher matcher = _selectPattern.matcher(innerSelectFrom);
+
+			innerSelectFrom = matcher.replaceAll(
+				"select top ".concat(String.valueOf(limit)).concat(
+					StringPool.SPACE));
+		}
+
+		return innerSelectFrom;
 	}
 
 	private static final String[] _splitOrderBy(
@@ -90,6 +105,7 @@ public class SQLServerLimitStringUtil {
 			orderByColumn = orderByColumn.trim();
 
 			String orderByColumnName = orderByColumn;
+
 			String orderByType = "ASC";
 
 			int spacePos = orderByColumn.lastIndexOf(CharPool.SPACE);
@@ -129,6 +145,7 @@ public class SQLServerLimitStringUtil {
 				orderByColumnName = matcher.replaceAll("$1");
 
 				outerOrderBySB.append(orderByColumnName);
+
 				outerOrderBySB.append(StringPool.SPACE);
 				outerOrderBySB.append(orderByType);
 			}
@@ -155,25 +172,9 @@ public class SQLServerLimitStringUtil {
 		};
 	}
 
-	private static String _getInnerSelectFrom(
-		String selectFrom, String innerOrderBy, int limit) {
-
-		String innerSelectFrom = selectFrom;
-
-		if (Validator.isNotNull(innerOrderBy)) {
-			Matcher matcher = _selectPattern.matcher(innerSelectFrom);
-
-			innerSelectFrom = matcher.replaceAll(
-				"select top ".concat(String.valueOf(limit)).concat(
-					StringPool.SPACE));
-		}
-
-		return innerSelectFrom;
-	}
-
-	private static Pattern _qualifiedColumnPattern = Pattern.compile(
+	private static final Pattern _qualifiedColumnPattern = Pattern.compile(
 		"\\w+\\.([\\w\\*]+)");
-	private static Pattern _selectPattern = Pattern.compile(
+	private static final Pattern _selectPattern = Pattern.compile(
 		"SELECT ", Pattern.CASE_INSENSITIVE);
 
 }

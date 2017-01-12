@@ -15,14 +15,16 @@
 package com.liferay.portal.service.impl;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.LayoutSetBranch;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.LayoutSetBranch;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
+import com.liferay.portal.kernel.service.permission.LayoutSetBranchPermissionUtil;
 import com.liferay.portal.service.base.LayoutSetBranchServiceBaseImpl;
-import com.liferay.portal.service.permission.GroupPermissionUtil;
-import com.liferay.portal.service.permission.LayoutSetBranchPermissionUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,7 +38,7 @@ public class LayoutSetBranchServiceImpl extends LayoutSetBranchServiceBaseImpl {
 			long groupId, boolean privateLayout, String name,
 			String description, boolean master, long copyLayoutSetBranchId,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		GroupPermissionUtil.check(
 			getPermissionChecker(), groupId, ActionKeys.ADD_LAYOUT_SET_BRANCH);
@@ -48,7 +50,7 @@ public class LayoutSetBranchServiceImpl extends LayoutSetBranchServiceBaseImpl {
 
 	@Override
 	public void deleteLayoutSetBranch(long layoutSetBranchId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		LayoutSetBranchPermissionUtil.check(
 			getPermissionChecker(), layoutSetBranchId, ActionKeys.DELETE);
@@ -58,18 +60,34 @@ public class LayoutSetBranchServiceImpl extends LayoutSetBranchServiceBaseImpl {
 
 	@Override
 	public List<LayoutSetBranch> getLayoutSetBranches(
-			long groupId, boolean privateLayout)
-		throws SystemException {
+		long groupId, boolean privateLayout) {
 
-		return layoutSetBranchLocalService.getLayoutSetBranches(
-			groupId, privateLayout);
+		try {
+			if (GroupPermissionUtil.contains(
+					getPermissionChecker(), groupId, ActionKeys.VIEW_STAGING)) {
+
+				return layoutSetBranchLocalService.getLayoutSetBranches(
+					groupId, privateLayout);
+			}
+		}
+		catch (PortalException pe) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Unable to get layout set branches for group " + groupId +
+						" with " + (privateLayout ? "private" : "public") +
+							" layouts",
+					pe);
+			}
+		}
+
+		return new ArrayList<>();
 	}
 
 	@Override
 	public LayoutSetBranch mergeLayoutSetBranch(
 			long layoutSetBranchId, long mergeLayoutSetBranchId,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		LayoutSetBranchPermissionUtil.check(
 			getPermissionChecker(), layoutSetBranchId, ActionKeys.UPDATE);
@@ -82,7 +100,7 @@ public class LayoutSetBranchServiceImpl extends LayoutSetBranchServiceBaseImpl {
 	public LayoutSetBranch updateLayoutSetBranch(
 			long groupId, long layoutSetBranchId, String name,
 			String description, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		LayoutSetBranchPermissionUtil.check(
 			getPermissionChecker(), layoutSetBranchId, ActionKeys.UPDATE);
@@ -90,5 +108,8 @@ public class LayoutSetBranchServiceImpl extends LayoutSetBranchServiceBaseImpl {
 		return layoutSetBranchLocalService.updateLayoutSetBranch(
 			layoutSetBranchId, name, description, serviceContext);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		LayoutSetBranchServiceImpl.class);
 
 }

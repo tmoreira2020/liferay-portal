@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.UserIdMapper;
-import com.liferay.portal.service.UserIdMapperLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.UserIdMapper;
+import com.liferay.portal.kernel.service.UserIdMapperLocalServiceUtil;
 
 /**
  * The extended model base implementation for the UserIdMapper service. Represents a row in the &quot;UserIdMapper&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.UserIdMapperLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see UserIdMapperImpl
- * @see com.liferay.portal.model.UserIdMapper
+ * @see UserIdMapper
  * @generated
  */
+@ProviderType
 public abstract class UserIdMapperBaseImpl extends UserIdMapperModelImpl
 	implements UserIdMapper {
 	/*
@@ -38,7 +40,7 @@ public abstract class UserIdMapperBaseImpl extends UserIdMapperModelImpl
 	 * Never modify or reference this class directly. All methods that expect a user ID mapper model instance should use the {@link UserIdMapper} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			UserIdMapperLocalServiceUtil.addUserIdMapper(this);
 		}

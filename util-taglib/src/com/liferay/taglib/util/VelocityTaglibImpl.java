@@ -15,39 +15,25 @@
 package com.liferay.taglib.util;
 
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.model.Portlet;
+import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.servlet.DirectRequestDispatcherFactoryUtil;
-import com.liferay.portal.kernel.servlet.PipingPageContext;
-import com.liferay.portal.kernel.servlet.taglib.TagSupport;
-import com.liferay.portal.kernel.template.Template;
+import com.liferay.portal.kernel.servlet.JSPSupportServlet;
 import com.liferay.portal.kernel.template.TemplateConstants;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.model.LayoutConstants;
-import com.liferay.portal.model.Portlet;
-import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.taglib.aui.ColumnTag;
-import com.liferay.taglib.aui.LayoutTag;
+import com.liferay.taglib.TagSupport;
 import com.liferay.taglib.portlet.ActionURLTag;
-import com.liferay.taglib.portletext.IconBackTag;
-import com.liferay.taglib.portletext.IconCloseTag;
-import com.liferay.taglib.portletext.IconConfigurationTag;
-import com.liferay.taglib.portletext.IconEditDefaultsTag;
-import com.liferay.taglib.portletext.IconEditGuestTag;
-import com.liferay.taglib.portletext.IconEditTag;
-import com.liferay.taglib.portletext.IconHelpTag;
-import com.liferay.taglib.portletext.IconMaximizeTag;
-import com.liferay.taglib.portletext.IconMinimizeTag;
 import com.liferay.taglib.portletext.IconOptionsTag;
-import com.liferay.taglib.portletext.IconPortletCssTag;
 import com.liferay.taglib.portletext.IconPortletTag;
-import com.liferay.taglib.portletext.IconPrintTag;
-import com.liferay.taglib.portletext.IconRefreshTag;
 import com.liferay.taglib.portletext.RuntimeTag;
 import com.liferay.taglib.security.DoAsURLTag;
 import com.liferay.taglib.security.PermissionsURLTag;
-import com.liferay.taglib.staging.MenuTag;
-import com.liferay.taglib.theme.LayoutIconTag;
+import com.liferay.taglib.servlet.PipingPageContext;
 import com.liferay.taglib.theme.MetaTagsTag;
 import com.liferay.taglib.theme.WrapPortletTag;
 import com.liferay.taglib.ui.AssetCategoriesSummaryTag;
@@ -55,16 +41,10 @@ import com.liferay.taglib.ui.AssetLinksTag;
 import com.liferay.taglib.ui.AssetTagsSummaryTag;
 import com.liferay.taglib.ui.BreadcrumbTag;
 import com.liferay.taglib.ui.DiscussionTag;
-import com.liferay.taglib.ui.FlagsTag;
 import com.liferay.taglib.ui.IconTag;
 import com.liferay.taglib.ui.JournalArticleTag;
-import com.liferay.taglib.ui.JournalContentSearchTag;
 import com.liferay.taglib.ui.LanguageTag;
-import com.liferay.taglib.ui.MySitesTag;
-import com.liferay.taglib.ui.PngImageTag;
-import com.liferay.taglib.ui.QuickAccessTag;
 import com.liferay.taglib.ui.RatingsTag;
-import com.liferay.taglib.ui.SearchTag;
 import com.liferay.taglib.ui.SitesDirectoryTag;
 import com.liferay.taglib.ui.SocialBookmarksTag;
 import com.liferay.taglib.ui.ToggleTag;
@@ -83,6 +63,7 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.jsp.JspFactory;
 import javax.servlet.jsp.PageContext;
 
 /**
@@ -91,57 +72,43 @@ import javax.servlet.jsp.PageContext;
  */
 public class VelocityTaglibImpl implements VelocityTaglib {
 
-	public VelocityTaglibImpl() {
-	}
-
 	public VelocityTaglibImpl(
 		ServletContext servletContext, HttpServletRequest request,
-		HttpServletResponse response, PageContext pageContext,
-		Template template) {
+		HttpServletResponse response, Map<String, Object> contextObjects) {
 
-		init(servletContext, request, response, pageContext, template);
+		_servletContext = servletContext;
+		_request = request;
+		_response = response;
+		_contextObjects = contextObjects;
+
+		JspFactory jspFactory = JspFactory.getDefaultFactory();
+
+		_pageContext = jspFactory.getPageContext(
+			new JSPSupportServlet(_servletContext), _request, _response, null,
+			false, 0, false);
 	}
 
 	@Override
-	public void actionURL(long plid, String portletName, String queryString)
+	public String actionURL(long plid, String portletName, String queryString)
 		throws Exception {
 
 		String windowState = WindowState.NORMAL.toString();
 		String portletMode = PortletMode.VIEW.toString();
 
-		actionURL(windowState, portletMode, plid, portletName, queryString);
+		return actionURL(
+			windowState, portletMode, plid, portletName, queryString);
 	}
 
 	@Override
-	public void actionURL(String portletName, String queryString)
+	public String actionURL(String portletName, String queryString)
 		throws Exception {
 
-		actionURL(LayoutConstants.DEFAULT_PLID, portletName, queryString);
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #actionURL(String, String,
-	 *             Boolean, Boolean, Boolean, String, long, long, String,
-	 *             Boolean, Boolean, long, long, Boolean, String)}
-	 */
-	@Deprecated
-	@Override
-	public void actionURL(
-			String windowState, String portletMode, Boolean secure,
-			Boolean copyCurrentRenderParameters, Boolean escapeXml, String name,
-			long plid, long refererPlid, String portletName, Boolean anchor,
-			Boolean encrypt, long doAsUserId, Boolean portletConfiguration,
-			String queryString)
-		throws Exception {
-
-		actionURL(
-			windowState, portletMode, secure, copyCurrentRenderParameters,
-			escapeXml, name, plid, refererPlid, portletName, anchor, encrypt, 0,
-			doAsUserId, portletConfiguration, queryString);
+		return actionURL(
+			LayoutConstants.DEFAULT_PLID, portletName, queryString);
 	}
 
 	@Override
-	public void actionURL(
+	public String actionURL(
 			String windowState, String portletMode, Boolean secure,
 			Boolean copyCurrentRenderParameters, Boolean escapeXml, String name,
 			long plid, long refererPlid, String portletName, Boolean anchor,
@@ -149,24 +116,24 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 			Boolean portletConfiguration, String queryString)
 		throws Exception {
 
-		String var = null;
-		String varImpl = null;
 		String resourceID = null;
 		String cacheability = null;
 		Map<String, String[]> parameterMap = HttpUtil.parameterMapFromString(
 			queryString);
 		Set<String> removedParameterNames = null;
 
-		ActionURLTag.doTag(
-			PortletRequest.ACTION_PHASE, windowState, portletMode, var, varImpl,
-			secure, copyCurrentRenderParameters, escapeXml, name, resourceID,
+		PortletURL portletURL = ActionURLTag.doTag(
+			PortletRequest.ACTION_PHASE, windowState, portletMode, secure,
+			copyCurrentRenderParameters, escapeXml, name, resourceID,
 			cacheability, plid, refererPlid, portletName, anchor, encrypt,
 			doAsGroupId, doAsUserId, portletConfiguration, parameterMap,
-			removedParameterNames, _pageContext);
+			removedParameterNames, _request);
+
+		return portletURL.toString();
 	}
 
 	@Override
-	public void actionURL(
+	public String actionURL(
 			String windowState, String portletMode, long plid,
 			String portletName, String queryString)
 		throws Exception {
@@ -182,19 +149,19 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		long doAsUserId = 0;
 		Boolean portletConfiguration = null;
 
-		actionURL(
+		return actionURL(
 			windowState, portletMode, secure, copyCurrentRenderParameters,
 			escapeXml, name, plid, refererPlid, portletName, anchor, encrypt,
 			doAsGroupId, doAsUserId, portletConfiguration, queryString);
 	}
 
 	@Override
-	public void actionURL(
+	public String actionURL(
 			String windowState, String portletMode, String portletName,
 			String queryString)
 		throws Exception {
 
-		actionURL(
+		return actionURL(
 			windowState, portletMode, LayoutConstants.DEFAULT_PLID, portletName,
 			queryString);
 	}
@@ -205,8 +172,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 			PortletURL portletURL)
 		throws Exception {
 
-		AssetCategoriesSummaryTag assetCategorySummaryTag =
-			new AssetCategoriesSummaryTag();
+		AssetCategoriesSummaryTag<?> assetCategorySummaryTag =
+			new AssetCategoriesSummaryTag<>();
 
 		setUp(assetCategorySummaryTag);
 
@@ -239,7 +206,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 			String assetTagNames, PortletURL portletURL)
 		throws Exception {
 
-		AssetTagsSummaryTag assetTagsSummaryTag = new AssetTagsSummaryTag();
+		AssetTagsSummaryTag<?> assetTagsSummaryTag =
+			new AssetTagsSummaryTag<>();
 
 		setUp(assetTagsSummaryTag);
 
@@ -263,22 +231,40 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 
 	@Override
 	public void breadcrumb(
-			String displayStyle, boolean showGuestGroup,
-			boolean showParentGroups, boolean showLayout,
-			boolean showPortletBreadcrumb)
+			long ddmTemplateGroupId, String ddmTemplateKey,
+			boolean showGuestGroup, boolean showParentGroups,
+			boolean showLayout, boolean showPortletBreadcrumb)
 		throws Exception {
 
 		BreadcrumbTag breadcrumbTag = new BreadcrumbTag();
 
 		setUp(breadcrumbTag);
 
-		breadcrumbTag.setDisplayStyle(displayStyle);
+		breadcrumbTag.setDdmTemplateGroupId(ddmTemplateGroupId);
+		breadcrumbTag.setDdmTemplateKey(ddmTemplateKey);
 		breadcrumbTag.setShowGuestGroup(showGuestGroup);
 		breadcrumbTag.setShowLayout(showLayout);
 		breadcrumbTag.setShowParentGroups(showParentGroups);
 		breadcrumbTag.setShowPortletBreadcrumb(showPortletBreadcrumb);
 
 		breadcrumbTag.runTag();
+	}
+
+	/**
+	 * @deprecated As of 7.0.0, replaced by {@link #breadcrumb(long, String,
+	 *             boolean, boolean, boolean, boolean)}}
+	 */
+	@Deprecated
+	@Override
+	public void breadcrumb(
+			String ddmTemplateKey, boolean showGuestGroup,
+			boolean showParentGroups, boolean showLayout,
+			boolean showPortletBreadcrumb)
+		throws Exception {
+
+		breadcrumb(
+			0, ddmTemplateKey, showGuestGroup, showParentGroups, showLayout,
+			showPortletBreadcrumb);
 	}
 
 	@Override
@@ -304,54 +290,17 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		discussionTag.runTag();
 	}
 
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #discussion(String, long,
-	 *             String, String, boolean, boolean, String, long)})}
-	 */
-	@Deprecated
-	@Override
-	public void discussion(
-			String className, long classPK, String formAction, String formName,
-			boolean hideControls, boolean ratingsEnabled, String redirect,
-			String subject, long userId)
-		throws Exception {
-
-		discussion(
-			className, classPK, formAction, formName, hideControls,
-			ratingsEnabled, redirect, userId);
-	}
-
 	@Override
 	public void doAsURL(long doAsUserId) throws Exception {
-		DoAsURLTag.doTag(doAsUserId, null, _pageContext);
+		DoAsURLTag.doTag(doAsUserId, _request);
 	}
 
 	@Override
-	public void flags(
-			String className, long classPK, String contentTitle, boolean label,
-			String message, long reportedUserId)
+	public AssetCategoriesSummaryTag<?> getAssetCategoriesSummaryTag()
 		throws Exception {
 
-		FlagsTag flagsTag = new FlagsTag();
-
-		setUp(flagsTag);
-
-		flagsTag.setClassName(className);
-		flagsTag.setClassPK(classPK);
-		flagsTag.setContentTitle(contentTitle);
-		flagsTag.setLabel(label);
-		flagsTag.setMessage(message);
-		flagsTag.setReportedUserId(reportedUserId);
-
-		flagsTag.runTag();
-	}
-
-	@Override
-	public AssetCategoriesSummaryTag getAssetCategoriesSummaryTag()
-		throws Exception {
-
-		AssetCategoriesSummaryTag assetCategoriesSummaryTag =
-			new AssetCategoriesSummaryTag();
+		AssetCategoriesSummaryTag<?> assetCategoriesSummaryTag =
+			new AssetCategoriesSummaryTag<>();
 
 		setUp(assetCategoriesSummaryTag);
 
@@ -368,8 +317,9 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public AssetTagsSummaryTag getAssetTagsSummaryTag() throws Exception {
-		AssetTagsSummaryTag assetTagsSummaryTag = new AssetTagsSummaryTag();
+	public AssetTagsSummaryTag<?> getAssetTagsSummaryTag() throws Exception {
+		AssetTagsSummaryTag<?> assetTagsSummaryTag =
+			new AssetTagsSummaryTag<>();
 
 		setUp(assetTagsSummaryTag);
 
@@ -386,30 +336,12 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public ColumnTag getColumnTag() throws Exception {
-		ColumnTag columnTag = new ColumnTag();
-
-		setUp(columnTag);
-
-		return columnTag;
-	}
-
-	@Override
 	public DiscussionTag getDiscussionTag() throws Exception {
 		DiscussionTag discussionTag = new DiscussionTag();
 
 		setUp(discussionTag);
 
 		return discussionTag;
-	}
-
-	@Override
-	public FlagsTag getFlagsTag() throws Exception {
-		FlagsTag flagsTag = new FlagsTag();
-
-		setUp(flagsTag);
-
-		return flagsTag;
 	}
 
 	@Override
@@ -430,18 +362,14 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		return journalArticleTag;
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	@Override
-	public LayoutTag getLayoutTag() throws Exception {
-		LayoutTag layoutTag = new LayoutTag();
-
-		setUp(layoutTag);
-
-		return layoutTag;
-	}
-
-	@Override
-	public MySitesTag getMySitesTag() throws Exception {
-		MySitesTag mySitesTag = new MySitesTag();
+	public com.liferay.taglib.ui.MySitesTag getMySitesTag() throws Exception {
+		com.liferay.taglib.ui.MySitesTag mySitesTag =
+			new com.liferay.taglib.ui.MySitesTag();
 
 		setUp(mySitesTag);
 
@@ -449,21 +377,22 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public PngImageTag getPngImageTag() throws Exception {
-		PngImageTag pngImageTag = new PngImageTag();
+	public PageContext getPageContext() {
+		return _pageContext;
+	}
+
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
+	@Override
+	public com.liferay.taglib.ui.PngImageTag getPngImageTag() throws Exception {
+		com.liferay.taglib.ui.PngImageTag pngImageTag =
+			new com.liferay.taglib.ui.PngImageTag();
 
 		setUp(pngImageTag);
 
 		return pngImageTag;
-	}
-
-	@Override
-	public QuickAccessTag getQuickAccessTag() throws Exception {
-		QuickAccessTag quickAccessTag = new QuickAccessTag();
-
-		setUp(quickAccessTag);
-
-		return quickAccessTag;
 	}
 
 	@Override
@@ -504,69 +433,6 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		iconTag.runTag();
 	}
 
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #iconBack}
-	 */
-	@Deprecated
-	@Override
-	public void iconBack() throws Exception {
-		portletIconBack();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconClose}
-	 */
-	@Deprecated
-	@Override
-	public void iconClose() throws Exception {
-		portletIconClose();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconConfiguration}
-	 */
-	@Deprecated
-	@Override
-	public void iconConfiguration() throws Exception {
-		portletIconConfiguration();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconEdit}
-	 */
-	@Deprecated
-	@Override
-	public void iconEdit() throws Exception {
-		portletIconEdit();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconEditDefaults}
-	 */
-	@Deprecated
-	@Override
-	public void iconEditDefaults() throws Exception {
-		portletIconEditDefaults();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconEditGuest}
-	 */
-	@Deprecated
-	@Override
-	public void iconEditGuest() throws Exception {
-		portletIconEditGuest();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconHelp}
-	 */
-	@Deprecated
-	@Override
-	public void iconHelp() throws Exception {
-		portletIconHelp();
-	}
-
 	@Override
 	public void iconHelp(String message) throws Exception {
 		com.liferay.taglib.ui.IconHelpTag iconHelpTag =
@@ -577,78 +443,6 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		iconHelpTag.setMessage(message);
 
 		iconHelpTag.runTag();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconMaximize}
-	 */
-	@Deprecated
-	@Override
-	public void iconMaximize() throws Exception {
-		portletIconMaximize();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconMinimize}
-	 */
-	@Deprecated
-	@Override
-	public void iconMinimize() throws Exception {
-		portletIconMinimize();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconOptions}
-	 */
-	@Deprecated
-	@Override
-	public void iconOptions() throws Exception {
-		portletIconOptions();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconPortlet}
-	 */
-	@Deprecated
-	@Override
-	public void iconPortlet() throws Exception {
-		portletIconPortlet();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconPortlet(Portlet)}
-	 */
-	@Deprecated
-	@Override
-	public void iconPortlet(Portlet portlet) throws Exception {
-		portletIconPortlet();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconPortletCss}
-	 */
-	@Deprecated
-	@Override
-	public void iconPortletCss() throws Exception {
-		portletIconPortletCss();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconPrint}
-	 */
-	@Deprecated
-	@Override
-	public void iconPrint() throws Exception {
-		portletIconPrint();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #portletIconRefresh}
-	 */
-	@Deprecated
-	@Override
-	public void iconRefresh() throws Exception {
-		portletIconRefresh();
 	}
 
 	@Override
@@ -672,7 +466,7 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 
 	@Override
 	public void journalArticle(
-			String articleId, long groupId, String templateId)
+			String articleId, long groupId, String ddmTemplateKey)
 		throws Exception {
 
 		JournalArticleTag journalArticleTag = new JournalArticleTag();
@@ -682,29 +476,31 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		journalArticleTag.setArticleId(articleId);
 		journalArticleTag.setGroupId(groupId);
 		journalArticleTag.setLanguageId(LanguageUtil.getLanguageId(_request));
-		journalArticleTag.setTemplateId(templateId);
+		journalArticleTag.setDDMTemplateKey(ddmTemplateKey);
 
 		journalArticleTag.runTag();
 	}
 
 	@Override
 	public void journalContentSearch() throws Exception {
-		journalContentSearch(true, null, null);
+		journalContentSearch(true, null);
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	@Override
-	public void journalContentSearch(
-			boolean showListed, String targetPortletId, String type)
+	public void journalContentSearch(boolean showListed, String targetPortletId)
 		throws Exception {
 
-		JournalContentSearchTag journalContentSearchTag =
-			new JournalContentSearchTag();
+		com.liferay.taglib.ui.JournalContentSearchTag journalContentSearchTag =
+			new com.liferay.taglib.ui.JournalContentSearchTag();
 
 		setUp(journalContentSearchTag);
 
 		journalContentSearchTag.setShowListed(showListed);
 		journalContentSearchTag.setTargetPortletId(targetPortletId);
-		journalContentSearchTag.setType(type);
 
 		journalContentSearchTag.runTag();
 	}
@@ -720,14 +516,15 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 
 	@Override
 	public void language(
-			String formName, String formAction, String name, int displayStyle)
+			String formName, String formAction, String name,
+			String ddmTemplateKey)
 		throws Exception {
 
 		LanguageTag languageTag = new LanguageTag();
 
 		setUp(languageTag);
 
-		languageTag.setDisplayStyle(displayStyle);
+		languageTag.setDdmTemplateKey(ddmTemplateKey);
 		languageTag.setFormAction(formAction);
 		languageTag.setFormName(formName);
 		languageTag.setName(name);
@@ -738,14 +535,14 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	@Override
 	public void language(
 			String formName, String formAction, String name,
-			String[] languageIds, int displayStyle)
+			String[] languageIds, String ddmTemplateKey)
 		throws Exception {
 
 		LanguageTag languageTag = new LanguageTag();
 
 		setUp(languageTag);
 
-		languageTag.setDisplayStyle(displayStyle);
+		languageTag.setDdmTemplateKey(ddmTemplateKey);
 		languageTag.setFormAction(formAction);
 		languageTag.setFormName(formName);
 		languageTag.setLanguageIds(languageIds);
@@ -754,9 +551,14 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		languageTag.runTag();
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public void layoutIcon(Layout layout) throws Exception {
-		LayoutIconTag.doTag(layout, _servletContext, _request, _response);
+		com.liferay.taglib.theme.LayoutIconTag.doTag(
+			layout, _servletContext, _request, _response);
 	}
 
 	@Override
@@ -765,35 +567,27 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #mySites}
+	 * @deprecated As of 7.0.0, with no direct replacement
 	 */
 	@Deprecated
-	@Override
-	public void myPlaces() throws Exception {
-		mySites();
-	}
-
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #mySites(int)}
-	 */
-	@Deprecated
-	@Override
-	public void myPlaces(int max) throws Exception {
-		mySites(max);
-	}
-
 	@Override
 	public void mySites() throws Exception {
-		MySitesTag mySitesTag = new MySitesTag();
+		com.liferay.taglib.ui.MySitesTag mySitesTag =
+			new com.liferay.taglib.ui.MySitesTag();
 
 		setUp(mySitesTag);
 
 		mySitesTag.runTag();
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public void mySites(int max) throws Exception {
-		MySitesTag mySitesTag = new MySitesTag();
+		com.liferay.taglib.ui.MySitesTag mySitesTag =
+			new com.liferay.taglib.ui.MySitesTag();
 
 		setUp(mySitesTag);
 
@@ -803,37 +597,25 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public void permissionsURL(
+	public String permissionsURL(
 			String redirect, String modelResource,
 			String modelResourceDescription, Object resourceGroupId,
 			String resourcePrimKey, String windowState, int[] roleTypes)
 		throws Exception {
 
-		PermissionsURLTag.doTag(
+		return PermissionsURLTag.doTag(
 			redirect, modelResource, modelResourceDescription, resourceGroupId,
-			resourcePrimKey, windowState, null, roleTypes, _pageContext);
+			resourcePrimKey, windowState, roleTypes, _request);
 	}
 
 	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #permissionsURL(String,
-	 *             String, String, Object, String, String, int[])}
+	 * @deprecated As of 7.0.0, with no direct replacement
 	 */
 	@Deprecated
 	@Override
-	public void permissionsURL(
-			String redirect, String modelResource,
-			String modelResourceDescription, String resourcePrimKey,
-			String windowState, int[] roleTypes)
-		throws Exception {
-
-		permissionsURL(
-			redirect, modelResourceDescription, modelResourceDescription, null,
-			resourcePrimKey, windowState, roleTypes);
-	}
-
-	@Override
 	public void portletIconBack() throws Exception {
-		IconBackTag iconBackTag = new IconBackTag();
+		com.liferay.taglib.portletext.IconBackTag iconBackTag =
+			new com.liferay.taglib.portletext.IconBackTag();
 
 		setUp(iconBackTag);
 
@@ -841,82 +623,24 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public void portletIconClose() throws Exception {
-		IconCloseTag iconCloseTag = new IconCloseTag();
-
-		setUp(iconCloseTag);
-
-		iconCloseTag.runTag();
-	}
-
-	@Override
-	public void portletIconConfiguration() throws Exception {
-		IconConfigurationTag iconConfigurationTag = new IconConfigurationTag();
-
-		setUp(iconConfigurationTag);
-
-		iconConfigurationTag.runTag();
-	}
-
-	@Override
-	public void portletIconEdit() throws Exception {
-		IconEditTag iconEditTag = new IconEditTag();
-
-		setUp(iconEditTag);
-
-		iconEditTag.runTag();
-	}
-
-	@Override
-	public void portletIconEditDefaults() throws Exception {
-		IconEditDefaultsTag iconEditDefaultsTag = new IconEditDefaultsTag();
-
-		setUp(iconEditDefaultsTag);
-
-		iconEditDefaultsTag.runTag();
-	}
-
-	@Override
-	public void portletIconEditGuest() throws Exception {
-		IconEditGuestTag iconEditGuestTag = new IconEditGuestTag();
-
-		setUp(iconEditGuestTag);
-
-		iconEditGuestTag.runTag();
-	}
-
-	@Override
-	public void portletIconHelp() throws Exception {
-		IconHelpTag iconHelpTag = new IconHelpTag();
-
-		setUp(iconHelpTag);
-
-		iconHelpTag.runTag();
-	}
-
-	@Override
-	public void portletIconMaximize() throws Exception {
-		IconMaximizeTag iconMaximizeTag = new IconMaximizeTag();
-
-		setUp(iconMaximizeTag);
-
-		iconMaximizeTag.runTag();
-	}
-
-	@Override
-	public void portletIconMinimize() throws Exception {
-		IconMinimizeTag iconMinimizeTag = new IconMinimizeTag();
-
-		setUp(iconMinimizeTag);
-
-		iconMinimizeTag.runTag();
-	}
-
-	@Override
 	public void portletIconOptions() throws Exception {
 		IconOptionsTag iconOptionsTag = new IconOptionsTag();
 
 		setUp(iconOptionsTag);
+
+		iconOptionsTag.runTag();
+	}
+
+	@Override
+	public void portletIconOptions(String direction, String markupView)
+		throws Exception {
+
+		IconOptionsTag iconOptionsTag = new IconOptionsTag();
+
+		setUp(iconOptionsTag);
+
+		iconOptionsTag.setDirection(direction);
+		iconOptionsTag.setMarkupView(markupView);
 
 		iconOptionsTag.runTag();
 	}
@@ -942,53 +666,6 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public void portletIconPortletCss() throws Exception {
-		IconPortletCssTag iconPortletCssTag = new IconPortletCssTag();
-
-		setUp(iconPortletCssTag);
-
-		iconPortletCssTag.runTag();
-	}
-
-	@Override
-	public void portletIconPrint() throws Exception {
-		IconPrintTag iconPrintTag = new IconPrintTag();
-
-		setUp(iconPrintTag);
-
-		iconPrintTag.runTag();
-	}
-
-	@Override
-	public void portletIconRefresh() throws Exception {
-		IconRefreshTag iconRefreshTag = new IconRefreshTag();
-
-		setUp(iconRefreshTag);
-
-		iconRefreshTag.runTag();
-	}
-
-	@Override
-	public void quickAccess() throws Exception {
-		QuickAccessTag quickAccessTag = new QuickAccessTag();
-
-		setUp(quickAccessTag);
-
-		quickAccessTag.runTag();
-	}
-
-	@Override
-	public void quickAccess(String contentId) throws Exception {
-		QuickAccessTag quickAccessTag = new QuickAccessTag();
-
-		setUp(quickAccessTag);
-
-		quickAccessTag.setContentId(contentId);
-
-		quickAccessTag.runTag();
-	}
-
-	@Override
 	public void ratings(
 			String className, long classPK, int numberOfStars, String type,
 			String url)
@@ -1008,24 +685,26 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	@Override
-	public void renderURL(long plid, String portletName, String queryString)
+	public String renderURL(long plid, String portletName, String queryString)
 		throws Exception {
 
 		String windowState = WindowState.NORMAL.toString();
 		String portletMode = PortletMode.VIEW.toString();
 
-		renderURL(windowState, portletMode, plid, portletName, queryString);
+		return renderURL(
+			windowState, portletMode, plid, portletName, queryString);
 	}
 
 	@Override
-	public void renderURL(String portletName, String queryString)
+	public String renderURL(String portletName, String queryString)
 		throws Exception {
 
-		renderURL(LayoutConstants.DEFAULT_PLID, portletName, queryString);
+		return renderURL(
+			LayoutConstants.DEFAULT_PLID, portletName, queryString);
 	}
 
 	@Override
-	public void renderURL(
+	public String renderURL(
 			String windowState, String portletMode, Boolean secure,
 			Boolean copyCurrentRenderParameters, Boolean escapeXml, long plid,
 			long refererPlid, String portletName, Boolean anchor,
@@ -1033,8 +712,6 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 			Boolean portletConfiguration, String queryString)
 		throws Exception {
 
-		String var = null;
-		String varImpl = null;
 		String name = null;
 		String resourceID = null;
 		String cacheability = null;
@@ -1042,38 +719,18 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 			queryString);
 		Set<String> removedParameterNames = null;
 
-		ActionURLTag.doTag(
-			PortletRequest.RENDER_PHASE, windowState, portletMode, var, varImpl,
-			secure, copyCurrentRenderParameters, escapeXml, name, resourceID,
+		PortletURL portletURL = ActionURLTag.doTag(
+			PortletRequest.RENDER_PHASE, windowState, portletMode, secure,
+			copyCurrentRenderParameters, escapeXml, name, resourceID,
 			cacheability, plid, refererPlid, portletName, anchor, encrypt,
 			doAsGroupId, doAsUserId, portletConfiguration, parameterMap,
-			removedParameterNames, _pageContext);
-	}
+			removedParameterNames, _request);
 
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #renderURL(String, String,
-	 *             Boolean, Boolean, Boolean, long, long, String, Boolean,
-	 *             Boolean, long, long, Boolean, String)}
-	 */
-	@Deprecated
-	@Override
-	public void renderURL(
-			String windowState, String portletMode, Boolean secure,
-			Boolean copyCurrentRenderParameters, Boolean escapeXml, long plid,
-			String portletName, Boolean anchor, Boolean encrypt,
-			long doAsUserId, Boolean portletConfiguration, String queryString)
-		throws Exception {
-
-		long refererPlid = LayoutConstants.DEFAULT_PLID;
-
-		renderURL(
-			windowState, portletMode, secure, copyCurrentRenderParameters,
-			escapeXml, plid, refererPlid, portletName, anchor, encrypt, 0,
-			doAsUserId, portletConfiguration, queryString);
+		return portletURL.toString();
 	}
 
 	@Override
-	public void renderURL(
+	public String renderURL(
 			String windowState, String portletMode, long plid,
 			String portletName, String queryString)
 		throws Exception {
@@ -1088,33 +745,68 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		long doAsUserId = 0;
 		Boolean portletConfiguration = null;
 
-		renderURL(
+		return renderURL(
 			windowState, portletMode, secure, copyCurrentRenderParameters,
 			escapeXml, plid, referPlid, portletName, anchor, encrypt,
 			doAsGroupId, doAsUserId, portletConfiguration, queryString);
 	}
 
 	@Override
-	public void renderURL(
+	public String renderURL(
 			String windowState, String portletMode, String portletName,
 			String queryString)
 		throws Exception {
 
-		renderURL(
+		return renderURL(
 			windowState, portletMode, LayoutConstants.DEFAULT_PLID, portletName,
 			queryString);
 	}
 
 	@Override
 	public void runtime(String portletName) throws Exception {
-		runtime(portletName, null);
+		runtime(portletName, (String)null);
+	}
+
+	@Override
+	public void runtime(
+			String portletProviderClassName,
+			PortletProvider.Action portletProviderAction)
+		throws Exception {
+
+		RuntimeTag.doTag(
+			portletProviderClassName, portletProviderAction, StringPool.BLANK,
+			null, null, true, _pageContext, _request, _response);
+	}
+
+	@Override
+	public void runtime(
+			String portletProviderClassName,
+			PortletProvider.Action portletProviderAction, String instanceId)
+		throws Exception {
+
+		RuntimeTag.doTag(
+			portletProviderClassName, portletProviderAction, instanceId, null,
+			null, true, _pageContext, _request, _response);
+	}
+
+	@Override
+	public void runtime(
+			String portletProviderClassName,
+			PortletProvider.Action portletProviderAction, String instanceId,
+			String defaultPreferences)
+		throws Exception {
+
+		RuntimeTag.doTag(
+			portletProviderClassName, portletProviderAction, instanceId, null,
+			defaultPreferences, true, _pageContext, _request, _response);
 	}
 
 	@Override
 	public void runtime(String portletName, String queryString)
 		throws Exception {
 
-		RuntimeTag.doTag(portletName, queryString, null, _request, _response);
+		RuntimeTag.doTag(
+			portletName, queryString, _pageContext, _request, _response);
 	}
 
 	@Override
@@ -1123,22 +815,33 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		throws Exception {
 
 		RuntimeTag.doTag(
-			portletName, queryString, defaultPreferences, null, _request,
-			_response);
+			portletName, queryString, defaultPreferences, _pageContext,
+			_request, _response);
 	}
 
 	@Override
+	public void runtime(
+			String portletName, String instanceId, String queryString,
+			String defaultPreferences)
+		throws Exception {
+
+		RuntimeTag.doTag(
+			portletName, instanceId, queryString, defaultPreferences,
+			_pageContext, _request, _response);
+	}
+
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
+	@Override
 	public void search() throws Exception {
-		SearchTag searchTag = new SearchTag();
+		com.liferay.taglib.ui.SearchTag searchTag =
+			new com.liferay.taglib.ui.SearchTag();
 
 		setUp(searchTag);
 
 		searchTag.runTag();
-	}
-
-	@Override
-	public void setTemplate(Template template) {
-		_template = template;
 	}
 
 	@Override
@@ -1184,20 +887,11 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 	}
 
 	/**
-	 * @deprecated As of 7.0.0, replaced by {@link #stagingMenu}
+	 * @deprecated As of 7.0.0, with no direct replacement
 	 */
+	@Deprecated
 	@Override
 	public void staging() throws Exception {
-		stagingMenu();
-	}
-
-	@Override
-	public void stagingMenu() throws Exception {
-		MenuTag menuTag = new MenuTag();
-
-		setUp(menuTag);
-
-		menuTag.runTag();
 	}
 
 	@Override
@@ -1216,29 +910,14 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		throws Exception {
 
 		return WrapPortletTag.doTag(
-			wrapPage, portletPage, _servletContext, _request, _response,
-			_pageContext);
-	}
-
-	protected VelocityTaglibImpl init(
-		ServletContext servletContext, HttpServletRequest request,
-		HttpServletResponse response, PageContext pageContext,
-		Template template) {
-
-		_servletContext = servletContext;
-		_request = request;
-		_response = response;
-		_pageContext = pageContext;
-		_template = template;
-
-		return this;
+			wrapPage, portletPage, _servletContext, _request, _response);
 	}
 
 	protected void setUp(TagSupport tagSupport) throws Exception {
 		Writer writer = null;
 
-		if (_template != null) {
-			writer = (Writer)_template.get(TemplateConstants.WRITER);
+		if (_contextObjects != null) {
+			writer = (Writer)_contextObjects.get(TemplateConstants.WRITER);
 		}
 
 		if (writer == null) {
@@ -1248,10 +927,10 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		tagSupport.setPageContext(new PipingPageContext(_pageContext, writer));
 	}
 
-	private PageContext _pageContext;
-	private HttpServletRequest _request;
-	private HttpServletResponse _response;
-	private ServletContext _servletContext;
-	private Template _template;
+	private final Map<String, Object> _contextObjects;
+	private final PageContext _pageContext;
+	private final HttpServletRequest _request;
+	private final HttpServletResponse _response;
+	private final ServletContext _servletContext;
 
 }

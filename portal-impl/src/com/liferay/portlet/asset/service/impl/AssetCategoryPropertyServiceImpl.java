@@ -14,13 +14,15 @@
 
 package com.liferay.portlet.asset.service.impl;
 
+import com.liferay.asset.kernel.model.AssetCategoryProperty;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portlet.asset.model.AssetCategoryProperty;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portlet.asset.service.base.AssetCategoryPropertyServiceBaseImpl;
 import com.liferay.portlet.asset.service.permission.AssetCategoryPermission;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,7 +35,7 @@ public class AssetCategoryPropertyServiceImpl
 	@Override
 	public AssetCategoryProperty addCategoryProperty(
 			long entryId, String key, String value)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		AssetCategoryPermission.check(
 			getPermissionChecker(), entryId, ActionKeys.UPDATE);
@@ -44,7 +46,7 @@ public class AssetCategoryPropertyServiceImpl
 
 	@Override
 	public void deleteCategoryProperty(long categoryPropertyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		AssetCategoryProperty assetCategoryProperty =
 			assetCategoryPropertyLocalService.getAssetCategoryProperty(
@@ -59,25 +61,40 @@ public class AssetCategoryPropertyServiceImpl
 	}
 
 	@Override
-	public List<AssetCategoryProperty> getCategoryProperties(long entryId)
-		throws SystemException {
+	public List<AssetCategoryProperty> getCategoryProperties(long entryId) {
+		try {
+			if (AssetCategoryPermission.contains(
+					getPermissionChecker(), entryId, ActionKeys.VIEW)) {
 
-		return assetCategoryPropertyLocalService.getCategoryProperties(entryId);
+				return assetCategoryPropertyLocalService.getCategoryProperties(
+					entryId);
+			}
+		}
+		catch (PortalException pe) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Unable to get asset category property for asset entry " +
+						entryId,
+					pe);
+			}
+		}
+
+		return new ArrayList<>();
 	}
 
 	@Override
 	public List<AssetCategoryProperty> getCategoryPropertyValues(
-			long companyId, String key)
-		throws SystemException {
+		long companyId, String key) {
 
-		return assetCategoryPropertyLocalService.getCategoryPropertyValues(
-			companyId, key);
+		return filterAssetCategoryProperties(
+			assetCategoryPropertyLocalService.getCategoryPropertyValues(
+				companyId, key));
 	}
 
 	@Override
 	public AssetCategoryProperty updateCategoryProperty(
 			long userId, long categoryPropertyId, String key, String value)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		AssetCategoryProperty assetCategoryProperty =
 			assetCategoryPropertyLocalService.getAssetCategoryProperty(
@@ -94,9 +111,43 @@ public class AssetCategoryPropertyServiceImpl
 	@Override
 	public AssetCategoryProperty updateCategoryProperty(
 			long categoryPropertyId, String key, String value)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		return updateCategoryProperty(0, categoryPropertyId, key, value);
 	}
+
+	protected List<AssetCategoryProperty> filterAssetCategoryProperties(
+		List<AssetCategoryProperty> assetCategoryProperties) {
+
+		List<AssetCategoryProperty> filteredAssetCategoryProperties =
+			new ArrayList<>(assetCategoryProperties.size());
+
+		for (AssetCategoryProperty assetCategoryProperty :
+				assetCategoryProperties) {
+
+			try {
+				if (AssetCategoryPermission.contains(
+						getPermissionChecker(),
+						assetCategoryProperty.getCategoryId(),
+						ActionKeys.VIEW)) {
+
+					filteredAssetCategoryProperties.add(assetCategoryProperty);
+				}
+			}
+			catch (PortalException pe) {
+
+				// LPS-52675
+
+				if (_log.isDebugEnabled()) {
+					_log.debug(pe, pe);
+				}
+			}
+		}
+
+		return filteredAssetCategoryProperties;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		AssetCategoryPropertyServiceImpl.class);
 
 }

@@ -23,8 +23,6 @@ import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermissio
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.ReflectionUtil;
 import com.liferay.portal.security.lang.DoPrivilegedBean;
-import com.liferay.portal.service.ResourceService;
-import com.liferay.portal.service.persistence.ResourcePersistence;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,7 +35,6 @@ import org.springframework.context.support.AbstractApplicationContext;
  * @author Miguel Pastor
  */
 @DoPrivileged
-@SuppressWarnings("deprecation")
 public class BeanLocatorImpl implements BeanLocator {
 
 	public static final String VELOCITY_SUFFIX = ".velocity";
@@ -111,27 +108,6 @@ public class BeanLocatorImpl implements BeanLocator {
 			throw se;
 		}
 		catch (Exception e) {
-			Object bean = _deprecatedBeans.get(name);
-
-			if (bean != null) {
-				return bean;
-			}
-
-			if (name.equals(ResourcePersistence.class.getName())) {
-				bean = new ResourcePersistence() {};
-
-				_deprecatedBeans.put(name, bean);
-
-				return bean;
-			}
-			else if (name.equals(ResourceService.class.getName())) {
-				bean = new ResourceService() {};
-
-				_deprecatedBeans.put(name, bean);
-
-				return bean;
-			}
-
 			throw new BeanLocatorException(e);
 		}
 	}
@@ -140,7 +116,7 @@ public class BeanLocatorImpl implements BeanLocator {
 		_paclServletContextName = paclServletContextName;
 	}
 
-	public static interface PACL {
+	public interface PACL {
 
 		public Object getBean(Object bean, ClassLoader classLoader);
 
@@ -204,17 +180,16 @@ public class BeanLocatorImpl implements BeanLocator {
 		return _pacl.getBean(bean, _classLoader);
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(BeanLocatorImpl.class);
+	private static final Log _log = LogFactoryUtil.getLog(
+		BeanLocatorImpl.class);
 
-	private static PACL _pacl = new NoPACL();
+	private static final PACL _pacl = new NoPACL();
 
 	private ApplicationContext _applicationContext;
-	private ClassLoader _classLoader;
-	private Map<String, Object> _deprecatedBeans =
-		new ConcurrentHashMap<String, Object>();
+	private final ClassLoader _classLoader;
 	private String _paclServletContextName;
-	private Map<String, Object> _velocityBeans =
-		new ConcurrentHashMap<String, Object>();
+	private final Map<String, Object> _velocityBeans =
+		new ConcurrentHashMap<>();
 
 	private static class NoPACL implements PACL {
 

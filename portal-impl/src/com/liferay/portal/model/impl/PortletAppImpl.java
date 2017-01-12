@@ -14,19 +14,19 @@
 
 package com.liferay.portal.model.impl;
 
+import com.liferay.portal.kernel.model.EventDefinition;
+import com.liferay.portal.kernel.model.Portlet;
+import com.liferay.portal.kernel.model.PortletApp;
+import com.liferay.portal.kernel.model.PortletFilter;
+import com.liferay.portal.kernel.model.PortletURLListener;
+import com.liferay.portal.kernel.model.PublicRenderParameter;
+import com.liferay.portal.kernel.model.SpriteImage;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.UniqueList;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.QName;
-import com.liferay.portal.model.EventDefinition;
-import com.liferay.portal.model.Portlet;
-import com.liferay.portal.model.PortletApp;
-import com.liferay.portal.model.PortletFilter;
-import com.liferay.portal.model.PortletURLListener;
-import com.liferay.portal.model.PublicRenderParameter;
-import com.liferay.portal.model.SpriteImage;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import javax.servlet.ServletContext;
 
 import javax.xml.XMLConstants;
 
@@ -136,7 +138,7 @@ public class PortletAppImpl implements PortletApp {
 
 	@Override
 	public List<Portlet> getPortlets() {
-		return _portlets;
+		return new ArrayList<>(_portlets);
 	}
 
 	@Override
@@ -152,6 +154,11 @@ public class PortletAppImpl implements PortletApp {
 	@Override
 	public PublicRenderParameter getPublicRenderParameter(String identifier) {
 		return _publicRenderParametersByIdentifier.get(identifier);
+	}
+
+	@Override
+	public ServletContext getServletContext() {
+		return _servletContext;
 	}
 
 	@Override
@@ -180,8 +187,20 @@ public class PortletAppImpl implements PortletApp {
 	}
 
 	@Override
+	public void removePortlet(Portlet portletModel) {
+		_portlets.remove(portletModel);
+	}
+
+	@Override
 	public void setDefaultNamespace(String defaultNamespace) {
 		_defaultNamespace = defaultNamespace;
+	}
+
+	@Override
+	public void setServletContext(ServletContext servletContext) {
+		_servletContext = servletContext;
+
+		_contextPath = _servletContext.getContextPath();
 	}
 
 	@Override
@@ -208,32 +227,29 @@ public class PortletAppImpl implements PortletApp {
 		_warFile = warFile;
 	}
 
-	private Map<String, String[]> _containerRuntimeOptions =
-		new HashMap<String, String[]>();
+	private final Map<String, String[]> _containerRuntimeOptions =
+		new HashMap<>();
 	private String _contextPath = StringPool.BLANK;
-	private Map<String, String> _customUserAttributes =
-		new LinkedHashMap<String, String>();
+	private final Map<String, String> _customUserAttributes =
+		new LinkedHashMap<>();
 	private String _defaultNamespace = XMLConstants.NULL_NS_URI;
-	private Set<EventDefinition> _eventDefinitions =
-		new LinkedHashSet<EventDefinition>();
-	private Set<PortletFilter> _portletFilters =
-		new LinkedHashSet<PortletFilter>();
-	private Map<String, PortletFilter> _portletFiltersByFilterName =
-		new HashMap<String, PortletFilter>();
-	private List<Portlet> _portlets = new UniqueList<Portlet>();
-	private Set<PortletURLListener> _portletURLListeners =
-		new LinkedHashSet<PortletURLListener>();
-	private Map<String, PortletURLListener>
-		_portletURLListenersByListenerClass =
-			new HashMap<String, PortletURLListener>();
-	private Map<String, PublicRenderParameter>
-		_publicRenderParametersByIdentifier =
-			new HashMap<String, PublicRenderParameter>();
-	private String _servletContextName = StringPool.BLANK;
-	private Set<String> _servletURLPatterns = new LinkedHashSet<String>();
-	private Map<String, SpriteImage> _spriteImagesMap =
-		new HashMap<String, SpriteImage>();
-	private Set<String> _userAttributes = new LinkedHashSet<String>();
+	private final Set<EventDefinition> _eventDefinitions =
+		new LinkedHashSet<>();
+	private final Set<PortletFilter> _portletFilters = new LinkedHashSet<>();
+	private final Map<String, PortletFilter> _portletFiltersByFilterName =
+		new HashMap<>();
+	private final Set<Portlet> _portlets = new LinkedHashSet<>();
+	private final Set<PortletURLListener> _portletURLListeners =
+		new LinkedHashSet<>();
+	private final Map<String, PortletURLListener>
+		_portletURLListenersByListenerClass = new HashMap<>();
+	private final Map<String, PublicRenderParameter>
+		_publicRenderParametersByIdentifier = new HashMap<>();
+	private ServletContext _servletContext;
+	private final String _servletContextName;
+	private final Set<String> _servletURLPatterns = new LinkedHashSet<>();
+	private final Map<String, SpriteImage> _spriteImagesMap = new HashMap<>();
+	private final Set<String> _userAttributes = new LinkedHashSet<>();
 	private boolean _warFile;
 
 }

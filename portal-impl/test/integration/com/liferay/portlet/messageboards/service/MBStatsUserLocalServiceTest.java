@@ -14,44 +14,38 @@
 
 package com.liferay.portlet.messageboards.service;
 
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.kernel.transaction.Transactional;
-import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.message.boards.kernel.model.MBCategoryConstants;
+import com.liferay.message.boards.kernel.model.MBMessage;
+import com.liferay.message.boards.kernel.model.MBStatsUser;
+import com.liferay.message.boards.kernel.service.MBMessageLocalServiceUtil;
+import com.liferay.message.boards.kernel.service.MBStatsUserLocalServiceUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.MainServletExecutionTestListener;
-import com.liferay.portal.test.TransactionalCallbackAwareExecutionTestListener;
-import com.liferay.portal.util.GroupTestUtil;
-import com.liferay.portal.util.TestPropsValues;
-import com.liferay.portlet.messageboards.model.MBCategoryConstants;
-import com.liferay.portlet.messageboards.model.MBMessage;
-import com.liferay.portlet.messageboards.model.MBStatsUser;
-import com.liferay.portlet.messageboards.util.MBTestUtil;
-
-import java.io.InputStream;
-
-import java.util.Collections;
-import java.util.List;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portlet.messageboards.util.test.MBTestUtil;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Roberto Díaz
  */
-@ExecutionTestListeners(
-	listeners = {
-		MainServletExecutionTestListener.class,
-		TransactionalCallbackAwareExecutionTestListener.class
-	})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
-@Transactional
 public class MBStatsUserLocalServiceTest {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Before
 	public void setUp() throws Exception {
@@ -62,7 +56,7 @@ public class MBStatsUserLocalServiceTest {
 	public void testUpdateStatsUserWhenAddingDraftMessage() throws Exception {
 		int initialStatsUserMessageCount = getStatsUserMessageCount();
 
-		addMessage(WorkflowConstants.ACTION_SAVE_DRAFT);
+		addMessage(false);
 
 		Assert.assertEquals(
 			initialStatsUserMessageCount, getStatsUserMessageCount());
@@ -74,7 +68,7 @@ public class MBStatsUserLocalServiceTest {
 
 		int initialStatsUserMessageCount = getStatsUserMessageCount();
 
-		addMessage(WorkflowConstants.ACTION_PUBLISH);
+		addMessage(true);
 
 		Assert.assertEquals(
 			initialStatsUserMessageCount + 1, getStatsUserMessageCount());
@@ -84,7 +78,7 @@ public class MBStatsUserLocalServiceTest {
 	public void testUpdateStatsUserWhenDeletingDraftMessage() throws Exception {
 		int initialStatsUserMessageCount = getStatsUserMessageCount();
 
-		addMessage(WorkflowConstants.ACTION_SAVE_DRAFT);
+		addMessage(false);
 
 		MBMessageLocalServiceUtil.deleteMessage(_message.getMessageId());
 
@@ -98,7 +92,7 @@ public class MBStatsUserLocalServiceTest {
 
 		int initialStatsUserMessageCount = getStatsUserMessageCount();
 
-		addMessage(WorkflowConstants.ACTION_PUBLISH);
+		addMessage(true);
 
 		MBMessageLocalServiceUtil.deleteMessage(_message.getMessageId());
 
@@ -112,7 +106,7 @@ public class MBStatsUserLocalServiceTest {
 
 		int initialStatsUserMessageCount = getStatsUserMessageCount();
 
-		addMessage(WorkflowConstants.ACTION_SAVE_DRAFT);
+		addMessage(false);
 
 		updateMessage(WorkflowConstants.ACTION_PUBLISH);
 
@@ -126,7 +120,7 @@ public class MBStatsUserLocalServiceTest {
 
 		int initialStatsUserMessageCount = getStatsUserMessageCount();
 
-		addMessage(WorkflowConstants.ACTION_PUBLISH);
+		addMessage(true);
 
 		updateMessage(WorkflowConstants.ACTION_PUBLISH);
 
@@ -140,7 +134,7 @@ public class MBStatsUserLocalServiceTest {
 
 		int initialStatsUserMessageCount = getStatsUserMessageCount();
 
-		addMessage(WorkflowConstants.ACTION_SAVE_DRAFT);
+		addMessage(false);
 
 		updateMessage(WorkflowConstants.ACTION_SAVE_DRAFT);
 
@@ -154,7 +148,7 @@ public class MBStatsUserLocalServiceTest {
 
 		int initialStatsUserMessageCount = getStatsUserMessageCount();
 
-		addMessage(WorkflowConstants.ACTION_PUBLISH);
+		addMessage(true);
 
 		updateMessage(WorkflowConstants.ACTION_SAVE_DRAFT);
 
@@ -162,10 +156,16 @@ public class MBStatsUserLocalServiceTest {
 			initialStatsUserMessageCount, getStatsUserMessageCount());
 	}
 
-	protected void addMessage(int workflowAction) throws Exception {
+	protected void addMessage(boolean approved) throws Exception {
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId());
+
 		_message = MBTestUtil.addMessageWithWorkflow(
-			_group.getGroupId(), MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID,
-			workflowAction == WorkflowConstants.ACTION_PUBLISH);
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			approved, serviceContext);
 	}
 
 	protected int getStatsUserMessageCount() throws Exception {
@@ -176,23 +176,20 @@ public class MBStatsUserLocalServiceTest {
 	}
 
 	protected void updateMessage(int workflowAction) throws Exception {
-		List<ObjectValuePair<String, InputStream>> inputStreamOVPs =
-			Collections.emptyList();
-		List<String> existingFiles = Collections.emptyList();
-
-		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
-			_group.getGroupId());
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId());
 
 		serviceContext.setWorkflowAction(workflowAction);
 
 		_message = MBMessageLocalServiceUtil.updateMessage(
 			TestPropsValues.getUserId(), _message.getMessageId(),
-			_message.getSubject(), _message.getBody(), inputStreamOVPs,
-			existingFiles, _message.getPriority(), _message.getAllowPingbacks(),
-			serviceContext);
+			_message.getBody(), serviceContext);
 	}
 
+	@DeleteAfterTestRun
 	private Group _group;
+
 	private MBMessage _message;
 
 }

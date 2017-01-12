@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.servlet.taglib.aui.ValidatorTag;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.taglib.aui.base.BaseFormTag;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,8 @@ public class FormTag extends BaseFormTag {
 	protected void cleanUp() {
 		super.cleanUp();
 
+		_checkboxNames.clear();
+
 		if (_validatorTagsMap != null) {
 			for (List<ValidatorTag> validatorTags :
 					_validatorTagsMap.values()) {
@@ -77,11 +80,14 @@ public class FormTag extends BaseFormTag {
 		}
 
 		request.setAttribute("aui:form:validatorTagsMap", _validatorTagsMap);
+		request.setAttribute(
+			"LIFERAY_SHARED_aui:form:checkboxNames", _checkboxNames);
 	}
 
 	private static final boolean _CLEAN_UP_SET_ATTRIBUTES = true;
 
-	private Map<String, List<ValidatorTag>> _validatorTagsMap =
-		new HashMap<String, List<ValidatorTag>>();
+	private final List<String> _checkboxNames = new ArrayList<>();
+	private final Map<String, List<ValidatorTag>> _validatorTagsMap =
+		new HashMap<>();
 
 }

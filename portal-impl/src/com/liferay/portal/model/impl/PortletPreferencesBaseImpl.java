@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.PortletPreferences;
-import com.liferay.portal.service.PortletPreferencesLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.PortletPreferences;
+import com.liferay.portal.kernel.service.PortletPreferencesLocalServiceUtil;
 
 /**
  * The extended model base implementation for the PortletPreferences service. Represents a row in the &quot;PortletPreferences&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.PortletPreferencesLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see PortletPreferencesImpl
- * @see com.liferay.portal.model.PortletPreferences
+ * @see PortletPreferences
  * @generated
  */
+@ProviderType
 public abstract class PortletPreferencesBaseImpl
 	extends PortletPreferencesModelImpl implements PortletPreferences {
 	/*
@@ -38,7 +40,7 @@ public abstract class PortletPreferencesBaseImpl
 	 * Never modify or reference this class directly. All methods that expect a portlet preferences model instance should use the {@link PortletPreferences} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			PortletPreferencesLocalServiceUtil.addPortletPreferences(this);
 		}

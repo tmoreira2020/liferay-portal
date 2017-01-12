@@ -14,14 +14,14 @@
 
 package com.liferay.portal.image;
 
+import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.Image;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.Image;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.documentlibrary.NoSuchFileException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,12 +33,10 @@ import java.io.InputStream;
  */
 public class FileSystemHook extends BaseHook {
 
-	public FileSystemHook() {
+	public FileSystemHook() throws IOException {
 		_rootDir = new File(PropsValues.IMAGE_HOOK_FILE_SYSTEM_ROOT_DIR);
 
-		if (!_rootDir.exists()) {
-			_rootDir.mkdirs();
-		}
+		FileUtil.mkdirs(_rootDir);
 	}
 
 	@Override
@@ -49,9 +47,7 @@ public class FileSystemHook extends BaseHook {
 	}
 
 	@Override
-	public byte[] getImageAsBytes(Image image)
-		throws PortalException, SystemException {
-
+	public byte[] getImageAsBytes(Image image) throws PortalException {
 		try {
 			File file = getFile(image.getImageId(), image.getType());
 
@@ -67,9 +63,7 @@ public class FileSystemHook extends BaseHook {
 	}
 
 	@Override
-	public InputStream getImageAsStream(Image image)
-		throws PortalException, SystemException {
-
+	public InputStream getImageAsStream(Image image) throws PortalException {
 		try {
 			File file = getFile(image.getImageId(), image.getType());
 
@@ -85,9 +79,7 @@ public class FileSystemHook extends BaseHook {
 	}
 
 	@Override
-	public void updateImage(Image image, String type, byte[] bytes)
-		throws SystemException {
-
+	public void updateImage(Image image, String type, byte[] bytes) {
 		try {
 			File file = getFile(image.getImageId(), type);
 
@@ -122,10 +114,10 @@ public class FileSystemHook extends BaseHook {
 		String path = buildPath(String.valueOf(imageId));
 
 		return new File(
-			_rootDir + StringPool.SLASH + path + StringPool.SLASH +
-				imageId + StringPool.PERIOD + type);
+			_rootDir + StringPool.SLASH + path + StringPool.SLASH + imageId +
+				StringPool.PERIOD + type);
 	}
 
-	private File _rootDir;
+	private final File _rootDir;
 
 }

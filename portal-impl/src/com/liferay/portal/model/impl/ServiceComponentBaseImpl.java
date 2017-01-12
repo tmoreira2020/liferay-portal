@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.ServiceComponent;
-import com.liferay.portal.service.ServiceComponentLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.ServiceComponent;
+import com.liferay.portal.kernel.service.ServiceComponentLocalServiceUtil;
 
 /**
  * The extended model base implementation for the ServiceComponent service. Represents a row in the &quot;ServiceComponent&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.ServiceComponentLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see ServiceComponentImpl
- * @see com.liferay.portal.model.ServiceComponent
+ * @see ServiceComponent
  * @generated
  */
+@ProviderType
 public abstract class ServiceComponentBaseImpl extends ServiceComponentModelImpl
 	implements ServiceComponent {
 	/*
@@ -38,7 +40,7 @@ public abstract class ServiceComponentBaseImpl extends ServiceComponentModelImpl
 	 * Never modify or reference this class directly. All methods that expect a service component model instance should use the {@link ServiceComponent} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			ServiceComponentLocalServiceUtil.addServiceComponent(this);
 		}

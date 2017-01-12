@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.announcements.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.announcements.model.AnnouncementsEntry;
-import com.liferay.portlet.announcements.service.AnnouncementsEntryLocalServiceUtil;
+import com.liferay.announcements.kernel.model.AnnouncementsEntry;
+import com.liferay.announcements.kernel.service.AnnouncementsEntryLocalServiceUtil;
 
 /**
  * The extended model base implementation for the AnnouncementsEntry service. Represents a row in the &quot;AnnouncementsEntry&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.announcements.service.AnnouncementsEntryLocalServiceU
  *
  * @author Brian Wing Shun Chan
  * @see AnnouncementsEntryImpl
- * @see com.liferay.portlet.announcements.model.AnnouncementsEntry
+ * @see AnnouncementsEntry
  * @generated
  */
+@ProviderType
 public abstract class AnnouncementsEntryBaseImpl
 	extends AnnouncementsEntryModelImpl implements AnnouncementsEntry {
 	/*
@@ -39,7 +40,7 @@ public abstract class AnnouncementsEntryBaseImpl
 	 * Never modify or reference this class directly. All methods that expect a announcements entry model instance should use the {@link AnnouncementsEntry} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			AnnouncementsEntryLocalServiceUtil.addAnnouncementsEntry(this);
 		}

@@ -15,14 +15,12 @@
 package com.liferay.portal.service.impl;
 
 import com.liferay.portal.kernel.cache.CacheRegistryItem;
-import com.liferay.portal.kernel.cache.CacheRegistryUtil;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.ClassName;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.spring.aop.Skip;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.ClassName;
-import com.liferay.portal.model.ModelHintsUtil;
 import com.liferay.portal.model.impl.ClassNameImpl;
 import com.liferay.portal.service.base.ClassNameLocalServiceBaseImpl;
 
@@ -37,7 +35,7 @@ public class ClassNameLocalServiceImpl
 	extends ClassNameLocalServiceBaseImpl implements CacheRegistryItem {
 
 	@Override
-	public ClassName addClassName(String value) throws SystemException {
+	public ClassName addClassName(String value) {
 		ClassName className = classNamePersistence.fetchByValue(value);
 
 		if (className == null) {
@@ -54,15 +52,8 @@ public class ClassNameLocalServiceImpl
 	}
 
 	@Override
-	public void afterPropertiesSet() {
-		super.afterPropertiesSet();
-
-		CacheRegistryUtil.register(this);
-	}
-
-	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public void checkClassNames() throws SystemException {
+	public void checkClassNames() {
 		List<ClassName> classNames = classNamePersistence.findAll();
 
 		for (ClassName className : classNames) {
@@ -77,8 +68,12 @@ public class ClassNameLocalServiceImpl
 	}
 
 	@Override
-	@Skip
-	public ClassName fetchClassName(String value) throws SystemException {
+	public ClassName fetchByClassNameId(long classNameId) {
+		return classNamePersistence.fetchByPrimaryKey(classNameId);
+	}
+
+	@Override
+	public ClassName fetchClassName(String value) {
 		if (Validator.isNull(value)) {
 			return _nullClassName;
 		}
@@ -100,27 +95,7 @@ public class ClassNameLocalServiceImpl
 
 	@Override
 	@Skip
-	public long fetchClassNameId(Class<?> clazz) {
-		return fetchClassNameId(clazz.getName());
-	}
-
-	@Override
-	@Skip
-	public long fetchClassNameId(String value) {
-		try {
-			ClassName className = fetchClassName(value);
-
-			return className.getClassNameId();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(
-				"Unable to get class name from value " + value, e);
-		}
-	}
-
-	@Override
-	@Skip
-	public ClassName getClassName(String value) throws SystemException {
+	public ClassName getClassName(String value) {
 		if (Validator.isNull(value)) {
 			return _nullClassName;
 		}
@@ -131,9 +106,18 @@ public class ClassNameLocalServiceImpl
 		ClassName className = _classNames.get(value);
 
 		if (className == null) {
-			className = classNameLocalService.addClassName(value);
+			try {
+				className = classNameLocalService.addClassName(value);
 
-			_classNames.put(value, className);
+				_classNames.put(value, className);
+			}
+			catch (Throwable t) {
+				className = classNameLocalService.fetchClassName(value);
+
+				if (className == _nullClassName) {
+					throw t;
+				}
+			}
 		}
 
 		return className;
@@ -148,15 +132,9 @@ public class ClassNameLocalServiceImpl
 	@Override
 	@Skip
 	public long getClassNameId(String value) {
-		try {
-			ClassName className = getClassName(value);
+		ClassName className = getClassName(value);
 
-			return className.getClassNameId();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(
-				"Unable to get class name from value " + value, e);
-		}
+		return className.getClassNameId();
 	}
 
 	@Override
@@ -169,8 +147,8 @@ public class ClassNameLocalServiceImpl
 		_classNames.clear();
 	}
 
-	private static Map<String, ClassName> _classNames =
-		new ConcurrentHashMap<String, ClassName>();
-	private static ClassName _nullClassName = new ClassNameImpl();
+	private static final Map<String, ClassName> _classNames =
+		new ConcurrentHashMap<>();
+	private static final ClassName _nullClassName = new ClassNameImpl();
 
 }

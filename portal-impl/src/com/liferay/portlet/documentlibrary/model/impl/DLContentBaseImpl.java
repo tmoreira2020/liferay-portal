@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.documentlibrary.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.documentlibrary.model.DLContent;
-import com.liferay.portlet.documentlibrary.service.DLContentLocalServiceUtil;
+import com.liferay.document.library.kernel.model.DLContent;
+import com.liferay.document.library.kernel.service.DLContentLocalServiceUtil;
 
 /**
  * The extended model base implementation for the DLContent service. Represents a row in the &quot;DLContent&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.documentlibrary.service.DLContentLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see DLContentImpl
- * @see com.liferay.portlet.documentlibrary.model.DLContent
+ * @see DLContent
  * @generated
  */
+@ProviderType
 public abstract class DLContentBaseImpl extends DLContentModelImpl
 	implements DLContent {
 	/*
@@ -39,7 +40,7 @@ public abstract class DLContentBaseImpl extends DLContentModelImpl
 	 * Never modify or reference this class directly. All methods that expect a document library content model instance should use the {@link DLContent} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			DLContentLocalServiceUtil.addDLContent(this);
 		}

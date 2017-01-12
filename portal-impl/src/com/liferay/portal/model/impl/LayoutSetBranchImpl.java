@@ -14,22 +14,22 @@
 
 package com.liferay.portal.model.impl;
 
+import com.liferay.exportimport.kernel.staging.LayoutStagingUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.staging.LayoutStagingUtil;
+import com.liferay.portal.kernel.model.ColorScheme;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.LayoutSet;
+import com.liferay.portal.kernel.model.LayoutSetStagingHandler;
+import com.liferay.portal.kernel.model.Theme;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.service.LayoutSetLocalServiceUtil;
+import com.liferay.portal.kernel.service.ThemeLocalServiceUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.ColorScheme;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.LayoutSet;
-import com.liferay.portal.model.LayoutSetStagingHandler;
-import com.liferay.portal.model.Theme;
-import com.liferay.portal.service.GroupLocalServiceUtil;
-import com.liferay.portal.service.LayoutSetLocalServiceUtil;
-import com.liferay.portal.service.ThemeLocalServiceUtil;
 import com.liferay.portal.util.PrefsPropsUtil;
 
 import java.io.IOException;
@@ -40,17 +40,14 @@ import java.io.IOException;
  */
 public class LayoutSetBranchImpl extends LayoutSetBranchBaseImpl {
 
-	public LayoutSetBranchImpl() {
-	}
-
 	@Override
-	public ColorScheme getColorScheme() throws SystemException {
+	public ColorScheme getColorScheme() {
 		return ThemeLocalServiceUtil.getColorScheme(
-			getCompanyId(), getTheme().getThemeId(), getColorSchemeId(), false);
+			getCompanyId(), getTheme().getThemeId(), getColorSchemeId());
 	}
 
 	@Override
-	public Group getGroup() throws PortalException, SystemException {
+	public Group getGroup() throws PortalException {
 		return GroupLocalServiceUtil.getGroup(getGroupId());
 	}
 
@@ -75,9 +72,13 @@ public class LayoutSetBranchImpl extends LayoutSetBranchBaseImpl {
 
 			return _layoutSet;
 		}
-		catch (SystemException se) {
-		}
-		catch (PortalException pe) {
+		catch (SystemException | PortalException e) {
+
+			// LPS-52675
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(e, e);
+			}
 		}
 
 		return _layoutSet;
@@ -137,15 +138,12 @@ public class LayoutSetBranchImpl extends LayoutSetBranchBaseImpl {
 	}
 
 	@Override
-	public Theme getTheme() throws SystemException {
-		return ThemeLocalServiceUtil.getTheme(
-			getCompanyId(), getThemeId(), false);
+	public Theme getTheme() {
+		return ThemeLocalServiceUtil.getTheme(getCompanyId(), getThemeId());
 	}
 
 	@Override
-	public String getThemeSetting(String key, String device)
-		throws SystemException {
-
+	public String getThemeSetting(String key, String device) {
 		UnicodeProperties settingsProperties = getSettingsProperties();
 
 		String value = settingsProperties.getProperty(
@@ -172,32 +170,15 @@ public class LayoutSetBranchImpl extends LayoutSetBranchBaseImpl {
 				getCompanyId(),
 				PropsKeys.CONTROL_PANEL_LAYOUT_REGULAR_THEME_ID);
 
-			theme = ThemeLocalServiceUtil.getTheme(
-				getCompanyId(), themeId, !device.equals("regular"));
-		}
-		else if (device.equals("regular")) {
-			theme = getTheme();
+			theme = ThemeLocalServiceUtil.getTheme(getCompanyId(), themeId);
 		}
 		else {
-			theme = getWapTheme();
+			theme = getTheme();
 		}
 
 		value = theme.getSetting(key);
 
 		return value;
-	}
-
-	@Override
-	public ColorScheme getWapColorScheme() throws SystemException {
-		return ThemeLocalServiceUtil.getColorScheme(
-			getCompanyId(), getWapTheme().getThemeId(), getWapColorSchemeId(),
-			true);
-	}
-
-	@Override
-	public Theme getWapTheme() throws SystemException {
-		return ThemeLocalServiceUtil.getTheme(
-			getCompanyId(), getWapThemeId(), true);
 	}
 
 	@Override
@@ -230,7 +211,8 @@ public class LayoutSetBranchImpl extends LayoutSetBranchBaseImpl {
 		super.setSettings(_settingsProperties.toString());
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(LayoutSetBranchImpl.class);
+	private static final Log _log = LogFactoryUtil.getLog(
+		LayoutSetBranchImpl.class);
 
 	private LayoutSet _layoutSet;
 	private UnicodeProperties _settingsProperties;

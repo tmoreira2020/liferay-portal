@@ -14,27 +14,33 @@
  */
 --%>
 
-<%@ include file="/html/taglib/init.jsp" %>
+<%@ include file="/html/taglib/ui/asset_categories_summary/init.jsp" %>
 
 <%
 String className = (String)request.getAttribute("liferay-ui:asset-categories-summary:className");
 long classPK = GetterUtil.getLong((String)request.getAttribute("liferay-ui:asset-categories-summary:classPK"));
+String paramName = GetterUtil.getString((String)request.getAttribute("liferay-ui:asset-categories-summary:paramName"), "categoryId");
 PortletURL portletURL = (PortletURL)request.getAttribute("liferay-ui:asset-categories-summary:portletURL");
 
-List<AssetVocabulary> vocabularies = AssetVocabularyServiceUtil.getGroupVocabularies(PortalUtil.getCurrentAndAncestorSiteGroupIds(scopeGroupId));
-List<AssetCategory> categories = AssetCategoryServiceUtil.getCategories(className, classPK);
+List<AssetCategory> categories = (List<AssetCategory>)request.getAttribute("liferay-ui:asset-categories-summary:assetCategories");
+
+if (ListUtil.isEmpty(categories)) {
+	categories = AssetCategoryServiceUtil.getCategories(className, classPK);
+}
+
+AssetEntry assetEntry = AssetEntryLocalServiceUtil.fetchEntry(className, classPK);
+
+List<AssetVocabulary> vocabularies = AssetVocabularyServiceUtil.getGroupVocabularies(PortalUtil.getCurrentAndAncestorSiteGroupIds((assetEntry != null) ? assetEntry.getGroupId() : scopeGroupId));
 
 for (AssetVocabulary vocabulary : vocabularies) {
 	vocabulary = vocabulary.toEscapedModel();
-
-	String vocabularyTitle = vocabulary.getTitle(themeDisplay.getLocale());
 
 	List<AssetCategory> curCategories = _filterCategories(categories, vocabulary);
 %>
 
 	<c:if test="<%= !curCategories.isEmpty() %>">
 		<span class="taglib-asset-categories-summary">
-			<%= vocabularyTitle %>:
+			<%= HtmlUtil.escape(vocabulary.getUnambiguousTitle(vocabularies, themeDisplay.getSiteGroupId(), themeDisplay.getLocale())) %>:
 
 			<c:choose>
 				<c:when test="<%= portletURL != null %>">
@@ -43,7 +49,7 @@ for (AssetVocabulary vocabulary : vocabularies) {
 					for (AssetCategory category : curCategories) {
 						category = category.toEscapedModel();
 
-						portletURL.setParameter("categoryId", String.valueOf(category.getCategoryId()));
+						portletURL.setParameter(paramName, String.valueOf(category.getCategoryId()));
 					%>
 
 						<a class="asset-category" href="<%= HtmlUtil.escape(portletURL.toString()) %>"><%= _buildCategoryPath(category, themeDisplay) %></a>

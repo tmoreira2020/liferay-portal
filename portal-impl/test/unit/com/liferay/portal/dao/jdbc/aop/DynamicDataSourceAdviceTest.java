@@ -14,11 +14,13 @@
 
 package com.liferay.portal.dao.jdbc.aop;
 
+import com.liferay.portal.kernel.dao.jdbc.aop.DynamicDataSourceTargetSource;
 import com.liferay.portal.kernel.dao.jdbc.aop.MasterDataSource;
-import com.liferay.portal.kernel.test.CodeCoverageAssertor;
+import com.liferay.portal.kernel.dao.jdbc.aop.Operation;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.ProxyUtil;
-import com.liferay.portal.kernel.util.ReflectionUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.spring.aop.AnnotationChainableMethodAdvice;
 import com.liferay.portal.spring.aop.ServiceBeanAopCacheManager;
@@ -26,7 +28,6 @@ import com.liferay.portal.spring.aop.ServiceBeanMethodInvocation;
 import com.liferay.portal.spring.transaction.AnnotationTransactionAttributeSource;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
@@ -50,14 +51,15 @@ import org.junit.Test;
 public class DynamicDataSourceAdviceTest {
 
 	@ClassRule
-	public static CodeCoverageAssertor codeCoverageAssertor =
-		new CodeCoverageAssertor();
+	public static final CodeCoverageAssertor codeCoverageAssertor =
+		CodeCoverageAssertor.INSTANCE;
 
 	@Before
 	public void setUp() {
 		_dynamicDataSourceAdvice = new DynamicDataSourceAdvice();
 
-		_dynamicDataSourceTargetSource = new DynamicDataSourceTargetSource();
+		_dynamicDataSourceTargetSource =
+			new DefaultDynamicDataSourceTargetSource();
 
 		ClassLoader classLoader =
 			DynamicDataSourceAdviceTest.class.getClassLoader();
@@ -115,12 +117,9 @@ public class DynamicDataSourceAdviceTest {
 	}
 
 	@Test
-	public void testAnnotationType() throws Exception {
-		Field masterDataSourceField = ReflectionUtil.getDeclaredField(
+	public void testAnnotationType() {
+		MasterDataSource masterDataSource = ReflectionTestUtil.getFieldValue(
 			DynamicDataSourceAdvice.class, "_nullMasterDataSource");
-
-		MasterDataSource masterDataSource =
-			(MasterDataSource)masterDataSourceField.get(null);
 
 		Assert.assertSame(
 			MasterDataSource.class, masterDataSource.annotationType());

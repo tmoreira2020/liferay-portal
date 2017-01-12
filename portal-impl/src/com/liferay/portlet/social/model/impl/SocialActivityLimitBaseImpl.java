@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.social.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.social.model.SocialActivityLimit;
-import com.liferay.portlet.social.service.SocialActivityLimitLocalServiceUtil;
+import com.liferay.social.kernel.model.SocialActivityLimit;
+import com.liferay.social.kernel.service.SocialActivityLimitLocalServiceUtil;
 
 /**
  * The extended model base implementation for the SocialActivityLimit service. Represents a row in the &quot;SocialActivityLimit&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.social.service.SocialActivityLimitLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see SocialActivityLimitImpl
- * @see com.liferay.portlet.social.model.SocialActivityLimit
+ * @see SocialActivityLimit
  * @generated
  */
+@ProviderType
 public abstract class SocialActivityLimitBaseImpl
 	extends SocialActivityLimitModelImpl implements SocialActivityLimit {
 	/*
@@ -39,7 +40,7 @@ public abstract class SocialActivityLimitBaseImpl
 	 * Never modify or reference this class directly. All methods that expect a social activity limit model instance should use the {@link SocialActivityLimit} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			SocialActivityLimitLocalServiceUtil.addSocialActivityLimit(this);
 		}

@@ -14,11 +14,14 @@
 
 package com.liferay.portal.model.impl;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.CacheModel;
+import com.liferay.portal.kernel.model.MVCCModel;
+import com.liferay.portal.kernel.model.Release;
+import com.liferay.portal.kernel.util.HashUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.CacheModel;
-import com.liferay.portal.model.MVCCModel;
-import com.liferay.portal.model.Release;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -34,8 +37,36 @@ import java.util.Date;
  * @see Release
  * @generated
  */
+@ProviderType
 public class ReleaseCacheModel implements CacheModel<Release>, Externalizable,
 	MVCCModel {
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ReleaseCacheModel)) {
+			return false;
+		}
+
+		ReleaseCacheModel releaseCacheModel = (ReleaseCacheModel)obj;
+
+		if ((releaseId == releaseCacheModel.releaseId) &&
+				(mvccVersion == releaseCacheModel.mvccVersion)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		int hashCode = HashUtil.hash(0, releaseId);
+
+		return HashUtil.hash(hashCode, mvccVersion);
+	}
+
 	@Override
 	public long getMvccVersion() {
 		return mvccVersion;
@@ -48,7 +79,7 @@ public class ReleaseCacheModel implements CacheModel<Release>, Externalizable,
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(21);
+		StringBundler sb = new StringBundler(23);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -60,6 +91,8 @@ public class ReleaseCacheModel implements CacheModel<Release>, Externalizable,
 		sb.append(modifiedDate);
 		sb.append(", servletContextName=");
 		sb.append(servletContextName);
+		sb.append(", schemaVersion=");
+		sb.append(schemaVersion);
 		sb.append(", buildNumber=");
 		sb.append(buildNumber);
 		sb.append(", buildDate=");
@@ -103,6 +136,13 @@ public class ReleaseCacheModel implements CacheModel<Release>, Externalizable,
 			releaseImpl.setServletContextName(servletContextName);
 		}
 
+		if (schemaVersion == null) {
+			releaseImpl.setSchemaVersion(StringPool.BLANK);
+		}
+		else {
+			releaseImpl.setSchemaVersion(schemaVersion);
+		}
+
 		releaseImpl.setBuildNumber(buildNumber);
 
 		if (buildDate == Long.MIN_VALUE) {
@@ -130,13 +170,18 @@ public class ReleaseCacheModel implements CacheModel<Release>, Externalizable,
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
 		releaseId = objectInput.readLong();
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 		servletContextName = objectInput.readUTF();
+		schemaVersion = objectInput.readUTF();
+
 		buildNumber = objectInput.readInt();
 		buildDate = objectInput.readLong();
+
 		verified = objectInput.readBoolean();
+
 		state = objectInput.readInt();
 		testString = objectInput.readUTF();
 	}
@@ -145,6 +190,7 @@ public class ReleaseCacheModel implements CacheModel<Release>, Externalizable,
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
 		objectOutput.writeLong(releaseId);
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
@@ -156,9 +202,18 @@ public class ReleaseCacheModel implements CacheModel<Release>, Externalizable,
 			objectOutput.writeUTF(servletContextName);
 		}
 
+		if (schemaVersion == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(schemaVersion);
+		}
+
 		objectOutput.writeInt(buildNumber);
 		objectOutput.writeLong(buildDate);
+
 		objectOutput.writeBoolean(verified);
+
 		objectOutput.writeInt(state);
 
 		if (testString == null) {
@@ -174,6 +229,7 @@ public class ReleaseCacheModel implements CacheModel<Release>, Externalizable,
 	public long createDate;
 	public long modifiedDate;
 	public String servletContextName;
+	public String schemaVersion;
 	public int buildNumber;
 	public long buildDate;
 	public boolean verified;

@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.social.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.social.model.SocialActivityAchievement;
-import com.liferay.portlet.social.service.SocialActivityAchievementLocalServiceUtil;
+import com.liferay.social.kernel.model.SocialActivityAchievement;
+import com.liferay.social.kernel.service.SocialActivityAchievementLocalServiceUtil;
 
 /**
  * The extended model base implementation for the SocialActivityAchievement service. Represents a row in the &quot;SocialActivityAchievement&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.social.service.SocialActivityAchievementLocalServiceU
  *
  * @author Brian Wing Shun Chan
  * @see SocialActivityAchievementImpl
- * @see com.liferay.portlet.social.model.SocialActivityAchievement
+ * @see SocialActivityAchievement
  * @generated
  */
+@ProviderType
 public abstract class SocialActivityAchievementBaseImpl
 	extends SocialActivityAchievementModelImpl
 	implements SocialActivityAchievement {
@@ -40,7 +41,7 @@ public abstract class SocialActivityAchievementBaseImpl
 	 * Never modify or reference this class directly. All methods that expect a social activity achievement model instance should use the {@link SocialActivityAchievement} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			SocialActivityAchievementLocalServiceUtil.addSocialActivityAchievement(this);
 		}

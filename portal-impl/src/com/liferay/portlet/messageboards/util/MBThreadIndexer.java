@@ -14,63 +14,59 @@
 
 package com.liferay.portlet.messageboards.util;
 
+import com.liferay.message.boards.kernel.model.MBCategory;
+import com.liferay.message.boards.kernel.model.MBCategoryConstants;
+import com.liferay.message.boards.kernel.model.MBDiscussion;
+import com.liferay.message.boards.kernel.model.MBThread;
+import com.liferay.message.boards.kernel.service.MBCategoryLocalServiceUtil;
+import com.liferay.message.boards.kernel.service.MBDiscussionLocalServiceUtil;
+import com.liferay.message.boards.kernel.service.MBThreadLocalServiceUtil;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.search.BaseIndexer;
-import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.DocumentImpl;
 import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.IndexWriterHelperUtil;
 import com.liferay.portal.kernel.search.SearchContext;
-import com.liferay.portal.kernel.search.SearchEngineUtil;
 import com.liferay.portal.kernel.search.Summary;
+import com.liferay.portal.kernel.search.filter.BooleanFilter;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portal.service.persistence.GroupActionableDynamicQuery;
-import com.liferay.portal.util.PortletKeys;
-import com.liferay.portlet.messageboards.NoSuchDiscussionException;
-import com.liferay.portlet.messageboards.model.MBCategory;
-import com.liferay.portlet.messageboards.model.MBCategoryConstants;
-import com.liferay.portlet.messageboards.model.MBThread;
-import com.liferay.portlet.messageboards.service.MBDiscussionLocalServiceUtil;
-import com.liferay.portlet.messageboards.service.MBThreadLocalServiceUtil;
-import com.liferay.portlet.messageboards.service.persistence.MBCategoryActionableDynamicQuery;
-import com.liferay.portlet.messageboards.service.persistence.MBThreadActionableDynamicQuery;
 
 import java.util.Locale;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
 
 /**
  * @author Eudaldo Alonso
  */
-public class MBThreadIndexer extends BaseIndexer {
+@OSGiBeanProperties
+public class MBThreadIndexer extends BaseIndexer<MBThread> {
 
-	public static final String[] CLASS_NAMES = {MBThread.class.getName()};
-
-	public static final String PORTLET_ID = PortletKeys.MESSAGE_BOARDS;
+	public static final String CLASS_NAME = MBThread.class.getName();
 
 	public MBThreadIndexer() {
+		setDefaultSelectedFieldNames(
+			Field.CLASS_NAME_ID, Field.CLASS_PK, Field.COMPANY_ID,
+			Field.ENTRY_CLASS_NAME, Field.ENTRY_CLASS_PK, Field.UID);
 		setFilterSearch(true);
 		setPermissionAware(true);
 	}
 
 	@Override
-	public String[] getClassNames() {
-		return CLASS_NAMES;
-	}
-
-	@Override
-	public String getPortletId() {
-		return PORTLET_ID;
+	public String getClassName() {
+		return CLASS_NAME;
 	}
 
 	@Override
@@ -83,16 +79,16 @@ public class MBThreadIndexer extends BaseIndexer {
 	}
 
 	@Override
-	public void postProcessContextQuery(
-			BooleanQuery contextQuery, SearchContext searchContext)
+	public void postProcessContextBooleanFilter(
+			BooleanFilter contextBooleanFilter, SearchContext searchContext)
 		throws Exception {
 
-		addStatus(contextQuery, searchContext);
+		addStatus(contextBooleanFilter, searchContext);
 
 		boolean discussion = GetterUtil.getBoolean(
-			searchContext.getAttribute("discussion"), false);
+			searchContext.getAttribute("discussion"));
 
-		contextQuery.addRequiredTerm("discussion", discussion);
+		contextBooleanFilter.addRequiredTerm("discussion", discussion);
 
 		long endDate = GetterUtil.getLong(
 			searchContext.getAttribute("endDate"));
@@ -100,74 +96,66 @@ public class MBThreadIndexer extends BaseIndexer {
 			searchContext.getAttribute("startDate"));
 
 		if ((endDate > 0) && (startDate > 0)) {
-			contextQuery.addRangeTerm("lastPostDate", startDate, endDate);
+			contextBooleanFilter.addRangeTerm(
+				"lastPostDate", startDate, endDate);
 		}
 
 		long participantUserId = GetterUtil.getLong(
 			searchContext.getAttribute("participantUserId"));
 
 		if (participantUserId > 0) {
-			contextQuery.addRequiredTerm(
+			contextBooleanFilter.addRequiredTerm(
 				"participantUserIds", participantUserId);
 		}
 	}
 
 	@Override
-	protected void doDelete(Object obj) throws Exception {
+	protected void doDelete(MBThread mbThread) throws Exception {
 		SearchContext searchContext = new SearchContext();
 
 		searchContext.setSearchEngineId(getSearchEngineId());
 
-		MBThread thread = (MBThread)obj;
-
-		Document document = new DocumentImpl();
-
-		document.addUID(PORTLET_ID, thread.getThreadId());
-
-		SearchEngineUtil.deleteDocument(
-			getSearchEngineId(), thread.getCompanyId(),
-			document.get(Field.UID));
+		deleteDocument(mbThread.getCompanyId(), mbThread.getThreadId());
 	}
 
 	@Override
-	protected Document doGetDocument(Object obj) throws Exception {
-		MBThread thread = (MBThread)obj;
+	protected Document doGetDocument(MBThread mbThread) throws Exception {
+		Document document = getBaseModelDocument(CLASS_NAME, mbThread);
 
-		Document document = getBaseModelDocument(PORTLET_ID, thread);
+		MBDiscussion discussion =
+			MBDiscussionLocalServiceUtil.fetchThreadDiscussion(
+				mbThread.getThreadId());
 
-		try {
-			MBDiscussionLocalServiceUtil.getThreadDiscussion(
-				thread.getThreadId());
-
-			document.addKeyword("discussion", true);
-		}
-		catch (NoSuchDiscussionException nsde) {
+		if (discussion == null) {
 			document.addKeyword("discussion", false);
 		}
+		else {
+			document.addKeyword("discussion", true);
+		}
 
-		document.addKeyword("lastPostDate", thread.getLastPostDate().getTime());
 		document.addKeyword(
-			"participantUserIds", thread.getParticipantUserIds());
+			"lastPostDate", mbThread.getLastPostDate().getTime());
+		document.addKeyword(
+			"participantUserIds", mbThread.getParticipantUserIds());
 
 		return document;
 	}
 
 	@Override
 	protected Summary doGetSummary(
-		Document document, Locale locale, String snippet, PortletURL portletURL,
+		Document document, Locale locale, String snippet,
 		PortletRequest portletRequest, PortletResponse portletResponse) {
 
 		return null;
 	}
 
 	@Override
-	protected void doReindex(Object obj) throws Exception {
-		MBThread thread = (MBThread)obj;
+	protected void doReindex(MBThread mbThread) throws Exception {
+		Document document = getDocument(mbThread);
 
-		Document document = getDocument(thread);
-
-		SearchEngineUtil.updateDocument(
-			getSearchEngineId(), thread.getCompanyId(), document);
+		IndexWriterHelperUtil.updateDocument(
+			getSearchEngineId(), mbThread.getCompanyId(), document,
+			isCommitImmediately());
 	}
 
 	@Override
@@ -186,118 +174,126 @@ public class MBThreadIndexer extends BaseIndexer {
 		reindexRoot(companyId);
 	}
 
-	@Override
-	protected String getPortletId(SearchContext searchContext) {
-		return PORTLET_ID;
-	}
-
 	protected void reindexCategories(final long companyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		ActionableDynamicQuery actionableDynamicQuery =
-			new MBCategoryActionableDynamicQuery() {
-
-			@Override
-			protected void performAction(Object object)
-				throws PortalException, SystemException {
-
-				MBCategory category = (MBCategory)object;
-
-				reindexThreads(
-					companyId, category.getGroupId(), category.getCategoryId());
-			}
-
-		};
+			MBCategoryLocalServiceUtil.getActionableDynamicQuery();
 
 		actionableDynamicQuery.setCompanyId(companyId);
+		actionableDynamicQuery.setPerformActionMethod(
+			new ActionableDynamicQuery.PerformActionMethod<MBCategory>() {
+
+				@Override
+				public void performAction(MBCategory category)
+					throws PortalException {
+
+					reindexThreads(
+						companyId, category.getGroupId(),
+						category.getCategoryId());
+				}
+
+			});
 
 		actionableDynamicQuery.performActions();
 	}
 
 	protected void reindexDiscussions(final long companyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		ActionableDynamicQuery actionableDynamicQuery =
-			new GroupActionableDynamicQuery() {
-
-			@Override
-			protected void performAction(Object object)
-				throws PortalException, SystemException {
-
-				Group group = (Group)object;
-
-				reindexThreads(
-					companyId, group.getGroupId(),
-					MBCategoryConstants.DISCUSSION_CATEGORY_ID);
-			}
-
-		};
+			GroupLocalServiceUtil.getActionableDynamicQuery();
 
 		actionableDynamicQuery.setCompanyId(companyId);
+		actionableDynamicQuery.setPerformActionMethod(
+			new ActionableDynamicQuery.PerformActionMethod<Group>() {
+
+				@Override
+				public void performAction(Group group) throws PortalException {
+					reindexThreads(
+						companyId, group.getGroupId(),
+						MBCategoryConstants.DISCUSSION_CATEGORY_ID);
+				}
+
+			});
 
 		actionableDynamicQuery.performActions();
 	}
 
-	protected void reindexRoot(final long companyId)
-		throws PortalException, SystemException {
-
+	protected void reindexRoot(final long companyId) throws PortalException {
 		ActionableDynamicQuery actionableDynamicQuery =
-			new GroupActionableDynamicQuery() {
-
-			@Override
-			protected void performAction(Object object)
-				throws PortalException, SystemException {
-
-				Group group = (Group)object;
-
-				reindexThreads(
-					companyId, group.getGroupId(),
-					MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID);
-			}
-
-		};
+			GroupLocalServiceUtil.getActionableDynamicQuery();
 
 		actionableDynamicQuery.setCompanyId(companyId);
+		actionableDynamicQuery.setPerformActionMethod(
+			new ActionableDynamicQuery.PerformActionMethod<Group>() {
+
+				@Override
+				public void performAction(Group group) throws PortalException {
+					reindexThreads(
+						companyId, group.getGroupId(),
+						MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID);
+				}
+
+			});
 
 		actionableDynamicQuery.performActions();
 	}
 
 	protected void reindexThreads(
 			long companyId, long groupId, final long categoryId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
-		ActionableDynamicQuery actionableDynamicQuery =
-			new MBThreadActionableDynamicQuery() {
+		final IndexableActionableDynamicQuery indexableActionableDynamicQuery =
+			MBThreadLocalServiceUtil.getIndexableActionableDynamicQuery();
 
-			@Override
-			protected void addCriteria(DynamicQuery dynamicQuery) {
-				Property categoryIdProperty = PropertyFactoryUtil.forName(
-					"categoryId");
+		indexableActionableDynamicQuery.setAddCriteriaMethod(
+			new ActionableDynamicQuery.AddCriteriaMethod() {
 
-				dynamicQuery.add(categoryIdProperty.eq(categoryId));
+				@Override
+				public void addCriteria(DynamicQuery dynamicQuery) {
+					Property categoryIdProperty = PropertyFactoryUtil.forName(
+						"categoryId");
 
-				Property statusProperty = PropertyFactoryUtil.forName("status");
+					dynamicQuery.add(categoryIdProperty.eq(categoryId));
 
-				dynamicQuery.add(
-					statusProperty.eq(WorkflowConstants.STATUS_APPROVED));
-			}
+					Property statusProperty = PropertyFactoryUtil.forName(
+						"status");
 
-			@Override
-			protected void performAction(Object object) throws PortalException {
-				MBThread thread = (MBThread)object;
+					dynamicQuery.add(
+						statusProperty.eq(WorkflowConstants.STATUS_APPROVED));
+				}
 
-				Document document = getDocument(thread);
+			});
+		indexableActionableDynamicQuery.setCompanyId(companyId);
+		indexableActionableDynamicQuery.setGroupId(groupId);
+		indexableActionableDynamicQuery.setPerformActionMethod(
+			new ActionableDynamicQuery.PerformActionMethod<MBThread>() {
 
-				addDocument(document);
-			}
+				@Override
+				public void performAction(MBThread thread) {
+					try {
+						Document document = getDocument(thread);
 
-		};
+						indexableActionableDynamicQuery.addDocuments(document);
+					}
+					catch (PortalException pe) {
+						if (_log.isWarnEnabled()) {
+							_log.warn(
+								"Unable to index message boards thread " +
+									thread.getThreadId(),
+								pe);
+						}
+					}
+				}
 
-		actionableDynamicQuery.setCompanyId(companyId);
-		actionableDynamicQuery.setGroupId(groupId);
-		actionableDynamicQuery.setSearchEngineId(getSearchEngineId());
+			});
+		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
-		actionableDynamicQuery.performActions();
+		indexableActionableDynamicQuery.performActions();
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		MBThreadIndexer.class);
 
 }

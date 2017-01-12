@@ -14,16 +14,15 @@
 
 package com.liferay.portal.util;
 
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.concurrent.ConcurrentReferenceKeyHashMap;
+import com.liferay.portal.kernel.memory.FinalizeManager;
 import com.liferay.portal.kernel.util.MethodParameter;
 import com.liferay.portal.kernel.util.MethodParametersResolver;
 
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 import jodd.paramo.Paramo;
 
@@ -40,25 +39,18 @@ public class MethodParametersResolverImpl implements MethodParametersResolver {
 			return methodParameters;
 		}
 
-		try {
-			Class<?>[] methodParameterTypes = method.getParameterTypes();
+		Class<?>[] methodParameterTypes = method.getParameterTypes();
 
-			jodd.paramo.MethodParameter[] joddMethodParameters =
-				Paramo.resolveParameters(method);
+		jodd.paramo.MethodParameter[] joddMethodParameters =
+			Paramo.resolveParameters(method);
 
-			methodParameters = new MethodParameter[joddMethodParameters.length];
+		methodParameters = new MethodParameter[joddMethodParameters.length];
 
-			for (int i = 0; i < joddMethodParameters.length; i++) {
-				methodParameters[i] = new MethodParameter(
-					joddMethodParameters[i].getName(),
-					joddMethodParameters[i].getSignature(),
-					methodParameterTypes[i]);
-			}
-		}
-		catch (Exception e) {
-			_log.error(e, e);
-
-			return null;
+		for (int i = 0; i < joddMethodParameters.length; i++) {
+			methodParameters[i] = new MethodParameter(
+				joddMethodParameters[i].getName(),
+				joddMethodParameters[i].getSignature(),
+				methodParameterTypes[i]);
 		}
 
 		_methodParameters.put(method, methodParameters);
@@ -66,10 +58,9 @@ public class MethodParametersResolverImpl implements MethodParametersResolver {
 		return methodParameters;
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(
-		MethodParametersResolverImpl.class);
-
-	private Map<AccessibleObject, MethodParameter[]> _methodParameters =
-		new HashMap<AccessibleObject, MethodParameter[]>();
+	private static final ConcurrentMap
+		<AccessibleObject, MethodParameter[]> _methodParameters =
+			new ConcurrentReferenceKeyHashMap<>(
+				FinalizeManager.WEAK_REFERENCE_FACTORY);
 
 }

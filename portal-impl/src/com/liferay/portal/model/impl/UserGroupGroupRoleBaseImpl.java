@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.UserGroupGroupRole;
-import com.liferay.portal.service.UserGroupGroupRoleLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.UserGroupGroupRole;
+import com.liferay.portal.kernel.service.UserGroupGroupRoleLocalServiceUtil;
 
 /**
  * The extended model base implementation for the UserGroupGroupRole service. Represents a row in the &quot;UserGroupGroupRole&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.UserGroupGroupRoleLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see UserGroupGroupRoleImpl
- * @see com.liferay.portal.model.UserGroupGroupRole
+ * @see UserGroupGroupRole
  * @generated
  */
+@ProviderType
 public abstract class UserGroupGroupRoleBaseImpl
 	extends UserGroupGroupRoleModelImpl implements UserGroupGroupRole {
 	/*
@@ -38,7 +40,7 @@ public abstract class UserGroupGroupRoleBaseImpl
 	 * Never modify or reference this class directly. All methods that expect a user group group role model instance should use the {@link UserGroupGroupRole} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			UserGroupGroupRoleLocalServiceUtil.addUserGroupGroupRole(this);
 		}

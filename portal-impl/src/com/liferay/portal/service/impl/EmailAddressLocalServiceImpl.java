@@ -14,19 +14,17 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.EmailAddressException;
+import com.liferay.portal.kernel.exception.EmailAddressException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.EmailAddress;
+import com.liferay.portal.kernel.model.ListTypeConstants;
+import com.liferay.portal.kernel.model.SystemEventConstants;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.EmailAddress;
-import com.liferay.portal.model.ListTypeConstants;
-import com.liferay.portal.model.SystemEventConstants;
-import com.liferay.portal.model.User;
-import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.base.EmailAddressLocalServiceBaseImpl;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -36,31 +34,14 @@ import java.util.List;
 public class EmailAddressLocalServiceImpl
 	extends EmailAddressLocalServiceBaseImpl {
 
-	/**
-	 * @deprecated As of 6.2.0, replaced by {@link #addEmailAddress(long,
-	 *             String, long, String, int, boolean, ServiceContext)}
-	 */
-	@Deprecated
 	@Override
 	public EmailAddress addEmailAddress(
 			long userId, String className, long classPK, String address,
-			int typeId, boolean primary)
-		throws PortalException, SystemException {
-
-		return addEmailAddress(
-			userId, className, classPK, address, typeId, primary,
-			new ServiceContext());
-	}
-
-	@Override
-	public EmailAddress addEmailAddress(
-			long userId, String className, long classPK, String address,
-			int typeId, boolean primary, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+			long typeId, boolean primary, ServiceContext serviceContext)
+		throws PortalException {
 
 		User user = userPersistence.findByPrimaryKey(userId);
 		long classNameId = classNameLocalService.getClassNameId(className);
-		Date now = new Date();
 
 		validate(
 			0, user.getCompanyId(), classNameId, classPK, address, typeId,
@@ -75,8 +56,6 @@ public class EmailAddressLocalServiceImpl
 		emailAddress.setCompanyId(user.getCompanyId());
 		emailAddress.setUserId(user.getUserId());
 		emailAddress.setUserName(user.getFullName());
-		emailAddress.setCreateDate(serviceContext.getCreateDate(now));
-		emailAddress.setModifiedDate(serviceContext.getModifiedDate(now));
 		emailAddress.setClassNameId(classNameId);
 		emailAddress.setClassPK(classPK);
 		emailAddress.setAddress(address);
@@ -91,10 +70,9 @@ public class EmailAddressLocalServiceImpl
 	@Override
 	@SystemEvent(
 		action = SystemEventConstants.ACTION_SKIP,
-		type = SystemEventConstants.TYPE_DELETE)
-	public EmailAddress deleteEmailAddress(EmailAddress emailAddress)
-		throws SystemException {
-
+		type = SystemEventConstants.TYPE_DELETE
+	)
+	public EmailAddress deleteEmailAddress(EmailAddress emailAddress) {
 		emailAddressPersistence.remove(emailAddress);
 
 		return emailAddress;
@@ -102,7 +80,7 @@ public class EmailAddressLocalServiceImpl
 
 	@Override
 	public EmailAddress deleteEmailAddress(long emailAddressId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		EmailAddress emailAddress = emailAddressPersistence.findByPrimaryKey(
 			emailAddressId);
@@ -112,8 +90,7 @@ public class EmailAddressLocalServiceImpl
 
 	@Override
 	public void deleteEmailAddresses(
-			long companyId, String className, long classPK)
-		throws SystemException {
+		long companyId, String className, long classPK) {
 
 		long classNameId = classNameLocalService.getClassNameId(className);
 
@@ -126,14 +103,13 @@ public class EmailAddressLocalServiceImpl
 	}
 
 	@Override
-	public List<EmailAddress> getEmailAddresses() throws SystemException {
+	public List<EmailAddress> getEmailAddresses() {
 		return emailAddressPersistence.findAll();
 	}
 
 	@Override
 	public List<EmailAddress> getEmailAddresses(
-			long companyId, String className, long classPK)
-		throws SystemException {
+		long companyId, String className, long classPK) {
 
 		long classNameId = classNameLocalService.getClassNameId(className);
 
@@ -143,15 +119,14 @@ public class EmailAddressLocalServiceImpl
 
 	@Override
 	public EmailAddress updateEmailAddress(
-			long emailAddressId, String address, int typeId, boolean primary)
-		throws PortalException, SystemException {
+			long emailAddressId, String address, long typeId, boolean primary)
+		throws PortalException {
 
 		validate(emailAddressId, 0, 0, 0, address, typeId, primary);
 
 		EmailAddress emailAddress = emailAddressPersistence.findByPrimaryKey(
 			emailAddressId);
 
-		emailAddress.setModifiedDate(new Date());
 		emailAddress.setAddress(address);
 		emailAddress.setTypeId(typeId);
 		emailAddress.setPrimary(primary);
@@ -162,9 +137,8 @@ public class EmailAddressLocalServiceImpl
 	}
 
 	protected void validate(
-			long emailAddressId, long companyId, long classNameId, long classPK,
-			boolean primary)
-		throws SystemException {
+		long emailAddressId, long companyId, long classNameId, long classPK,
+		boolean primary) {
 
 		// Check to make sure there isn't another emailAddress with the same
 		// company id, class name, and class pk that also has primary set to
@@ -189,8 +163,8 @@ public class EmailAddressLocalServiceImpl
 
 	protected void validate(
 			long emailAddressId, long companyId, long classNameId, long classPK,
-			String address, int typeId, boolean primary)
-		throws PortalException, SystemException {
+			String address, long typeId, boolean primary)
+		throws PortalException {
 
 		if (!Validator.isEmailAddress(address)) {
 			throw new EmailAddressException();
@@ -205,7 +179,7 @@ public class EmailAddressLocalServiceImpl
 			classPK = emailAddress.getClassPK();
 		}
 
-		listTypeService.validate(
+		listTypeLocalService.validate(
 			typeId, classNameId, ListTypeConstants.EMAIL_ADDRESS);
 
 		validate(emailAddressId, companyId, classNameId, classPK, primary);

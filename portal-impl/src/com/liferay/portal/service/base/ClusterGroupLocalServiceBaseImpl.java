@@ -14,27 +14,32 @@
 
 package com.liferay.portal.service.base;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.kernel.bean.BeanReference;
-import com.liferay.portal.kernel.bean.IdentifiableBean;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.ClusterGroup;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
+import com.liferay.portal.kernel.service.ClusterGroupLocalService;
+import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
+import com.liferay.portal.kernel.service.persistence.ClusterGroupPersistence;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.model.ClusterGroup;
-import com.liferay.portal.model.PersistedModel;
-import com.liferay.portal.service.BaseLocalServiceImpl;
-import com.liferay.portal.service.ClusterGroupLocalService;
-import com.liferay.portal.service.PersistedModelLocalServiceRegistry;
-import com.liferay.portal.service.persistence.ClusterGroupPersistence;
-import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 
 import java.io.Serializable;
 
@@ -51,16 +56,17 @@ import javax.sql.DataSource;
  *
  * @author Brian Wing Shun Chan
  * @see com.liferay.portal.service.impl.ClusterGroupLocalServiceImpl
- * @see com.liferay.portal.service.ClusterGroupLocalServiceUtil
+ * @see com.liferay.portal.kernel.service.ClusterGroupLocalServiceUtil
  * @generated
  */
+@ProviderType
 public abstract class ClusterGroupLocalServiceBaseImpl
 	extends BaseLocalServiceImpl implements ClusterGroupLocalService,
-		IdentifiableBean {
+		IdentifiableOSGiService {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this class directly. Always use {@link com.liferay.portal.service.ClusterGroupLocalServiceUtil} to access the cluster group local service.
+	 * Never modify or reference this class directly. Always use {@link com.liferay.portal.kernel.service.ClusterGroupLocalServiceUtil} to access the cluster group local service.
 	 */
 
 	/**
@@ -68,12 +74,10 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 *
 	 * @param clusterGroup the cluster group
 	 * @return the cluster group that was added
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public ClusterGroup addClusterGroup(ClusterGroup clusterGroup)
-		throws SystemException {
+	public ClusterGroup addClusterGroup(ClusterGroup clusterGroup) {
 		clusterGroup.setNew(true);
 
 		return clusterGroupPersistence.update(clusterGroup);
@@ -96,12 +100,11 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 * @param clusterGroupId the primary key of the cluster group
 	 * @return the cluster group that was removed
 	 * @throws PortalException if a cluster group with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	public ClusterGroup deleteClusterGroup(long clusterGroupId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return clusterGroupPersistence.remove(clusterGroupId);
 	}
 
@@ -110,12 +113,10 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 *
 	 * @param clusterGroup the cluster group
 	 * @return the cluster group that was removed
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public ClusterGroup deleteClusterGroup(ClusterGroup clusterGroup)
-		throws SystemException {
+	public ClusterGroup deleteClusterGroup(ClusterGroup clusterGroup) {
 		return clusterGroupPersistence.remove(clusterGroup);
 	}
 
@@ -132,12 +133,9 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return clusterGroupPersistence.findWithDynamicQuery(dynamicQuery);
 	}
 
@@ -152,12 +150,10 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 * @param start the lower bound of the range of model instances
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end) {
 		return clusterGroupPersistence.findWithDynamicQuery(dynamicQuery,
 			start, end);
 	}
@@ -174,47 +170,41 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end, OrderByComparator<T> orderByComparator) {
 		return clusterGroupPersistence.findWithDynamicQuery(dynamicQuery,
 			start, end, orderByComparator);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
-	public long dynamicQueryCount(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return clusterGroupPersistence.countWithDynamicQuery(dynamicQuery);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @param projection the projection to apply to the query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
 	public long dynamicQueryCount(DynamicQuery dynamicQuery,
-		Projection projection) throws SystemException {
+		Projection projection) {
 		return clusterGroupPersistence.countWithDynamicQuery(dynamicQuery,
 			projection);
 	}
 
 	@Override
-	public ClusterGroup fetchClusterGroup(long clusterGroupId)
-		throws SystemException {
+	public ClusterGroup fetchClusterGroup(long clusterGroupId) {
 		return clusterGroupPersistence.fetchByPrimaryKey(clusterGroupId);
 	}
 
@@ -224,17 +214,61 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 * @param clusterGroupId the primary key of the cluster group
 	 * @return the cluster group
 	 * @throws PortalException if a cluster group with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public ClusterGroup getClusterGroup(long clusterGroupId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return clusterGroupPersistence.findByPrimaryKey(clusterGroupId);
 	}
 
 	@Override
+	public ActionableDynamicQuery getActionableDynamicQuery() {
+		ActionableDynamicQuery actionableDynamicQuery = new DefaultActionableDynamicQuery();
+
+		actionableDynamicQuery.setBaseLocalService(clusterGroupLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(ClusterGroup.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("clusterGroupId");
+
+		return actionableDynamicQuery;
+	}
+
+	@Override
+	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery = new IndexableActionableDynamicQuery();
+
+		indexableActionableDynamicQuery.setBaseLocalService(clusterGroupLocalService);
+		indexableActionableDynamicQuery.setClassLoader(getClassLoader());
+		indexableActionableDynamicQuery.setModelClass(ClusterGroup.class);
+
+		indexableActionableDynamicQuery.setPrimaryKeyPropertyName(
+			"clusterGroupId");
+
+		return indexableActionableDynamicQuery;
+	}
+
+	protected void initActionableDynamicQuery(
+		ActionableDynamicQuery actionableDynamicQuery) {
+		actionableDynamicQuery.setBaseLocalService(clusterGroupLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(ClusterGroup.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("clusterGroupId");
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
+		throws PortalException {
+		return clusterGroupLocalService.deleteClusterGroup((ClusterGroup)persistedModel);
+	}
+
+	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return clusterGroupPersistence.findByPrimaryKey(primaryKeyObj);
 	}
 
@@ -248,11 +282,9 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 * @param start the lower bound of the range of cluster groups
 	 * @param end the upper bound of the range of cluster groups (not inclusive)
 	 * @return the range of cluster groups
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<ClusterGroup> getClusterGroups(int start, int end)
-		throws SystemException {
+	public List<ClusterGroup> getClusterGroups(int start, int end) {
 		return clusterGroupPersistence.findAll(start, end);
 	}
 
@@ -260,10 +292,9 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 * Returns the number of cluster groups.
 	 *
 	 * @return the number of cluster groups
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getClusterGroupsCount() throws SystemException {
+	public int getClusterGroupsCount() {
 		return clusterGroupPersistence.countAll();
 	}
 
@@ -272,12 +303,10 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 *
 	 * @param clusterGroup the cluster group
 	 * @return the cluster group that was updated
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public ClusterGroup updateClusterGroup(ClusterGroup clusterGroup)
-		throws SystemException {
+	public ClusterGroup updateClusterGroup(ClusterGroup clusterGroup) {
 		return clusterGroupPersistence.update(clusterGroup);
 	}
 
@@ -286,7 +315,7 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 *
 	 * @return the cluster group local service
 	 */
-	public com.liferay.portal.service.ClusterGroupLocalService getClusterGroupLocalService() {
+	public ClusterGroupLocalService getClusterGroupLocalService() {
 		return clusterGroupLocalService;
 	}
 
@@ -296,7 +325,7 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 * @param clusterGroupLocalService the cluster group local service
 	 */
 	public void setClusterGroupLocalService(
-		com.liferay.portal.service.ClusterGroupLocalService clusterGroupLocalService) {
+		ClusterGroupLocalService clusterGroupLocalService) {
 		this.clusterGroupLocalService = clusterGroupLocalService;
 	}
 
@@ -324,7 +353,7 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 *
 	 * @return the counter local service
 	 */
-	public com.liferay.counter.service.CounterLocalService getCounterLocalService() {
+	public com.liferay.counter.kernel.service.CounterLocalService getCounterLocalService() {
 		return counterLocalService;
 	}
 
@@ -334,38 +363,28 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 * @param counterLocalService the counter local service
 	 */
 	public void setCounterLocalService(
-		com.liferay.counter.service.CounterLocalService counterLocalService) {
+		com.liferay.counter.kernel.service.CounterLocalService counterLocalService) {
 		this.counterLocalService = counterLocalService;
 	}
 
 	public void afterPropertiesSet() {
-		persistedModelLocalServiceRegistry.register("com.liferay.portal.model.ClusterGroup",
+		persistedModelLocalServiceRegistry.register("com.liferay.portal.kernel.model.ClusterGroup",
 			clusterGroupLocalService);
 	}
 
 	public void destroy() {
 		persistedModelLocalServiceRegistry.unregister(
-			"com.liferay.portal.model.ClusterGroup");
+			"com.liferay.portal.kernel.model.ClusterGroup");
 	}
 
 	/**
-	 * Returns the Spring bean ID for this bean.
+	 * Returns the OSGi service identifier.
 	 *
-	 * @return the Spring bean ID for this bean
+	 * @return the OSGi service identifier
 	 */
 	@Override
-	public String getBeanIdentifier() {
-		return _beanIdentifier;
-	}
-
-	/**
-	 * Sets the Spring bean ID for this bean.
-	 *
-	 * @param beanIdentifier the Spring bean ID for this bean
-	 */
-	@Override
-	public void setBeanIdentifier(String beanIdentifier) {
-		_beanIdentifier = beanIdentifier;
+	public String getOSGiServiceIdentifier() {
+		return ClusterGroupLocalService.class.getName();
 	}
 
 	protected Class<?> getModelClass() {
@@ -381,17 +400,17 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 	 *
 	 * @param sql the sql query
 	 */
-	protected void runSQL(String sql) throws SystemException {
+	protected void runSQL(String sql) {
 		try {
 			DataSource dataSource = clusterGroupPersistence.getDataSource();
 
-			DB db = DBFactoryUtil.getDB();
+			DB db = DBManagerUtil.getDB();
 
 			sql = db.buildSQL(sql);
 			sql = PortalUtil.transformSQL(sql);
 
 			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(dataSource,
-					sql, new int[0]);
+					sql);
 
 			sqlUpdate.update();
 		}
@@ -400,13 +419,12 @@ public abstract class ClusterGroupLocalServiceBaseImpl
 		}
 	}
 
-	@BeanReference(type = com.liferay.portal.service.ClusterGroupLocalService.class)
-	protected com.liferay.portal.service.ClusterGroupLocalService clusterGroupLocalService;
+	@BeanReference(type = ClusterGroupLocalService.class)
+	protected ClusterGroupLocalService clusterGroupLocalService;
 	@BeanReference(type = ClusterGroupPersistence.class)
 	protected ClusterGroupPersistence clusterGroupPersistence;
-	@BeanReference(type = com.liferay.counter.service.CounterLocalService.class)
-	protected com.liferay.counter.service.CounterLocalService counterLocalService;
+	@BeanReference(type = com.liferay.counter.kernel.service.CounterLocalService.class)
+	protected com.liferay.counter.kernel.service.CounterLocalService counterLocalService;
 	@BeanReference(type = PersistedModelLocalServiceRegistry.class)
 	protected PersistedModelLocalServiceRegistry persistedModelLocalServiceRegistry;
-	private String _beanIdentifier;
 }

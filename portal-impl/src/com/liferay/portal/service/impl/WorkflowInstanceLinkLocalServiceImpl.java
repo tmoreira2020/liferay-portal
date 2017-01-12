@@ -14,9 +14,11 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.NoSuchWorkflowInstanceLinkException;
+import com.liferay.portal.kernel.exception.NoSuchWorkflowInstanceLinkException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
+import com.liferay.portal.kernel.model.WorkflowInstanceLink;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -25,14 +27,10 @@ import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil;
 import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
-import com.liferay.portal.model.User;
-import com.liferay.portal.model.WorkflowDefinitionLink;
-import com.liferay.portal.model.WorkflowInstanceLink;
 import com.liferay.portal.service.base.WorkflowInstanceLinkLocalServiceBaseImpl;
 
 import java.io.Serializable;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,19 +47,16 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	public WorkflowInstanceLink addWorkflowInstanceLink(
 			long userId, long companyId, long groupId, String className,
 			long classPK, long workflowInstanceId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		User user = userPersistence.findByPrimaryKey(userId);
 		long classNameId = classNameLocalService.getClassNameId(className);
-		Date now = new Date();
 
 		long workflowInstanceLinkId = counterLocalService.increment();
 
 		WorkflowInstanceLink workflowInstanceLink =
 			workflowInstanceLinkPersistence.create(workflowInstanceLinkId);
 
-		workflowInstanceLink.setCreateDate(now);
-		workflowInstanceLink.setModifiedDate(now);
 		workflowInstanceLink.setUserId(userId);
 		workflowInstanceLink.setUserName(user.getFullName());
 		workflowInstanceLink.setGroupId(groupId);
@@ -78,7 +73,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	@Override
 	public WorkflowInstanceLink deleteWorkflowInstanceLink(
 			long workflowInstanceLinkId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		WorkflowInstanceLink workflowInstanceLink = fetchWorkflowInstanceLink(
 			workflowInstanceLinkId);
@@ -89,7 +84,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	@Override
 	public WorkflowInstanceLink deleteWorkflowInstanceLink(
 			long companyId, long groupId, String className, long classPK)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		WorkflowInstanceLink workflowInstanceLink = fetchWorkflowInstanceLink(
 			companyId, groupId, className, classPK);
@@ -100,18 +95,13 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	@Override
 	public WorkflowInstanceLink deleteWorkflowInstanceLink(
 			WorkflowInstanceLink workflowInstanceLink)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (workflowInstanceLink == null) {
 			return null;
 		}
 
 		super.deleteWorkflowInstanceLink(workflowInstanceLink);
-
-		subscriptionLocalService.deleteSubscriptions(
-			workflowInstanceLink.getCompanyId(),
-			WorkflowInstance.class.getName(),
-			workflowInstanceLink.getWorkflowInstanceId());
 
 		WorkflowInstanceManagerUtil.deleteWorkflowInstance(
 			workflowInstanceLink.getCompanyId(),
@@ -123,7 +113,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	@Override
 	public void deleteWorkflowInstanceLinks(
 			long companyId, long groupId, String className, long classPK)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		List<WorkflowInstanceLink> workflowInstanceLinks =
 			getWorkflowInstanceLinks(companyId, groupId, className, classPK);
@@ -137,8 +127,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 
 	@Override
 	public WorkflowInstanceLink fetchWorkflowInstanceLink(
-			long companyId, long groupId, String className, long classPK)
-		throws SystemException {
+		long companyId, long groupId, String className, long classPK) {
 
 		List<WorkflowInstanceLink> workflowInstanceLinks =
 			getWorkflowInstanceLinks(companyId, groupId, className, classPK);
@@ -154,7 +143,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	@Override
 	public String getState(
 			long companyId, long groupId, String className, long classPK)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		WorkflowInstanceLink workflowInstanceLink = getWorkflowInstanceLink(
 			companyId, groupId, className, classPK);
@@ -169,7 +158,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	@Override
 	public WorkflowInstanceLink getWorkflowInstanceLink(
 			long companyId, long groupId, String className, long classPK)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		List<WorkflowInstanceLink> workflowInstanceLinks =
 			getWorkflowInstanceLinks(companyId, groupId, className, classPK);
@@ -196,8 +185,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 
 	@Override
 	public List<WorkflowInstanceLink> getWorkflowInstanceLinks(
-			long companyId, long groupId, String className, long classPK)
-		throws SystemException {
+		long companyId, long groupId, String className, long classPK) {
 
 		long classNameId = classNameLocalService.getClassNameId(className);
 
@@ -207,8 +195,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 
 	@Override
 	public boolean hasWorkflowInstanceLink(
-			long companyId, long groupId, String className, long classPK)
-		throws SystemException {
+		long companyId, long groupId, String className, long classPK) {
 
 		WorkflowInstanceLink workflowInstanceLink = fetchWorkflowInstanceLink(
 			companyId, groupId, className, classPK);
@@ -223,7 +210,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	@Override
 	public boolean isEnded(
 			long companyId, long groupId, String className, long classPK)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		WorkflowInstanceLink workflowInstanceLink = fetchWorkflowInstanceLink(
 			companyId, groupId, className, classPK);
@@ -247,7 +234,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	public void startWorkflowInstance(
 			long companyId, long groupId, long userId, String className,
 			long classPK, Map<String, Serializable> workflowContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!WorkflowThreadLocal.isEnabled()) {
 			return;
@@ -257,7 +244,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 			userId = userLocalService.getDefaultUserId(companyId);
 		}
 
-		WorkflowHandler workflowHandler =
+		WorkflowHandler<?> workflowHandler =
 			WorkflowHandlerRegistryUtil.getWorkflowHandler(className);
 
 		WorkflowDefinitionLink workflowDefinitionLink =
@@ -270,11 +257,10 @@ public class WorkflowInstanceLinkLocalServiceImpl
 			workflowDefinitionLink.getWorkflowDefinitionVersion();
 
 		if (workflowContext != null) {
-			workflowContext = new HashMap<String, Serializable>(
-				workflowContext);
+			workflowContext = new HashMap<>(workflowContext);
 		}
 		else {
-			workflowContext = new HashMap<String, Serializable>();
+			workflowContext = new HashMap<>();
 		}
 
 		workflowContext.put(
@@ -303,7 +289,7 @@ public class WorkflowInstanceLinkLocalServiceImpl
 	public void updateClassPK(
 			long companyId, long groupId, String className, long oldClassPK,
 			long newClassPK)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!WorkflowThreadLocal.isEnabled()) {
 			return;
@@ -324,9 +310,8 @@ public class WorkflowInstanceLinkLocalServiceImpl
 
 			workflowInstanceLinkPersistence.update(workflowInstanceLink);
 
-			Map<String, Serializable> workflowContext =
-				new HashMap<String, Serializable>(
-					workflowInstance.getWorkflowContext());
+			Map<String, Serializable> workflowContext = new HashMap<>(
+				workflowInstance.getWorkflowContext());
 
 			workflowContext.put(
 				WorkflowConstants.CONTEXT_ENTRY_CLASS_PK,

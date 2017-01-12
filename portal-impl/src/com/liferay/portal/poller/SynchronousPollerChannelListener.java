@@ -21,7 +21,6 @@ import com.liferay.portal.kernel.notifications.ChannelException;
 import com.liferay.portal.kernel.notifications.ChannelHubManagerUtil;
 import com.liferay.portal.kernel.notifications.ChannelListener;
 import com.liferay.portal.kernel.notifications.NotificationEvent;
-import com.liferay.portal.util.PropsValues;
 
 import java.util.List;
 
@@ -30,46 +29,33 @@ import java.util.List;
  */
 public class SynchronousPollerChannelListener implements ChannelListener {
 
-	public SynchronousPollerChannelListener(
-		long companyId, long userId,
-		JSONObject pollerResponseHeaderJSONObject) {
-
-		_companyId = companyId;
-		_userId = userId;
-		_pollerResponseHeaderJSONObject = pollerResponseHeaderJSONObject;
-	}
-
 	@Override
 	public synchronized void channelListenerRemoved(long channelId) {
 		_complete = true;
 
-		this.notify();
+		notify();
 	}
 
-	public synchronized String getNotificationEvents(long timeout)
+	public synchronized String getNotificationEvents(
+			long companyId, long userId,
+			JSONObject pollerResponseHeaderJSONObject, long timeout)
 		throws ChannelException {
 
 		try {
 			if (!_complete) {
-				this.wait(timeout);
+				wait(timeout);
 			}
-		}
-		catch (InterruptedException ie) {
-		}
-
-		try {
-			Thread.sleep(PropsValues.POLLER_NOTIFICATIONS_TIMEOUT);
 		}
 		catch (InterruptedException ie) {
 		}
 
 		List<NotificationEvent> notificationEvents =
 			ChannelHubManagerUtil.fetchNotificationEvents(
-				_companyId, _userId, true);
+				companyId, userId, true);
 
 		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
 
-		jsonArray.put(_pollerResponseHeaderJSONObject);
+		jsonArray.put(pollerResponseHeaderJSONObject);
 
 		for (NotificationEvent notificationEvent : notificationEvents) {
 			jsonArray.put(notificationEvent.toJSONObject());
@@ -82,12 +68,9 @@ public class SynchronousPollerChannelListener implements ChannelListener {
 	public synchronized void notificationEventsAvailable(long channelId) {
 		_complete = true;
 
-		this.notify();
+		notify();
 	}
 
-	private long _companyId;
 	private boolean _complete;
-	private JSONObject _pollerResponseHeaderJSONObject;
-	private long _userId;
 
 }

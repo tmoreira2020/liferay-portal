@@ -14,11 +14,12 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.NoSuchWebDAVPropsException;
+import com.liferay.portal.kernel.exception.NoSuchWebDAVPropsException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.WebDAVProps;
 import com.liferay.portal.kernel.webdav.WebDAVException;
-import com.liferay.portal.model.WebDAVProps;
 import com.liferay.portal.service.base.WebDAVPropsLocalServiceBaseImpl;
 
 import java.util.Date;
@@ -30,22 +31,25 @@ public class WebDAVPropsLocalServiceImpl
 	extends WebDAVPropsLocalServiceBaseImpl {
 
 	@Override
-	public void deleteWebDAVProps(String className, long classPK)
-		throws SystemException {
-
+	public void deleteWebDAVProps(String className, long classPK) {
 		long classNameId = classNameLocalService.getClassNameId(className);
 
 		try {
 			webDAVPropsPersistence.removeByC_C(classNameId, classPK);
 		}
 		catch (NoSuchWebDAVPropsException nswdavpe) {
+
+			// LPS-52675
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(nswdavpe, nswdavpe);
+			}
 		}
 	}
 
 	@Override
 	public WebDAVProps getWebDAVProps(
-			long companyId, String className, long classPK)
-		throws SystemException {
+		long companyId, String className, long classPK) {
 
 		long classNameId = classNameLocalService.getClassNameId(className);
 
@@ -72,7 +76,7 @@ public class WebDAVPropsLocalServiceImpl
 
 	@Override
 	public void storeWebDAVProps(WebDAVProps webDavProps)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		try {
 			webDavProps.store();
@@ -83,5 +87,8 @@ public class WebDAVPropsLocalServiceImpl
 
 		webDAVPropsPersistence.update(webDavProps);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		WebDAVPropsLocalServiceImpl.class);
 
 }

@@ -14,56 +14,43 @@
 
 package com.liferay.portlet;
 
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.ClassUtil;
-import com.liferay.portal.kernel.util.InstanceFactory;
-import com.liferay.portal.util.ClassLoaderUtil;
-import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.kernel.portlet.ControlPanelEntry;
+import com.liferay.registry.Filter;
+import com.liferay.registry.Registry;
+import com.liferay.registry.RegistryUtil;
+import com.liferay.registry.ServiceTracker;
 
 /**
  * @author Brian Wing Shun Chan
  * @author Shuyang Zhou
+ * @author Peter Fellwock
+ * @deprecated As of 7.0.0, with no direct replacement
  */
+@Deprecated
 public class DefaultControlPanelEntryFactory {
 
 	public static ControlPanelEntry getInstance() {
-		return _controlPanelEntry;
+		return ServiceTrackerHolder._serviceTracker.getService();
 	}
 
-	public static void setInstance(ControlPanelEntry controlPanelEntry) {
-		if (_log.isDebugEnabled()) {
-			_log.debug("Set " + ClassUtil.getClassName(controlPanelEntry));
+	private static class ServiceTrackerHolder {
+
+		private static final
+			ServiceTracker<ControlPanelEntry, ControlPanelEntry>
+				_serviceTracker;
+
+		static {
+			Registry registry = RegistryUtil.getRegistry();
+
+			Filter filter = registry.getFilter(
+				"(&(!(javax.portlet.name=*))(objectClass=" +
+					ControlPanelEntry.class.getName() + "))");
+
+			_serviceTracker = registry.trackServices(filter);
+
+			_serviceTracker.open();
 		}
 
-		if (controlPanelEntry == null) {
-			_controlPanelEntry = _originalControlPanelEntry;
-		}
-		else {
-			_controlPanelEntry = controlPanelEntry;
-		}
 	}
-
-	public void afterPropertiesSet() throws Exception {
-		if (_log.isDebugEnabled()) {
-			_log.debug(
-				"Instantiate " +
-					PropsValues.CONTROL_PANEL_DEFAULT_ENTRY_CLASS);
-		}
-
-		ClassLoader classLoader = ClassLoaderUtil.getPortalClassLoader();
-
-		_originalControlPanelEntry =
-			(ControlPanelEntry)InstanceFactory.newInstance(
-				classLoader, PropsValues.CONTROL_PANEL_DEFAULT_ENTRY_CLASS);
-
-		_controlPanelEntry = _originalControlPanelEntry;
-	}
-
-	private static Log _log = LogFactoryUtil.getLog(
-		DefaultControlPanelEntryFactory.class);
-
-	private static volatile ControlPanelEntry _controlPanelEntry;
-	private static ControlPanelEntry _originalControlPanelEntry;
 
 }

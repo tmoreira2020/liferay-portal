@@ -16,6 +16,7 @@ package com.liferay.portlet;
 
 import com.liferay.portal.kernel.cache.MultiVMPoolUtil;
 import com.liferay.portal.kernel.cache.PortalCache;
+import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 /**
@@ -27,8 +28,7 @@ public class PortalPreferencesWrapperCacheUtil {
 		PortalPreferencesWrapperCacheUtil.class.getName();
 
 	public static PortalPreferencesWrapper get(long ownerId, int ownerType) {
-		String cacheKey = StringUtil.toHexString(ownerId).concat(
-			StringUtil.toHexString(ownerType));
+		String cacheKey = _getCacheKey(ownerId, ownerType);
 
 		return _portalPreferencesWrapperPortalCache.get(cacheKey);
 	}
@@ -37,22 +37,29 @@ public class PortalPreferencesWrapperCacheUtil {
 		long ownerId, int ownerType,
 		PortalPreferencesWrapper portalPreferencesWrapper) {
 
-		String cacheKey = StringUtil.toHexString(ownerId).concat(
-			StringUtil.toHexString(ownerType));
+		String cacheKey = _getCacheKey(ownerId, ownerType);
 
-		_portalPreferencesWrapperPortalCache.putQuiet(
-			cacheKey, portalPreferencesWrapper);
+		PortalCacheHelperUtil.putWithoutReplicator(
+			_portalPreferencesWrapperPortalCache, cacheKey,
+			portalPreferencesWrapper);
 	}
 
 	public static void remove(long ownerId, int ownerType) {
-		String cacheKey = StringUtil.toHexString(ownerId).concat(
-			StringUtil.toHexString(ownerType));
+		String cacheKey = _getCacheKey(ownerId, ownerType);
 
 		_portalPreferencesWrapperPortalCache.remove(cacheKey);
 	}
 
-	private static PortalCache<String, PortalPreferencesWrapper>
-		_portalPreferencesWrapperPortalCache = MultiVMPoolUtil.getCache(
-			CACHE_NAME);
+	private static String _getCacheKey(long ownerId, int ownerType) {
+		String cacheKey = StringUtil.toHexString(ownerId);
+
+		cacheKey = cacheKey.concat(StringUtil.toHexString(ownerType));
+
+		return cacheKey;
+	}
+
+	private static final PortalCache<String, PortalPreferencesWrapper>
+		_portalPreferencesWrapperPortalCache = MultiVMPoolUtil.getPortalCache(
+			CACHE_NAME, false, true);
 
 }

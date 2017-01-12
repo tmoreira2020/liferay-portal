@@ -17,7 +17,7 @@ package com.liferay.portal.spring.transaction;
 import org.aopalliance.intercept.MethodInvocation;
 
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.interceptor.TransactionAttribute;
+import org.springframework.transaction.support.CallbackPreferringPlatformTransactionManager;
 import org.springframework.transaction.support.TransactionCallback;
 
 /**
@@ -28,23 +28,33 @@ public class CounterCallbackPreferringTransactionExecutor
 
 	@Override
 	protected TransactionCallback<Object> createTransactionCallback(
-		TransactionAttribute transactionAttribute,
+		CallbackPreferringPlatformTransactionManager
+			callbackPreferringPlatformTransactionManager,
+		TransactionAttributeAdapter transactionAttributeAdapter,
 		MethodInvocation methodInvocation) {
 
 		return new CounterCallbackPreferringTransactionCallback(
-			transactionAttribute, methodInvocation);
+			transactionAttributeAdapter, methodInvocation);
 	}
 
-	private class CounterCallbackPreferringTransactionCallback
+	/**
+	 * @deprecated As of 7.0.0, replaced by {@link
+	 *             #createTransactionCallback(
+	 *             CallbackPreferringPlatformTransactionManager,
+	 *             TransactionAttributeAdapter, MethodInvocation)}
+	 */
+	@Deprecated
+	@Override
+	protected TransactionCallback<Object> createTransactionCallback(
+		TransactionAttributeAdapter transactionAttributeAdapter,
+		MethodInvocation methodInvocation) {
+
+		return createTransactionCallback(
+			null, transactionAttributeAdapter, methodInvocation);
+	}
+
+	private static class CounterCallbackPreferringTransactionCallback
 		implements TransactionCallback<Object> {
-
-		private CounterCallbackPreferringTransactionCallback(
-			TransactionAttribute transactionAttribute,
-			MethodInvocation methodInvocation) {
-
-			_transactionAttribute = transactionAttribute;
-			_methodInvocation = methodInvocation;
-		}
 
 		@Override
 		public Object doInTransaction(TransactionStatus transactionStatus) {
@@ -52,7 +62,7 @@ public class CounterCallbackPreferringTransactionExecutor
 				return _methodInvocation.proceed();
 			}
 			catch (Throwable throwable) {
-				if (_transactionAttribute.rollbackOn(throwable)) {
+				if (_transactionAttributeAdapter.rollbackOn(throwable)) {
 					if (throwable instanceof RuntimeException) {
 						throw (RuntimeException)throwable;
 					}
@@ -66,8 +76,16 @@ public class CounterCallbackPreferringTransactionExecutor
 			}
 		}
 
-		private MethodInvocation _methodInvocation;
-		private TransactionAttribute _transactionAttribute;
+		private CounterCallbackPreferringTransactionCallback(
+			TransactionAttributeAdapter transactionAttributeAdapter,
+			MethodInvocation methodInvocation) {
+
+			_transactionAttributeAdapter = transactionAttributeAdapter;
+			_methodInvocation = methodInvocation;
+		}
+
+		private final MethodInvocation _methodInvocation;
+		private final TransactionAttributeAdapter _transactionAttributeAdapter;
 
 	}
 

@@ -14,10 +14,8 @@
 
 package com.liferay.portal.deploy.hot;
 
-import com.liferay.portal.dao.orm.hibernate.region.LiferayEhcacheRegionFactory;
-import com.liferay.portal.dao.orm.hibernate.region.SingletonLiferayEhcacheRegionFactory;
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.cache.PortalCacheManager;
+import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
+import com.liferay.portal.kernel.cache.configurator.PortalCacheConfiguratorSettings;
 import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.configuration.ConfigurationFactoryUtil;
 import com.liferay.portal.kernel.deploy.hot.BaseHotDeployListener;
@@ -26,14 +24,17 @@ import com.liferay.portal.kernel.deploy.hot.HotDeployException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.plugin.PluginPackage;
+import com.liferay.portal.kernel.service.ServiceComponentLocalServiceUtil;
+import com.liferay.portal.kernel.service.configuration.ServiceComponentConfiguration;
+import com.liferay.portal.kernel.service.configuration.servlet.ServletServiceContextComponentConfiguration;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
-import com.liferay.portal.kernel.util.AggregateClassLoader;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.plugin.PluginPackageUtil;
-import com.liferay.portal.service.ServiceComponentLocalServiceUtil;
-import com.liferay.portal.util.ClassLoaderUtil;
+import com.liferay.registry.Registry;
+import com.liferay.registry.RegistryUtil;
+import com.liferay.registry.ServiceRegistrar;
 import com.liferay.util.log4j.Log4JUtil;
 import com.liferay.util.portlet.PortletProps;
 
@@ -41,6 +42,8 @@ import java.lang.reflect.Method;
 
 import java.net.URL;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.ServletContext;
@@ -62,10 +65,7 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 		}
 		catch (Throwable t) {
 			throwHotDeployException(
-				hotDeployEvent,
-				"Error registering plugins for " +
-					hotDeployEvent.getServletContextName(),
-				t);
+				hotDeployEvent, "Error registering plugins for ", t);
 		}
 	}
 
@@ -78,19 +78,17 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 		}
 		catch (Throwable t) {
 			throwHotDeployException(
-				hotDeployEvent,
-				"Error unregistering plugins for " +
-					hotDeployEvent.getServletContextName(),
-				t);
+				hotDeployEvent, "Error unregistering plugins for ", t);
 		}
 	}
 
 	protected void destroyServiceComponent(
-			ServletContext servletContext, ClassLoader classLoader)
+			ServiceComponentConfiguration serviceComponentConfiguration,
+			ClassLoader classLoader)
 		throws Exception {
 
 		ServiceComponentLocalServiceUtil.destroyServiceComponent(
-			servletContext, classLoader);
+			serviceComponentConfiguration, classLoader);
 	}
 
 	protected void doInvokeDeploy(HotDeployEvent hotDeployEvent)
@@ -111,8 +109,8 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 			return;
 		}
 
-		if (servletContext.getResource(
-				"/WEB-INF/liferay-theme-loader.xml") != null) {
+		if (servletContext.getResource("/WEB-INF/liferay-theme-loader.xml") !=
+				null) {
 
 			PluginPackageUtil.registerInstalledPluginPackage(pluginPackage);
 
@@ -131,9 +129,7 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 		initPortletProps(classLoader);
 		initServiceComponent(servletContext, classLoader);
 
-		registerClpMessageListeners(servletContext, classLoader);
-
-		reconfigureCaches(classLoader);
+		reconfigureCaches(servletContext, classLoader);
 
 		if (_log.isInfoEnabled()) {
 			_log.info(
@@ -167,15 +163,36 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 		ServletContextPool.remove(servletContextName);
 
 		destroyServiceComponent(
-			servletContext, hotDeployEvent.getContextClassLoader());
+			new ServletServiceContextComponentConfiguration(servletContext),
+			hotDeployEvent.getContextClassLoader());
 
-		unregisterClpMessageListeners(servletContext);
+		ServiceRegistrar<PortalCacheConfiguratorSettings> serviceRegistrar =
+			(ServiceRegistrar<PortalCacheConfiguratorSettings>)
+				servletContext.getAttribute(
+					_PORTAL_CACHE_CONFIGURATOR_SETTINGS_SERVICE_REGISTAR);
+
+		if (serviceRegistrar != null) {
+			serviceRegistrar.destroy();
+		}
 
 		if (_log.isInfoEnabled()) {
 			_log.info(
 				"Plugin package " + pluginPackage.getModuleId() +
 					" unregistered successfully");
 		}
+	}
+
+	protected URL getPortalCacheConfigurationURL(
+		Configuration configuration, ClassLoader classLoader,
+		String configLocation) {
+
+		String cacheConfigurationLocation = configuration.get(configLocation);
+
+		if (Validator.isNull(cacheConfigurationLocation)) {
+			return null;
+		}
+
+		return classLoader.getResource(cacheConfigurationLocation);
 	}
 
 	protected void initLogger(ClassLoader classLoader) {
@@ -245,11 +262,15 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 		}
 
 		ServiceComponentLocalServiceUtil.initServiceComponent(
-			servletContext, classLoader, buildNamespace, buildNumber, buildDate,
+			new ServletServiceContextComponentConfiguration(servletContext),
+			classLoader, buildNamespace, buildNumber, buildDate,
 			buildAutoUpgrade);
 	}
 
-	protected void reconfigureCaches(ClassLoader classLoader) throws Exception {
+	protected void reconfigureCaches(
+			ServletContext servletContext, ClassLoader classLoader)
+		throws Exception {
+
 		Configuration portletPropertiesConfiguration = null;
 
 		try {
@@ -265,105 +286,60 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 			return;
 		}
 
-		String cacheConfigurationLocation = portletPropertiesConfiguration.get(
-			PropsKeys.EHCACHE_SINGLE_VM_CONFIG_LOCATION);
-
-		reconfigureCaches(
-			classLoader, cacheConfigurationLocation,
-			_SINGLE_VM_PORTAL_CACHE_MANAGER_BEAN_NAME);
-
-		String clusterCacheConfigurationLocation =
+		String singleVMConfigurationLocation =
+			portletPropertiesConfiguration.get(
+				PropsKeys.EHCACHE_SINGLE_VM_CONFIG_LOCATION);
+		String multiVMConfigurationLocation =
 			portletPropertiesConfiguration.get(
 				PropsKeys.EHCACHE_MULTI_VM_CONFIG_LOCATION);
 
-		reconfigureCaches(
-			classLoader, clusterCacheConfigurationLocation,
-			_MULTI_VM_PORTAL_CACHE_MANAGER_BEAN_NAME);
+		if (Validator.isNull(singleVMConfigurationLocation) &&
+			Validator.isNull(multiVMConfigurationLocation)) {
 
-		String hibernateCacheConfigurationPath =
-			portletPropertiesConfiguration.get(
-				PropsKeys.NET_SF_EHCACHE_CONFIGURATION_RESOURCE_NAME);
-
-		reconfigureHibernateCache(classLoader, hibernateCacheConfigurationPath);
-	}
-
-	protected void reconfigureCaches(
-			ClassLoader classLoader, String cacheConfigurationPath,
-			String portalCacheManagerBeanId)
-		throws Exception {
-
-		if (Validator.isNull(cacheConfigurationPath)) {
 			return;
 		}
 
-		URL cacheConfigurationURL = classLoader.getResource(
-			cacheConfigurationPath);
+		Registry registry = RegistryUtil.getRegistry();
 
-		if (cacheConfigurationURL == null) {
-			return;
+		ServiceRegistrar<PortalCacheConfiguratorSettings> serviceRegistrar =
+			registry.getServiceRegistrar(PortalCacheConfiguratorSettings.class);
+
+		if (Validator.isNotNull(singleVMConfigurationLocation)) {
+			Map<String, Object> properties = new HashMap<>();
+
+			properties.put(
+				"portal.cache.manager.name", PortalCacheManagerNames.SINGLE_VM);
+
+			serviceRegistrar.registerService(
+				PortalCacheConfiguratorSettings.class,
+				new PortalCacheConfiguratorSettings(
+					classLoader, singleVMConfigurationLocation),
+				properties);
 		}
 
-		ClassLoader aggregateClassLoader =
-			AggregateClassLoader.getAggregateClassLoader(
-				new ClassLoader[] {
-					ClassLoaderUtil.getPortalClassLoader(), classLoader
-				});
+		if (Validator.isNotNull(multiVMConfigurationLocation)) {
+			Map<String, Object> properties = new HashMap<>();
 
-		ClassLoader contextClassLoader =
-			ClassLoaderUtil.getContextClassLoader();
+			properties.put(
+				"portal.cache.manager.name", PortalCacheManagerNames.MULTI_VM);
 
-		try {
-			ClassLoaderUtil.setContextClassLoader(aggregateClassLoader);
-
-			PortalCacheManager<?, ?> portalCacheManager =
-				(PortalCacheManager<?, ?>)PortalBeanLocatorUtil.locate(
-					portalCacheManagerBeanId);
-
-			if (_log.isInfoEnabled()) {
-				_log.info(
-					"Reconfiguring caches in cache manager " +
-						portalCacheManagerBeanId + " using " +
-							cacheConfigurationURL);
-			}
-
-			portalCacheManager.reconfigureCaches(cacheConfigurationURL);
+			serviceRegistrar.registerService(
+				PortalCacheConfiguratorSettings.class,
+				new PortalCacheConfiguratorSettings(
+					classLoader, multiVMConfigurationLocation),
+				properties);
 		}
-		finally {
-			ClassLoaderUtil.setContextClassLoader(contextClassLoader);
-		}
+
+		servletContext.setAttribute(
+			_PORTAL_CACHE_CONFIGURATOR_SETTINGS_SERVICE_REGISTAR,
+			serviceRegistrar);
 	}
 
-	protected void reconfigureHibernateCache(
-		ClassLoader classLoader, String hibernateCacheConfigurationPath) {
+	private static final String
+		_PORTAL_CACHE_CONFIGURATOR_SETTINGS_SERVICE_REGISTAR =
+			"PORTAL_CACHE_CONFIGURATOR_SETTINGS_SERVICE_REGISTAR";
 
-		if (Validator.isNull(hibernateCacheConfigurationPath)) {
-			return;
-		}
-
-		LiferayEhcacheRegionFactory liferayEhcacheRegionFactory =
-			SingletonLiferayEhcacheRegionFactory.getInstance();
-
-		URL configurationFile = classLoader.getResource(
-			hibernateCacheConfigurationPath);
-
-		if (configurationFile != null) {
-			if (_log.isInfoEnabled()) {
-				_log.info(
-					"Reconfiguring Hibernate caches using " +
-						configurationFile);
-			}
-
-			liferayEhcacheRegionFactory.reconfigureCaches(configurationFile);
-		}
-	}
-
-	private static final String _MULTI_VM_PORTAL_CACHE_MANAGER_BEAN_NAME =
-		"com.liferay.portal.kernel.cache.MultiVMPortalCacheManager";
-
-	private static final String _SINGLE_VM_PORTAL_CACHE_MANAGER_BEAN_NAME =
-		"com.liferay.portal.kernel.cache.SingleVMPortalCacheManager";
-
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		PluginPackageHotDeployListener.class);
 
 }

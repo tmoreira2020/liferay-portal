@@ -14,171 +14,50 @@
 
 package com.liferay.portal.upgrade.v6_1_0;
 
-import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.upgrade.UpgradeProcess;
-import com.liferay.portal.model.GroupConstants;
-import com.liferay.portal.model.ResourcePermission;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.util.PortletKeys;
+import com.liferay.counter.kernel.service.CounterLocalService;
+import com.liferay.counter.kernel.service.CounterLocalServiceWrapper;
+import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
+import com.liferay.portal.kernel.model.ResourcePermission;
+import com.liferay.portal.kernel.upgrade.BaseUpgradeAdminPortlets;
+import com.liferay.portal.spring.aop.ServiceWrapperProxyUtil;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.io.Closeable;
 
 /**
  * @author Juan Fernández
  */
-public class UpgradeAdminPortlets extends UpgradeProcess {
-
-	protected void addResourcePermission(
-			long resourcePermissionId, long companyId, String name, int scope,
-			String primKey, long roleId, long actionIds)
-		throws Exception {
-
-		Connection con = null;
-		PreparedStatement ps = null;
-
-		try {
-			con = DataAccess.getUpgradeOptimizedConnection();
-
-			ps = con.prepareStatement(
-				"insert into ResourcePermission (resourcePermissionId, " +
-					"companyId, name, scope, primKey, roleId, actionIds) " +
-						"values (?, ?, ?, ?, ?, ?, ?)");
-
-			ps.setLong(1, resourcePermissionId);
-			ps.setLong(2, companyId);
-			ps.setString(3, name);
-			ps.setInt(4, scope);
-			ps.setString(5, primKey);
-			ps.setLong(6, roleId);
-			ps.setLong(7, actionIds);
-
-			ps.executeUpdate();
-		}
-		finally {
-			DataAccess.cleanUp(con, ps);
-		}
-	}
+public class UpgradeAdminPortlets extends BaseUpgradeAdminPortlets {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		updateAccessInControlPanelPermission(
-			PortletKeys.BLOGS, PortletKeys.BLOGS_ADMIN);
+		try (Closeable closeable = ServiceWrapperProxyUtil.createProxy(
+				PortalBeanLocatorUtil.locate(
+					CounterLocalService.class.getName()),
+				Pre7CounterLocalServiceImpl.class)) {
 
-		updateAccessInControlPanelPermission(
-			PortletKeys.MESSAGE_BOARDS, PortletKeys.MESSAGE_BOARDS_ADMIN);
-	}
-
-	protected long getBitwiseValue(String name, String actionId)
-		throws Exception {
-
-		Connection con = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		try {
-			con = DataAccess.getUpgradeOptimizedConnection();
-
-			ps = con.prepareStatement(
-				"select bitwiseValue from ResourceAction where name = ? and " +
-					"actionId = ?");
-
-			ps.setString(1, name);
-			ps.setString(2, actionId);
-
-			rs = ps.executeQuery();
-
-			if (rs.next()) {
-				return rs.getLong("bitwiseValue");
-			}
-
-			return 0;
-		}
-		finally {
-			DataAccess.cleanUp(con, ps, rs);
+			updateAccessInControlPanelPermission("19", "162");
+			updateAccessInControlPanelPermission("33", "161");
 		}
 	}
 
-	protected long getControlPanelGroupId() throws Exception {
-		Connection con = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
+	private static class Pre7CounterLocalServiceImpl
+		extends CounterLocalServiceWrapper {
 
-		try {
-			con = DataAccess.getUpgradeOptimizedConnection();
-
-			ps = con.prepareStatement(
-				"select groupId from Group_ where name = '" +
-					GroupConstants.CONTROL_PANEL + "'");
-
-			rs = ps.executeQuery();
-
-			if (rs.next()) {
-				return rs.getLong("groupId");
+		@Override
+		public long increment(String name) {
+			if (name.equals(ResourcePermission.class.getName())) {
+				name = "com.liferay.portal.model.ResourcePermission";
 			}
 
-			return 0;
+			return super.increment(name);
 		}
-		finally {
-			DataAccess.cleanUp(con, ps, rs);
+
+		private Pre7CounterLocalServiceImpl(
+			CounterLocalService counterLocalService) {
+
+			super(counterLocalService);
 		}
-	}
 
-	protected void updateAccessInControlPanelPermission(
-			String portletFrom, String portletTo)
-		throws Exception {
-
-		long bitwiseValue = getBitwiseValue(
-			portletFrom, ActionKeys.ACCESS_IN_CONTROL_PANEL);
-
-		Connection con = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		try {
-			con = DataAccess.getUpgradeOptimizedConnection();
-
-			ps = con.prepareStatement(
-				"select * from ResourcePermission where name = ?");
-
-			ps.setString(1, portletFrom);
-
-			rs = ps.executeQuery();
-
-			while (rs.next()) {
-				long resourcePermissionId = rs.getLong("resourcePermissionId");
-				long actionIds = rs.getLong("actionIds");
-
-				if ((actionIds & bitwiseValue) != 0) {
-					actionIds = actionIds & (~bitwiseValue);
-
-					runSQL(
-						"update ResourcePermission set actionIds = " +
-							actionIds + " where resourcePermissionId = " +
-								resourcePermissionId);
-
-					resourcePermissionId = increment(
-						ResourcePermission.class.getName());
-
-					long companyId = rs.getLong("companyId");
-					int scope = rs.getInt("scope");
-					String primKey = rs.getString("primKey");
-					long roleId = rs.getLong("roleId");
-
-					actionIds = rs.getLong("actionIds");
-
-					actionIds |= bitwiseValue;
-
-					addResourcePermission(
-						resourcePermissionId, companyId, portletTo, scope,
-						primKey, roleId, actionIds);
-				}
-			}
-		}
-		finally {
-			DataAccess.cleanUp(con, ps, rs);
-		}
 	}
 
 }

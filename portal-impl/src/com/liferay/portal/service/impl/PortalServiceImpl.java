@@ -14,7 +14,6 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -25,15 +24,15 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.messaging.sender.DirectSynchronousMessageSender;
+import com.liferay.portal.kernel.messaging.sender.SingleDestinationMessageSenderFactoryUtil;
 import com.liferay.portal.kernel.messaging.sender.SynchronousMessageSender;
+import com.liferay.portal.kernel.model.ClassName;
+import com.liferay.portal.kernel.service.PortalService;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ReleaseInfo;
-import com.liferay.portal.model.ClassName;
 import com.liferay.portal.model.impl.ClassNameImpl;
-import com.liferay.portal.service.PortalService;
 import com.liferay.portal.service.base.PortalServiceBaseImpl;
 import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.PropsValues;
@@ -45,7 +44,7 @@ import com.liferay.portal.util.PropsValues;
 public class PortalServiceImpl extends PortalServiceBaseImpl {
 
 	@Override
-	public String getAutoDeployDirectory() throws SystemException {
+	public String getAutoDeployDirectory() {
 		return PrefsPropsUtil.getString(
 			PropsKeys.AUTO_DEPLOY_DEPLOY_DIR,
 			PropsValues.AUTO_DEPLOY_DEPLOY_DIR);
@@ -57,26 +56,27 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 		return ReleaseInfo.getBuildNumber();
 	}
 
+	@JSONWebService
 	@Override
-	public void testAddClassName_Rollback(String classNameValue)
-		throws SystemException {
+	public String getVersion() {
+		return ReleaseInfo.getVersion();
+	}
 
+	@Override
+	public void testAddClassName_Rollback(String classNameValue) {
 		addClassName(classNameValue);
 
 		throw new SystemException();
 	}
 
 	@Override
-	public void testAddClassName_Success(String classNameValue)
-		throws SystemException {
-
+	public void testAddClassName_Success(String classNameValue) {
 		addClassName(classNameValue);
 	}
 
 	@Override
 	public void testAddClassNameAndTestTransactionPortletBar_PortalRollback(
-			String transactionPortletBarText)
-		throws SystemException {
+		String transactionPortletBarText) {
 
 		addClassName(PortalService.class.getName());
 
@@ -87,8 +87,7 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 
 	@Override
 	public void testAddClassNameAndTestTransactionPortletBar_PortletRollback(
-			String transactionPortletBarText)
-		throws SystemException {
+		String transactionPortletBarText) {
 
 		addClassName(PortalService.class.getName());
 
@@ -97,8 +96,7 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 
 	@Override
 	public void testAddClassNameAndTestTransactionPortletBar_Success(
-			String transactionPortletBarText)
-		throws SystemException {
+		String transactionPortletBarText) {
 
 		addClassName(PortalService.class.getName());
 
@@ -107,8 +105,7 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public void testAutoSyncHibernateSessionStateOnTxCreation()
-		throws SystemException {
+	public void testAutoSyncHibernateSessionStateOnTxCreation() {
 
 		// Add in new transaction
 
@@ -178,7 +175,7 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 	}
 
 	@Override
-	public void testDeleteClassName() throws PortalException, SystemException {
+	public void testDeleteClassName() throws PortalException {
 		classNamePersistence.removeByValue(PortalService.class.getName());
 	}
 
@@ -204,7 +201,7 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 	}
 
 	@Override
-	public boolean testHasClassName() throws SystemException {
+	public boolean testHasClassName() {
 		int count = classNamePersistence.countByValue(
 			PortalService.class.getName());
 
@@ -216,7 +213,7 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 		}
 	}
 
-	protected void addClassName(String classNameValue) throws SystemException {
+	protected void addClassName(String classNameValue) {
 		long classNameId = counterLocalService.increment();
 
 		ClassName className = classNamePersistence.create(classNameId);
@@ -227,8 +224,7 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 	}
 
 	protected void addTransactionPortletBar(
-			String transactionPortletBarText, boolean rollback)
-		throws SystemException {
+		String transactionPortletBarText, boolean rollback) {
 
 		try {
 			Message message = new Message();
@@ -237,8 +233,9 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 			message.put("text", transactionPortletBarText);
 
 			SynchronousMessageSender synchronousMessageSender =
-				(SynchronousMessageSender)PortalBeanLocatorUtil.locate(
-					DirectSynchronousMessageSender.class.getName());
+				SingleDestinationMessageSenderFactoryUtil.
+					getSynchronousMessageSender(
+						SynchronousMessageSender.Mode.DIRECT);
 
 			synchronousMessageSender.send(
 				DestinationNames.TEST_TRANSACTION, message);
@@ -248,6 +245,7 @@ public class PortalServiceImpl extends PortalServiceBaseImpl {
 		}
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(PortalServiceImpl.class);
+	private static final Log _log = LogFactoryUtil.getLog(
+		PortalServiceImpl.class);
 
 }

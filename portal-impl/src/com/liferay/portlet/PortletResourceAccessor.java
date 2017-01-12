@@ -14,8 +14,8 @@
 
 package com.liferay.portlet;
 
+import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.util.Accessor;
-import com.liferay.portal.model.Portlet;
 
 import java.util.List;
 
@@ -107,8 +107,19 @@ public interface PortletResourceAccessor
 
 	public boolean isPortalResource();
 
-	public static abstract class DefaultPortletResourceAccessor
+	public abstract static class DefaultPortletResourceAccessor
 		implements PortletResourceAccessor {
+
+		@Override
+		@SuppressWarnings("rawtypes")
+		public Class<List<String>> getAttributeClass() {
+			return (Class)List.class;
+		}
+
+		@Override
+		public Class<Portlet> getTypeClass() {
+			return Portlet.class;
+		}
 
 		@Override
 		public boolean isPortalResource() {
@@ -117,8 +128,19 @@ public interface PortletResourceAccessor
 
 	}
 
-	public static abstract class PortalPortletResourceAccessor
+	public abstract static class PortalPortletResourceAccessor
 		implements PortletResourceAccessor {
+
+		@Override
+		@SuppressWarnings("rawtypes")
+		public Class<List<String>> getAttributeClass() {
+			return (Class)List.class;
+		}
+
+		@Override
+		public Class<Portlet> getTypeClass() {
+			return Portlet.class;
+		}
 
 		@Override
 		public boolean isPortalResource() {

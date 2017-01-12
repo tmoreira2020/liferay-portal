@@ -14,8 +14,9 @@
 
 package com.liferay.portal.metadata;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.lar.PortletDataContext;
+import com.liferay.document.library.kernel.util.AudioProcessorUtil;
+import com.liferay.document.library.kernel.util.VideoProcessorUtil;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -25,8 +26,6 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xuggler.XugglerUtil;
-import com.liferay.portlet.documentlibrary.util.AudioProcessorUtil;
-import com.liferay.portlet.documentlibrary.util.VideoProcessorUtil;
 
 import com.xuggle.xuggler.IContainer;
 
@@ -36,6 +35,7 @@ import java.io.InputStream;
 import java.text.DecimalFormat;
 
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.XMPDM;
 
 /**
  * @author Juan González
@@ -45,20 +45,14 @@ public class XugglerRawMetadataProcessor extends BaseRawMetadataProcessor {
 
 	@Override
 	public void exportGeneratedFiles(
-			PortletDataContext portletDataContext, FileEntry fileEntry,
-			Element fileEntryElement)
-		throws Exception {
-
-		return;
+		PortletDataContext portletDataContext, FileEntry fileEntry,
+		Element fileEntryElement) {
 	}
 
 	@Override
 	public void importGeneratedFiles(
-			PortletDataContext portletDataContext, FileEntry fileEntry,
-			FileEntry importedFileEntry, Element fileEntryElement)
-		throws Exception {
-
-		return;
+		PortletDataContext portletDataContext, FileEntry fileEntry,
+		FileEntry importedFileEntry, Element fileEntryElement) {
 	}
 
 	protected String convertTime(long microseconds) {
@@ -110,10 +104,8 @@ public class XugglerRawMetadataProcessor extends BaseRawMetadataProcessor {
 	}
 
 	@Override
-	@SuppressWarnings("unused")
 	protected Metadata extractMetadata(
-			String extension, String mimeType, File file)
-		throws SystemException {
+		String extension, String mimeType, File file) {
 
 		Metadata metadata = null;
 
@@ -132,10 +124,8 @@ public class XugglerRawMetadataProcessor extends BaseRawMetadataProcessor {
 	}
 
 	@Override
-	@SuppressWarnings("unused")
 	protected Metadata extractMetadata(
-			String extension, String mimeType, InputStream inputStream)
-		throws SystemException {
+		String extension, String mimeType, InputStream inputStream) {
 
 		Metadata metadata = null;
 
@@ -176,9 +166,10 @@ public class XugglerRawMetadataProcessor extends BaseRawMetadataProcessor {
 		return false;
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		XugglerRawMetadataProcessor.class);
 
-	private static DecimalFormat _decimalFormatter = new DecimalFormat("00");
+	private static final DecimalFormat _decimalFormatter = new DecimalFormat(
+		"00");
 
 }

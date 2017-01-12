@@ -23,6 +23,9 @@ import com.liferay.portal.kernel.util.UnicodeFormatter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * @author Brian Wing Shun Chan
  * @author Shuyang Zhou
@@ -33,11 +36,13 @@ public class JS {
 
 		// Get rid of all unicode
 
-		s = s.replaceAll("%u[0-9a-fA-F]{4}", StringPool.BLANK);
+		Matcher matcher = _pattern.matcher(s);
+
+		s = matcher.replaceAll(StringPool.BLANK);
 
 		// Adjust for JavaScript specific annoyances
 
-		s = StringUtil.replace(s, "+", "%2B");
+		s = StringUtil.replace(s, '+', "%2B");
 		s = StringUtil.replace(s, "%20", "+");
 
 		// Decode URL
@@ -63,7 +68,7 @@ public class JS {
 
 		// Adjust for JavaScript specific annoyances
 
-		s = StringUtil.replace(s, "+", "%20");
+		s = StringUtil.replace(s, '+', "%20");
 		s = StringUtil.replace(s, "%2B", "+");
 
 		return s;
@@ -145,5 +150,7 @@ public class JS {
 	public static String unescape(String s) {
 		return decodeURIComponent(s);
 	}
+
+	private static final Pattern _pattern = Pattern.compile("%u[0-9a-fA-F]{4}");
 
 }

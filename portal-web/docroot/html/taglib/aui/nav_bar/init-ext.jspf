@@ -14,15 +14,13 @@
  */
 --%>
 
-<%@ page import="javax.servlet.jsp.tagext.BodyContent" %>
-
 <%
 String bodyContentString = StringPool.BLANK;
 
-BodyContent bodyContent = (BodyContent)request.getAttribute("aui:nav-bar:bodyContent");
+Object bodyContent = request.getAttribute("aui:nav-bar:bodyContent");
 
 if (bodyContent != null) {
-	bodyContentString = bodyContent.getString();
+	bodyContentString = bodyContent.toString();
 }
 
 if ((portletResponse != null) && Validator.isNotNull(id)) {
@@ -33,5 +31,8 @@ if (Validator.isNull(id)) {
 	id = StringUtil.randomId();
 }
 
+String dataTarget = (String)request.getAttribute("aui:nav-bar:dataTarget");
+IntegerWrapper navItemCount = (IntegerWrapper)request.getAttribute("aui:nav-bar:navItemCount");
 String responsiveButtons = (String)request.getAttribute("aui:nav-bar:responsiveButtons");
+String selectedItemName = (String)request.getAttribute("aui:nav-bar:selectedItemName");
 %>

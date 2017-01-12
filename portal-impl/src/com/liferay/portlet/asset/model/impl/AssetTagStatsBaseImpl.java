@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.asset.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.asset.model.AssetTagStats;
-import com.liferay.portlet.asset.service.AssetTagStatsLocalServiceUtil;
+import com.liferay.asset.kernel.model.AssetTagStats;
+import com.liferay.asset.kernel.service.AssetTagStatsLocalServiceUtil;
 
 /**
  * The extended model base implementation for the AssetTagStats service. Represents a row in the &quot;AssetTagStats&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.asset.service.AssetTagStatsLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see AssetTagStatsImpl
- * @see com.liferay.portlet.asset.model.AssetTagStats
+ * @see AssetTagStats
  * @generated
  */
+@ProviderType
 public abstract class AssetTagStatsBaseImpl extends AssetTagStatsModelImpl
 	implements AssetTagStats {
 	/*
@@ -39,7 +40,7 @@ public abstract class AssetTagStatsBaseImpl extends AssetTagStatsModelImpl
 	 * Never modify or reference this class directly. All methods that expect a asset tag stats model instance should use the {@link AssetTagStats} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			AssetTagStatsLocalServiceUtil.addAssetTagStats(this);
 		}

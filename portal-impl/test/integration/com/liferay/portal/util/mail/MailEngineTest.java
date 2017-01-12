@@ -14,11 +14,12 @@
 
 package com.liferay.portal.util.mail;
 
-import com.liferay.portal.kernel.mail.MailMessage;
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.SynchronousMailExecutionTestListener;
-import com.liferay.portal.util.MailServiceTestUtil;
+import com.liferay.mail.kernel.model.MailMessage;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.Sync;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.SynchronousMailTestRule;
+import com.liferay.portal.util.test.MailServiceTestUtil;
 import com.liferay.util.mail.MailEngine;
 
 import java.util.List;
@@ -26,17 +27,21 @@ import java.util.List;
 import javax.mail.internet.InternetAddress;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Manuel de la Peña
  */
-@ExecutionTestListeners(
-	listeners = {SynchronousMailExecutionTestListener.class}
-)
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
+@Sync
 public class MailEngineTest {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(), SynchronousMailTestRule.INSTANCE);
 
 	@Test
 	public void testSendMail() throws Exception {

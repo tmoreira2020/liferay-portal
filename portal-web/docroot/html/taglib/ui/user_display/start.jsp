@@ -16,47 +16,21 @@
 
 <%@ include file="/html/taglib/ui/user_display/init.jsp" %>
 
-<%
-if (Validator.isNull(url) && (userDisplay != null)) {
-	url = userDisplay.getDisplayURL(themeDisplay);
-}
-%>
-
-<div class="taglib-user-display display-style-<%= displayStyle %>">
-
-	<%
-	String taglibSrc = null;
-
-	if (userDisplay != null) {
-		taglibSrc = userDisplay.getPortraitURL(themeDisplay);
-	}
-	else {
-		taglibSrc = UserConstants.getPortraitURL(themeDisplay.getPathImage(), true, 0, null);
-	}
-	%>
-
+<div class="display-style-<%= displayStyle %> taglib-user-display">
 	<aui:a href="<%= url %>">
-		<c:choose>
-			<c:when test="<%= displayStyle == 3 %>">
-				<c:choose>
-					<c:when test="<%= BrowserSnifferUtil.isIe(request) && (BrowserSnifferUtil.getMajorVersion(request) < 9) %>">
-						<img alt="" class="user-profile-image" src="<%= HtmlUtil.escape(taglibSrc) %>" style="height: <%= height %>px; width: <%= width %>px;" />
-					</c:when>
-					<c:otherwise>
-						<span class="user-profile-image" style="background-image: url('<%= HtmlUtil.escape(taglibSrc) %>'); background-size: <%= height %>px <%= width %>px; height: <%= height %>px; width: <%= width %>px;"></span>
-					</c:otherwise>
-				</c:choose>
-			</c:when>
-			<c:otherwise>
-				<span class="user-profile-image">
-					<img alt="" class="avatar" src="<%= HtmlUtil.escape(taglibSrc) %>" style="height: <%= height %>px; width: <%= width %>px;" />
-				</span>
-			</c:otherwise>
-		</c:choose>
+		<liferay-ui:user-portrait
+			imageCssClass="<%= imageCssClass %>"
+			userId="<%= (userDisplay != null) ? userDisplay.getUserId() : 0 %>"
+			userName="<%= (userDisplay != null) ? userDisplay.getFullName() : userName %>"
+		/>
 
-		<span class="user-name">
-			<%= (userDisplay != null) ? HtmlUtil.escape(userDisplay.getFullName()) : HtmlUtil.escape(userName) %>
-		</span>
+		<c:if test="<%= showUserName %>">
+			<span class="user-name">
+				<%= (userDisplay != null) ? HtmlUtil.escape(userDisplay.getFullName()) : HtmlUtil.escape(userName) %>
+			</span>
+		</c:if>
 	</aui:a>
 
-	<div class="user-details">
+	<c:if test="<%= showUserDetails %>">
+		<div class="user-details">
+	</c:if>

@@ -15,9 +15,8 @@
 package com.liferay.portal.service.impl;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.UserTracker;
-import com.liferay.portal.model.UserTrackerPath;
+import com.liferay.portal.kernel.model.UserTracker;
+import com.liferay.portal.kernel.model.UserTrackerPath;
 import com.liferay.portal.service.base.UserTrackerLocalServiceBaseImpl;
 import com.liferay.portal.util.PropsValues;
 
@@ -32,10 +31,9 @@ public class UserTrackerLocalServiceImpl
 
 	@Override
 	public UserTracker addUserTracker(
-			long companyId, long userId, Date modifiedDate, String sessionId,
-			String remoteAddr, String remoteHost, String userAgent,
-			List<UserTrackerPath> userTrackerPaths)
-		throws SystemException {
+		long companyId, long userId, Date modifiedDate, String sessionId,
+		String remoteAddr, String remoteHost, String userAgent,
+		List<UserTrackerPath> userTrackerPaths) {
 
 		if (PropsValues.SESSION_TRACKER_PERSISTENCE_ENABLED) {
 			long userTrackerId = counterLocalService.increment(
@@ -59,6 +57,7 @@ public class UserTrackerLocalServiceImpl
 					UserTrackerPath.class.getName());
 
 				userTrackerPath.setUserTrackerPathId(pathId);
+
 				userTrackerPath.setUserTrackerId(userTrackerId);
 
 				userTrackerPathPersistence.update(userTrackerPath);
@@ -73,7 +72,7 @@ public class UserTrackerLocalServiceImpl
 
 	@Override
 	public UserTracker deleteUserTracker(long userTrackerId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		UserTracker userTracker = userTrackerPersistence.findByPrimaryKey(
 			userTrackerId);
@@ -82,8 +81,7 @@ public class UserTrackerLocalServiceImpl
 	}
 
 	@Override
-	public UserTracker deleteUserTracker(UserTracker userTracker)
-		throws SystemException {
+	public UserTracker deleteUserTracker(UserTracker userTracker) {
 
 		// Paths
 
@@ -96,8 +94,8 @@ public class UserTrackerLocalServiceImpl
 	}
 
 	@Override
-	public List<UserTracker> getUserTrackers(long companyId, int start, int end)
-		throws SystemException {
+	public List<UserTracker> getUserTrackers(
+		long companyId, int start, int end) {
 
 		return userTrackerPersistence.findByCompanyId(companyId, start, end);
 	}

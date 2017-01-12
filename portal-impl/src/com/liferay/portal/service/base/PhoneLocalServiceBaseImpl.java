@@ -14,31 +14,45 @@
 
 package com.liferay.portal.service.base;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.exportimport.kernel.lar.ExportImportHelperUtil;
+import com.liferay.exportimport.kernel.lar.ManifestSummary;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.exportimport.kernel.lar.StagedModelType;
+
 import com.liferay.portal.kernel.bean.BeanReference;
-import com.liferay.portal.kernel.bean.IdentifiableBean;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
 import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Projection;
+import com.liferay.portal.kernel.dao.orm.Property;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.Phone;
+import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.BaseLocalServiceImpl;
+import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
+import com.liferay.portal.kernel.service.PhoneLocalService;
+import com.liferay.portal.kernel.service.persistence.ClassNamePersistence;
+import com.liferay.portal.kernel.service.persistence.ListTypePersistence;
+import com.liferay.portal.kernel.service.persistence.PhonePersistence;
+import com.liferay.portal.kernel.service.persistence.UserFinder;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.model.PersistedModel;
-import com.liferay.portal.model.Phone;
-import com.liferay.portal.service.BaseLocalServiceImpl;
-import com.liferay.portal.service.PersistedModelLocalServiceRegistry;
-import com.liferay.portal.service.PhoneLocalService;
-import com.liferay.portal.service.persistence.ClassNamePersistence;
-import com.liferay.portal.service.persistence.ListTypePersistence;
-import com.liferay.portal.service.persistence.PhonePersistence;
-import com.liferay.portal.service.persistence.UserFinder;
-import com.liferay.portal.service.persistence.UserPersistence;
-import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 
 import java.io.Serializable;
 
@@ -55,15 +69,16 @@ import javax.sql.DataSource;
  *
  * @author Brian Wing Shun Chan
  * @see com.liferay.portal.service.impl.PhoneLocalServiceImpl
- * @see com.liferay.portal.service.PhoneLocalServiceUtil
+ * @see com.liferay.portal.kernel.service.PhoneLocalServiceUtil
  * @generated
  */
+@ProviderType
 public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
-	implements PhoneLocalService, IdentifiableBean {
+	implements PhoneLocalService, IdentifiableOSGiService {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
-	 * Never modify or reference this class directly. Always use {@link com.liferay.portal.service.PhoneLocalServiceUtil} to access the phone local service.
+	 * Never modify or reference this class directly. Always use {@link com.liferay.portal.kernel.service.PhoneLocalServiceUtil} to access the phone local service.
 	 */
 
 	/**
@@ -71,11 +86,10 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param phone the phone
 	 * @return the phone that was added
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public Phone addPhone(Phone phone) throws SystemException {
+	public Phone addPhone(Phone phone) {
 		phone.setNew(true);
 
 		return phonePersistence.update(phone);
@@ -98,12 +112,10 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param phoneId the primary key of the phone
 	 * @return the phone that was removed
 	 * @throws PortalException if a phone with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public Phone deletePhone(long phoneId)
-		throws PortalException, SystemException {
+	public Phone deletePhone(long phoneId) throws PortalException {
 		return phonePersistence.remove(phoneId);
 	}
 
@@ -112,11 +124,10 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param phone the phone
 	 * @return the phone that was removed
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public Phone deletePhone(Phone phone) throws SystemException {
+	public Phone deletePhone(Phone phone) {
 		return phonePersistence.remove(phone);
 	}
 
@@ -133,12 +144,9 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @return the matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery) {
 		return phonePersistence.findWithDynamicQuery(dynamicQuery);
 	}
 
@@ -153,12 +161,10 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param start the lower bound of the range of model instances
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @return the range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end)
-		throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end) {
 		return phonePersistence.findWithDynamicQuery(dynamicQuery, start, end);
 	}
 
@@ -174,45 +180,40 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param end the upper bound of the range of model instances (not inclusive)
 	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	 * @return the ordered range of matching rows
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
-	public List dynamicQuery(DynamicQuery dynamicQuery, int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
+	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
+		int end, OrderByComparator<T> orderByComparator) {
 		return phonePersistence.findWithDynamicQuery(dynamicQuery, start, end,
 			orderByComparator);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
-	public long dynamicQueryCount(DynamicQuery dynamicQuery)
-		throws SystemException {
+	public long dynamicQueryCount(DynamicQuery dynamicQuery) {
 		return phonePersistence.countWithDynamicQuery(dynamicQuery);
 	}
 
 	/**
-	 * Returns the number of rows that match the dynamic query.
+	 * Returns the number of rows matching the dynamic query.
 	 *
 	 * @param dynamicQuery the dynamic query
 	 * @param projection the projection to apply to the query
-	 * @return the number of rows that match the dynamic query
-	 * @throws SystemException if a system exception occurred
+	 * @return the number of rows matching the dynamic query
 	 */
 	@Override
 	public long dynamicQueryCount(DynamicQuery dynamicQuery,
-		Projection projection) throws SystemException {
+		Projection projection) {
 		return phonePersistence.countWithDynamicQuery(dynamicQuery, projection);
 	}
 
 	@Override
-	public Phone fetchPhone(long phoneId) throws SystemException {
+	public Phone fetchPhone(long phoneId) {
 		return phonePersistence.fetchByPrimaryKey(phoneId);
 	}
 
@@ -220,13 +221,11 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * Returns the phone with the matching UUID and company.
 	 *
 	 * @param uuid the phone's UUID
-	 * @param  companyId the primary key of the company
+	 * @param companyId the primary key of the company
 	 * @return the matching phone, or <code>null</code> if a matching phone could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public Phone fetchPhoneByUuidAndCompanyId(String uuid, long companyId)
-		throws SystemException {
+	public Phone fetchPhoneByUuidAndCompanyId(String uuid, long companyId) {
 		return phonePersistence.fetchByUuid_C_First(uuid, companyId, null);
 	}
 
@@ -236,16 +235,127 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param phoneId the primary key of the phone
 	 * @return the phone
 	 * @throws PortalException if a phone with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public Phone getPhone(long phoneId) throws PortalException, SystemException {
+	public Phone getPhone(long phoneId) throws PortalException {
 		return phonePersistence.findByPrimaryKey(phoneId);
 	}
 
 	@Override
+	public ActionableDynamicQuery getActionableDynamicQuery() {
+		ActionableDynamicQuery actionableDynamicQuery = new DefaultActionableDynamicQuery();
+
+		actionableDynamicQuery.setBaseLocalService(phoneLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(Phone.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("phoneId");
+
+		return actionableDynamicQuery;
+	}
+
+	@Override
+	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery() {
+		IndexableActionableDynamicQuery indexableActionableDynamicQuery = new IndexableActionableDynamicQuery();
+
+		indexableActionableDynamicQuery.setBaseLocalService(phoneLocalService);
+		indexableActionableDynamicQuery.setClassLoader(getClassLoader());
+		indexableActionableDynamicQuery.setModelClass(Phone.class);
+
+		indexableActionableDynamicQuery.setPrimaryKeyPropertyName("phoneId");
+
+		return indexableActionableDynamicQuery;
+	}
+
+	protected void initActionableDynamicQuery(
+		ActionableDynamicQuery actionableDynamicQuery) {
+		actionableDynamicQuery.setBaseLocalService(phoneLocalService);
+		actionableDynamicQuery.setClassLoader(getClassLoader());
+		actionableDynamicQuery.setModelClass(Phone.class);
+
+		actionableDynamicQuery.setPrimaryKeyPropertyName("phoneId");
+	}
+
+	@Override
+	public ExportActionableDynamicQuery getExportActionableDynamicQuery(
+		final PortletDataContext portletDataContext) {
+		final ExportActionableDynamicQuery exportActionableDynamicQuery = new ExportActionableDynamicQuery() {
+				@Override
+				public long performCount() throws PortalException {
+					ManifestSummary manifestSummary = portletDataContext.getManifestSummary();
+
+					StagedModelType stagedModelType = getStagedModelType();
+
+					long modelAdditionCount = super.performCount();
+
+					manifestSummary.addModelAdditionCount(stagedModelType,
+						modelAdditionCount);
+
+					long modelDeletionCount = ExportImportHelperUtil.getModelDeletionCount(portletDataContext,
+							stagedModelType);
+
+					manifestSummary.addModelDeletionCount(stagedModelType,
+						modelDeletionCount);
+
+					return modelAdditionCount;
+				}
+			};
+
+		initActionableDynamicQuery(exportActionableDynamicQuery);
+
+		exportActionableDynamicQuery.setAddCriteriaMethod(new ActionableDynamicQuery.AddCriteriaMethod() {
+				@Override
+				public void addCriteria(DynamicQuery dynamicQuery) {
+					portletDataContext.addDateRangeCriteria(dynamicQuery,
+						"modifiedDate");
+
+					StagedModelType stagedModelType = exportActionableDynamicQuery.getStagedModelType();
+
+					long referrerClassNameId = stagedModelType.getReferrerClassNameId();
+
+					Property classNameIdProperty = PropertyFactoryUtil.forName(
+							"classNameId");
+
+					if ((referrerClassNameId != StagedModelType.REFERRER_CLASS_NAME_ID_ALL) &&
+							(referrerClassNameId != StagedModelType.REFERRER_CLASS_NAME_ID_ANY)) {
+						dynamicQuery.add(classNameIdProperty.eq(
+								stagedModelType.getReferrerClassNameId()));
+					}
+					else if (referrerClassNameId == StagedModelType.REFERRER_CLASS_NAME_ID_ANY) {
+						dynamicQuery.add(classNameIdProperty.isNotNull());
+					}
+				}
+			});
+
+		exportActionableDynamicQuery.setCompanyId(portletDataContext.getCompanyId());
+
+		exportActionableDynamicQuery.setPerformActionMethod(new ActionableDynamicQuery.PerformActionMethod<Phone>() {
+				@Override
+				public void performAction(Phone phone)
+					throws PortalException {
+					StagedModelDataHandlerUtil.exportStagedModel(portletDataContext,
+						phone);
+				}
+			});
+		exportActionableDynamicQuery.setStagedModelType(new StagedModelType(
+				PortalUtil.getClassNameId(Phone.class.getName()),
+				StagedModelType.REFERRER_CLASS_NAME_ID_ALL));
+
+		return exportActionableDynamicQuery;
+	}
+
+	/**
+	 * @throws PortalException
+	 */
+	@Override
+	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
+		throws PortalException {
+		return phoneLocalService.deletePhone((Phone)persistedModel);
+	}
+
+	@Override
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return phonePersistence.findByPrimaryKey(primaryKeyObj);
 	}
 
@@ -253,14 +363,13 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * Returns the phone with the matching UUID and company.
 	 *
 	 * @param uuid the phone's UUID
-	 * @param  companyId the primary key of the company
+	 * @param companyId the primary key of the company
 	 * @return the matching phone
 	 * @throws PortalException if a matching phone could not be found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public Phone getPhoneByUuidAndCompanyId(String uuid, long companyId)
-		throws PortalException, SystemException {
+		throws PortalException {
 		return phonePersistence.findByUuid_C_First(uuid, companyId, null);
 	}
 
@@ -274,10 +383,9 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param start the lower bound of the range of phones
 	 * @param end the upper bound of the range of phones (not inclusive)
 	 * @return the range of phones
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<Phone> getPhones(int start, int end) throws SystemException {
+	public List<Phone> getPhones(int start, int end) {
 		return phonePersistence.findAll(start, end);
 	}
 
@@ -285,10 +393,9 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * Returns the number of phones.
 	 *
 	 * @return the number of phones
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public int getPhonesCount() throws SystemException {
+	public int getPhonesCount() {
 		return phonePersistence.countAll();
 	}
 
@@ -297,11 +404,10 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param phone the phone
 	 * @return the phone that was updated
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
-	public Phone updatePhone(Phone phone) throws SystemException {
+	public Phone updatePhone(Phone phone) {
 		return phonePersistence.update(phone);
 	}
 
@@ -310,7 +416,7 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the phone local service
 	 */
-	public com.liferay.portal.service.PhoneLocalService getPhoneLocalService() {
+	public PhoneLocalService getPhoneLocalService() {
 		return phoneLocalService;
 	}
 
@@ -319,28 +425,8 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param phoneLocalService the phone local service
 	 */
-	public void setPhoneLocalService(
-		com.liferay.portal.service.PhoneLocalService phoneLocalService) {
+	public void setPhoneLocalService(PhoneLocalService phoneLocalService) {
 		this.phoneLocalService = phoneLocalService;
-	}
-
-	/**
-	 * Returns the phone remote service.
-	 *
-	 * @return the phone remote service
-	 */
-	public com.liferay.portal.service.PhoneService getPhoneService() {
-		return phoneService;
-	}
-
-	/**
-	 * Sets the phone remote service.
-	 *
-	 * @param phoneService the phone remote service
-	 */
-	public void setPhoneService(
-		com.liferay.portal.service.PhoneService phoneService) {
-		this.phoneService = phoneService;
 	}
 
 	/**
@@ -366,7 +452,7 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the counter local service
 	 */
-	public com.liferay.counter.service.CounterLocalService getCounterLocalService() {
+	public com.liferay.counter.kernel.service.CounterLocalService getCounterLocalService() {
 		return counterLocalService;
 	}
 
@@ -376,7 +462,7 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param counterLocalService the counter local service
 	 */
 	public void setCounterLocalService(
-		com.liferay.counter.service.CounterLocalService counterLocalService) {
+		com.liferay.counter.kernel.service.CounterLocalService counterLocalService) {
 		this.counterLocalService = counterLocalService;
 	}
 
@@ -385,7 +471,7 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the class name local service
 	 */
-	public com.liferay.portal.service.ClassNameLocalService getClassNameLocalService() {
+	public com.liferay.portal.kernel.service.ClassNameLocalService getClassNameLocalService() {
 		return classNameLocalService;
 	}
 
@@ -395,27 +481,8 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param classNameLocalService the class name local service
 	 */
 	public void setClassNameLocalService(
-		com.liferay.portal.service.ClassNameLocalService classNameLocalService) {
+		com.liferay.portal.kernel.service.ClassNameLocalService classNameLocalService) {
 		this.classNameLocalService = classNameLocalService;
-	}
-
-	/**
-	 * Returns the class name remote service.
-	 *
-	 * @return the class name remote service
-	 */
-	public com.liferay.portal.service.ClassNameService getClassNameService() {
-		return classNameService;
-	}
-
-	/**
-	 * Sets the class name remote service.
-	 *
-	 * @param classNameService the class name remote service
-	 */
-	public void setClassNameService(
-		com.liferay.portal.service.ClassNameService classNameService) {
-		this.classNameService = classNameService;
 	}
 
 	/**
@@ -438,22 +505,22 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	}
 
 	/**
-	 * Returns the list type remote service.
+	 * Returns the list type local service.
 	 *
-	 * @return the list type remote service
+	 * @return the list type local service
 	 */
-	public com.liferay.portal.service.ListTypeService getListTypeService() {
-		return listTypeService;
+	public com.liferay.portal.kernel.service.ListTypeLocalService getListTypeLocalService() {
+		return listTypeLocalService;
 	}
 
 	/**
-	 * Sets the list type remote service.
+	 * Sets the list type local service.
 	 *
-	 * @param listTypeService the list type remote service
+	 * @param listTypeLocalService the list type local service
 	 */
-	public void setListTypeService(
-		com.liferay.portal.service.ListTypeService listTypeService) {
-		this.listTypeService = listTypeService;
+	public void setListTypeLocalService(
+		com.liferay.portal.kernel.service.ListTypeLocalService listTypeLocalService) {
+		this.listTypeLocalService = listTypeLocalService;
 	}
 
 	/**
@@ -479,7 +546,7 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @return the user local service
 	 */
-	public com.liferay.portal.service.UserLocalService getUserLocalService() {
+	public com.liferay.portal.kernel.service.UserLocalService getUserLocalService() {
 		return userLocalService;
 	}
 
@@ -489,27 +556,8 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @param userLocalService the user local service
 	 */
 	public void setUserLocalService(
-		com.liferay.portal.service.UserLocalService userLocalService) {
+		com.liferay.portal.kernel.service.UserLocalService userLocalService) {
 		this.userLocalService = userLocalService;
-	}
-
-	/**
-	 * Returns the user remote service.
-	 *
-	 * @return the user remote service
-	 */
-	public com.liferay.portal.service.UserService getUserService() {
-		return userService;
-	}
-
-	/**
-	 * Sets the user remote service.
-	 *
-	 * @param userService the user remote service
-	 */
-	public void setUserService(
-		com.liferay.portal.service.UserService userService) {
-		this.userService = userService;
 	}
 
 	/**
@@ -549,33 +597,23 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	}
 
 	public void afterPropertiesSet() {
-		persistedModelLocalServiceRegistry.register("com.liferay.portal.model.Phone",
+		persistedModelLocalServiceRegistry.register("com.liferay.portal.kernel.model.Phone",
 			phoneLocalService);
 	}
 
 	public void destroy() {
 		persistedModelLocalServiceRegistry.unregister(
-			"com.liferay.portal.model.Phone");
+			"com.liferay.portal.kernel.model.Phone");
 	}
 
 	/**
-	 * Returns the Spring bean ID for this bean.
+	 * Returns the OSGi service identifier.
 	 *
-	 * @return the Spring bean ID for this bean
+	 * @return the OSGi service identifier
 	 */
 	@Override
-	public String getBeanIdentifier() {
-		return _beanIdentifier;
-	}
-
-	/**
-	 * Sets the Spring bean ID for this bean.
-	 *
-	 * @param beanIdentifier the Spring bean ID for this bean
-	 */
-	@Override
-	public void setBeanIdentifier(String beanIdentifier) {
-		_beanIdentifier = beanIdentifier;
+	public String getOSGiServiceIdentifier() {
+		return PhoneLocalService.class.getName();
 	}
 
 	protected Class<?> getModelClass() {
@@ -591,17 +629,17 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 *
 	 * @param sql the sql query
 	 */
-	protected void runSQL(String sql) throws SystemException {
+	protected void runSQL(String sql) {
 		try {
 			DataSource dataSource = phonePersistence.getDataSource();
 
-			DB db = DBFactoryUtil.getDB();
+			DB db = DBManagerUtil.getDB();
 
 			sql = db.buildSQL(sql);
 			sql = PortalUtil.transformSQL(sql);
 
 			SqlUpdate sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(dataSource,
-					sql, new int[0]);
+					sql);
 
 			sqlUpdate.update();
 		}
@@ -610,33 +648,26 @@ public abstract class PhoneLocalServiceBaseImpl extends BaseLocalServiceImpl
 		}
 	}
 
-	@BeanReference(type = com.liferay.portal.service.PhoneLocalService.class)
-	protected com.liferay.portal.service.PhoneLocalService phoneLocalService;
-	@BeanReference(type = com.liferay.portal.service.PhoneService.class)
-	protected com.liferay.portal.service.PhoneService phoneService;
+	@BeanReference(type = PhoneLocalService.class)
+	protected PhoneLocalService phoneLocalService;
 	@BeanReference(type = PhonePersistence.class)
 	protected PhonePersistence phonePersistence;
-	@BeanReference(type = com.liferay.counter.service.CounterLocalService.class)
-	protected com.liferay.counter.service.CounterLocalService counterLocalService;
-	@BeanReference(type = com.liferay.portal.service.ClassNameLocalService.class)
-	protected com.liferay.portal.service.ClassNameLocalService classNameLocalService;
-	@BeanReference(type = com.liferay.portal.service.ClassNameService.class)
-	protected com.liferay.portal.service.ClassNameService classNameService;
+	@BeanReference(type = com.liferay.counter.kernel.service.CounterLocalService.class)
+	protected com.liferay.counter.kernel.service.CounterLocalService counterLocalService;
+	@BeanReference(type = com.liferay.portal.kernel.service.ClassNameLocalService.class)
+	protected com.liferay.portal.kernel.service.ClassNameLocalService classNameLocalService;
 	@BeanReference(type = ClassNamePersistence.class)
 	protected ClassNamePersistence classNamePersistence;
-	@BeanReference(type = com.liferay.portal.service.ListTypeService.class)
-	protected com.liferay.portal.service.ListTypeService listTypeService;
+	@BeanReference(type = com.liferay.portal.kernel.service.ListTypeLocalService.class)
+	protected com.liferay.portal.kernel.service.ListTypeLocalService listTypeLocalService;
 	@BeanReference(type = ListTypePersistence.class)
 	protected ListTypePersistence listTypePersistence;
-	@BeanReference(type = com.liferay.portal.service.UserLocalService.class)
-	protected com.liferay.portal.service.UserLocalService userLocalService;
-	@BeanReference(type = com.liferay.portal.service.UserService.class)
-	protected com.liferay.portal.service.UserService userService;
+	@BeanReference(type = com.liferay.portal.kernel.service.UserLocalService.class)
+	protected com.liferay.portal.kernel.service.UserLocalService userLocalService;
 	@BeanReference(type = UserPersistence.class)
 	protected UserPersistence userPersistence;
 	@BeanReference(type = UserFinder.class)
 	protected UserFinder userFinder;
 	@BeanReference(type = PersistedModelLocalServiceRegistry.class)
 	protected PersistedModelLocalServiceRegistry persistedModelLocalServiceRegistry;
-	private String _beanIdentifier;
 }

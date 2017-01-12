@@ -14,24 +14,28 @@
 
 package com.liferay.portal.resiliency.spi.action;
 
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.PortletContainerUtil;
 import com.liferay.portal.kernel.resiliency.spi.agent.SPIAgent;
-import com.liferay.portal.kernel.test.CodeCoverageAssertor;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.kernel.test.rule.NewEnv;
 import com.liferay.portal.kernel.util.CentralizedThreadLocal;
 import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.portal.kernel.util.ReflectionUtil;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.model.Portlet;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.impl.LayoutImpl;
 import com.liferay.portal.model.impl.PortletImpl;
 import com.liferay.portal.resiliency.spi.agent.SPIAgentRequest;
 import com.liferay.portal.resiliency.spi.agent.SPIAgentResponse;
-import com.liferay.portal.security.auth.PrincipalThreadLocal;
-import com.liferay.portal.test.AdviseWith;
-import com.liferay.portal.test.AspectJMockingNewClassLoaderJUnitTestRunner;
+import com.liferay.portal.test.rule.AdviseWith;
+import com.liferay.portal.test.rule.AspectJNewEnvTestRule;
 import com.liferay.portal.util.PropsImpl;
-import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.EventImpl;
+import com.liferay.registry.BasicRegistryImpl;
+import com.liferay.registry.RegistryUtil;
 
 import java.io.IOException;
 
@@ -48,8 +52,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -57,15 +61,18 @@ import org.springframework.mock.web.MockHttpServletResponse;
 /**
  * @author Shuyang Zhou
  */
-@RunWith(AspectJMockingNewClassLoaderJUnitTestRunner.class)
 public class PortalResiliencyActionTest {
 
 	@ClassRule
-	public static CodeCoverageAssertor codeCoverageAssertor =
-		new CodeCoverageAssertor();
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			CodeCoverageAssertor.INSTANCE, AspectJNewEnvTestRule.INSTANCE);
 
 	@Before
 	public void setUp() throws IOException {
+		RegistryUtil.setRegistry(new BasicRegistryImpl());
+
 		PropsUtil.setProps(new PropsImpl());
 
 		PortletContainerUtil portletContainerUtil = new PortletContainerUtil();
@@ -105,6 +112,7 @@ public class PortalResiliencyActionTest {
 		_mockHttpServletRequest.setAttribute(
 			WebKeys.SPI_AGENT_REQUEST,
 			new SPIAgentRequest(originalMockHttpServletRequest));
+
 		_mockHttpServletRequest.setAttribute(
 			WebKeys.SPI_AGENT_RESPONSE,
 			new SPIAgentResponse(_SERVLET_CONTEXT_NAME));
@@ -267,6 +275,7 @@ public class PortalResiliencyActionTest {
 	}
 
 	@AdviseWith(adviceClasses = {LifecycleAdvice.class})
+	@NewEnv(type = NewEnv.Type.CLASSLOADER)
 	@Test
 	public void testUnknownPhase() throws Exception {
 		_mockHttpServletRequest.setAttribute(
@@ -288,7 +297,8 @@ public class PortalResiliencyActionTest {
 
 		@Around(
 			"execution(* com.liferay.portal.kernel.resiliency.spi.agent." +
-				"SPIAgent$Lifecycle.values())")
+				"SPIAgent$Lifecycle.values())"
+		)
 		public SPIAgent.Lifecycle[] values(
 				ProceedingJoinPoint proceedingJoinPoint)
 			throws Throwable {
@@ -304,9 +314,9 @@ public class PortalResiliencyActionTest {
 
 			int ordinal = newLifecycles.length - 1;
 
-			newLifecycles[ordinal] = ReflectionUtil.newEnumElement(
+			newLifecycles[ordinal] = ReflectionTestUtil.newEnumElement(
 				SPIAgent.Lifecycle.class, new Class<?>[] {String.class},
-					"UNKNOWN", ordinal, "UNKNOWN");
+				"UNKNOWN", ordinal, "UNKNOWN");
 
 			return newLifecycles;
 		}
@@ -323,7 +333,7 @@ public class PortalResiliencyActionTest {
 	private Layout _layout;
 	private MockHttpServletRequest _mockHttpServletRequest;
 	private MockPortletContainer _mockPortletContainer;
-	private PortalResiliencyAction _portalResiliencyAction =
+	private final PortalResiliencyAction _portalResiliencyAction =
 		new PortalResiliencyAction();
 	private Portlet _portlet;
 	private HttpServletResponse _response;

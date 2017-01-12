@@ -53,6 +53,12 @@ public class PollerCometChannelListener implements ChannelListener {
 				cometRequest.getCompanyId(), cometRequest.getUserId(), this);
 		}
 		catch (UnknownChannelException uce) {
+
+			// LPS-52675
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(uce, uce);
+			}
 		}
 		catch (ChannelException ce) {
 			if (_log.isWarnEnabled()) {
@@ -68,10 +74,10 @@ public class PollerCometChannelListener implements ChannelListener {
 			pollerCometDelayedTask);
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		PollerCometChannelListener.class);
 
-	private CometSession _cometSession;
-	private JSONObject _pollerResponseHeaderJSONObject;
+	private final CometSession _cometSession;
+	private final JSONObject _pollerResponseHeaderJSONObject;
 
 }

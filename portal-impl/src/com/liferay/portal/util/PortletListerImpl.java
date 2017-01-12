@@ -15,23 +15,25 @@
 package com.liferay.portal.util;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.LayoutTypePortlet;
+import com.liferay.portal.kernel.model.Portlet;
+import com.liferay.portal.kernel.model.PortletApp;
+import com.liferay.portal.kernel.model.PortletCategory;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.portlet.PortletConfigFactoryUtil;
+import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PortletLister;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.TreeNodeView;
 import com.liferay.portal.kernel.util.TreeView;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.LayoutTypePortlet;
-import com.liferay.portal.model.Portlet;
-import com.liferay.portal.model.PortletApp;
-import com.liferay.portal.model.PortletCategory;
-import com.liferay.portal.model.User;
-import com.liferay.portal.service.PortletLocalServiceUtil;
-import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portal.util.comparator.PortletCategoryComparator;
-import com.liferay.portal.util.comparator.PortletTitleComparator;
-import com.liferay.portlet.PortletConfigFactoryUtil;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.util.comparator.PortletCategoryComparator;
+import com.liferay.portal.kernel.util.comparator.PortletTitleComparator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,10 +53,10 @@ import javax.servlet.ServletContext;
 public class PortletListerImpl implements PortletLister {
 
 	@Override
-	public TreeView getTreeView() throws PortalException, SystemException {
+	public TreeView getTreeView() throws PortalException {
 		_nodeId = 1;
 
-		_list = new ArrayList<TreeNodeView>();
+		_list = new ArrayList<>();
 
 		TreeNodeView rootNodeView = null;
 
@@ -131,7 +133,7 @@ public class PortletListerImpl implements PortletLister {
 	protected void iteratePortletCategories(
 			TreeNodeView parentNodeView,
 			List<PortletCategory> portletCategories, long parentId, int depth)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		portletCategories = ListUtil.sort(
 			portletCategories, new PortletCategoryComparator(getLocale()));
@@ -179,10 +181,10 @@ public class PortletListerImpl implements PortletLister {
 
 			int nodeId = _nodeId;
 
-			List<PortletCategory> subCategories = ListUtil.fromCollection(
+			List<PortletCategory> subcategories = ListUtil.fromCollection(
 				portletCategory.getCategories());
 
-			iteratePortletCategories(nodeView, subCategories, nodeId, depth);
+			iteratePortletCategories(nodeView, subcategories, nodeId, depth);
 
 			if (_iteratePortlets) {
 				iteratePortlets(
@@ -193,11 +195,10 @@ public class PortletListerImpl implements PortletLister {
 	}
 
 	protected void iteratePortlets(
-			TreeNodeView parentNodeView, PortletCategory portletCategory,
-			Set<String> portletIds, int parentNodeId, int depth)
-		throws PortalException, SystemException {
+		TreeNodeView parentNodeView, PortletCategory portletCategory,
+		Set<String> portletIds, int parentNodeId, int depth) {
 
-		List<Portlet> portlets = new ArrayList<Portlet>();
+		List<Portlet> portlets = new ArrayList<>();
 
 		String externalPortletCategory = null;
 
@@ -215,7 +216,7 @@ public class PortletListerImpl implements PortletLister {
 				}
 				else if (!portlet.isInstanceable() &&
 						 _layoutTypePortlet.hasPortletId(
-							portlet.getPortletId())) {
+							 portlet.getPortletId())) {
 
 					portlets.add(portlet);
 				}

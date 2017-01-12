@@ -14,12 +14,15 @@
 
 package com.liferay.portlet.social.service.impl;
 
-import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portal.util.PortalUtil;
-import com.liferay.portlet.social.model.SocialRequest;
-import com.liferay.portlet.social.model.SocialRequestFeedEntry;
-import com.liferay.portlet.social.model.SocialRequestInterpreter;
-import com.liferay.portlet.social.model.impl.SocialRequestInterpreterImpl;
+import com.liferay.portal.kernel.json.JSONException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portlet.social.service.base.SocialRequestInterpreterLocalServiceBaseImpl;
 import com.liferay.registry.Filter;
 import com.liferay.registry.Registry;
@@ -29,6 +32,11 @@ import com.liferay.registry.ServiceRegistration;
 import com.liferay.registry.ServiceTracker;
 import com.liferay.registry.ServiceTrackerCustomizer;
 import com.liferay.registry.collections.ServiceRegistrationMap;
+import com.liferay.registry.collections.ServiceRegistrationMapImpl;
+import com.liferay.social.kernel.model.SocialRequest;
+import com.liferay.social.kernel.model.SocialRequestFeedEntry;
+import com.liferay.social.kernel.model.SocialRequestInterpreter;
+import com.liferay.social.kernel.model.impl.SocialRequestInterpreterImpl;
 
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +76,7 @@ public class SocialRequestInterpreterLocalServiceImpl
 
 		Registry registry = RegistryUtil.getRegistry();
 
-		Map<String, Object> properties = new HashMap<String, Object>();
+		Map<String, Object> properties = new HashMap<>();
 
 		SocialRequestInterpreterImpl requestInterpreterImpl =
 			(SocialRequestInterpreterImpl)requestInterpreter;
@@ -85,6 +93,8 @@ public class SocialRequestInterpreterLocalServiceImpl
 
 	@Override
 	public void afterPropertiesSet() {
+		super.afterPropertiesSet();
+
 		Registry registry = RegistryUtil.getRegistry();
 
 		Filter filter = registry.getFilter(
@@ -141,7 +151,7 @@ public class SocialRequestInterpreterLocalServiceImpl
 			SocialRequestInterpreterImpl requestInterpreter =
 				(SocialRequestInterpreterImpl)_requestInterpreters.get(i);
 
-			if (requestInterpreter.hasClassName(className)) {
+			if (matches(requestInterpreter, className, request)) {
 				SocialRequestFeedEntry requestFeedEntry =
 					requestInterpreter.interpret(request, themeDisplay);
 
@@ -181,7 +191,7 @@ public class SocialRequestInterpreterLocalServiceImpl
 			SocialRequestInterpreterImpl requestInterpreter =
 				(SocialRequestInterpreterImpl)_requestInterpreters.get(i);
 
-			if (requestInterpreter.hasClassName(className)) {
+			if (matches(requestInterpreter, className, request)) {
 				boolean value = requestInterpreter.processConfirmation(
 					request, themeDisplay);
 
@@ -217,7 +227,7 @@ public class SocialRequestInterpreterLocalServiceImpl
 			SocialRequestInterpreterImpl requestInterpreter =
 				(SocialRequestInterpreterImpl)_requestInterpreters.get(i);
 
-			if (requestInterpreter.hasClassName(className)) {
+			if (matches(requestInterpreter, className, request)) {
 				boolean value = requestInterpreter.processRejection(
 					request, themeDisplay);
 
@@ -228,11 +238,48 @@ public class SocialRequestInterpreterLocalServiceImpl
 		}
 	}
 
-	private List<SocialRequestInterpreter> _requestInterpreters =
-		new CopyOnWriteArrayList<SocialRequestInterpreter>();
-	private ServiceRegistrationMap<SocialRequestInterpreter>
-		_serviceRegistrations =
-			new ServiceRegistrationMap<SocialRequestInterpreter>();
+	protected String getSocialRequestPortletId(SocialRequest request) {
+		try {
+			JSONObject extraDataJSONObject = JSONFactoryUtil.createJSONObject(
+				request.getExtraData());
+
+			return extraDataJSONObject.getString("portletId");
+		}
+		catch (JSONException jsone) {
+			_log.error(
+				"Unable to create JSON object from " + request.getExtraData(),
+				jsone);
+
+			return StringPool.BLANK;
+		}
+	}
+
+	protected boolean matches(
+		SocialRequestInterpreterImpl requestInterpreter, String className,
+		SocialRequest request) {
+
+		if (!requestInterpreter.hasClassName(className)) {
+			return false;
+		}
+
+		String requestPortletId = getSocialRequestPortletId(request);
+
+		if (Validator.isNull(requestPortletId) ||
+			requestPortletId.equals(requestInterpreter.getPortletId())) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		SocialRequestInterpreterLocalServiceImpl.class);
+
+	private final List<SocialRequestInterpreter> _requestInterpreters =
+		new CopyOnWriteArrayList<>();
+	private final ServiceRegistrationMap<SocialRequestInterpreter>
+		_serviceRegistrations = new ServiceRegistrationMapImpl<>();
 	private ServiceTracker<SocialRequestInterpreter, SocialRequestInterpreter>
 		_serviceTracker;
 

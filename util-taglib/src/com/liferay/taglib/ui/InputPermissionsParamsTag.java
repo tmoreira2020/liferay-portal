@@ -15,21 +15,20 @@
 package com.liferay.taglib.ui;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.RoleConstants;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.model.Role;
-import com.liferay.portal.model.RoleConstants;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.security.permission.ResourceActionsUtil;
-import com.liferay.portal.service.GroupLocalServiceUtil;
-import com.liferay.portal.service.RoleLocalServiceUtil;
-import com.liferay.portal.theme.ThemeDisplay;
 
 import java.util.List;
 
@@ -37,23 +36,19 @@ import javax.portlet.RenderResponse;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
+import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.TagSupport;
 
 /**
  * @author Brian Wing Shun Chan
  * @author Jorge Ferrer
- * @see    com.liferay.portal.servlet.taglib.ui.InputPermissionsParamsTagUtil
  */
 public class InputPermissionsParamsTag extends TagSupport {
 
-	public static String doTag(String modelName, PageContext pageContext)
+	public static String doTag(String modelName, HttpServletRequest request)
 		throws Exception {
 
 		try {
-			HttpServletRequest request =
-				(HttpServletRequest)pageContext.getRequest();
-
 			RenderResponse renderResponse =
 				(RenderResponse)request.getAttribute(
 					JavaConstants.JAVAX_PORTLET_RESPONSE);
@@ -133,27 +128,23 @@ public class InputPermissionsParamsTag extends TagSupport {
 			sb.append("inputPermissionsViewRole=");
 			sb.append(HttpUtil.encodeURL(inputPermissionsViewRole));
 
-			pageContext.getOut().print(sb.toString());
+			return sb.toString();
 		}
 		catch (Exception e) {
 			throw new JspException(e);
 		}
-
-		return StringPool.BLANK;
 	}
 
 	public static String getDefaultViewRole(
 			String modelName, ThemeDisplay themeDisplay)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		Layout layout = themeDisplay.getLayout();
-
-		Group layoutGroup = layout.getGroup();
 
 		List<String> guestDefaultActions =
 			ResourceActionsUtil.getModelResourceGuestDefaultActions(modelName);
 
-		if (layoutGroup.isControlPanel()) {
+		if (layout.isTypeControlPanel()) {
 			Group group = themeDisplay.getScopeGroup();
 
 			if (!group.hasPrivateLayouts() &&
@@ -187,7 +178,9 @@ public class InputPermissionsParamsTag extends TagSupport {
 	@Override
 	public int doEndTag() throws JspException {
 		try {
-			doTag(_modelName, pageContext);
+			JspWriter jspWriter = pageContext.getOut();
+
+			jspWriter.write(_modelName);
 
 			return EVAL_PAGE;
 		}

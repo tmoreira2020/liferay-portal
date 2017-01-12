@@ -24,7 +24,7 @@ import javax.servlet.jsp.JspException;
  * @author Julio Camarero
  * @generated
  */
-public class BasePanelTag extends com.liferay.taglib.util.IncludeTag {
+public abstract class BasePanelTag extends com.liferay.taglib.util.IncludeTag {
 
 	@Override
 	public int doStartTag() throws JspException {
@@ -49,36 +49,39 @@ public class BasePanelTag extends com.liferay.taglib.util.IncludeTag {
 		return _label;
 	}
 
+	public boolean getLocalizeLabel() {
+		return _localizeLabel;
+	}
+
 	public void setCollapsed(boolean collapsed) {
 		_collapsed = collapsed;
-
-		setScopedAttribute("collapsed", collapsed);
 	}
 
 	public void setCollapsible(boolean collapsible) {
 		_collapsible = collapsible;
-
-		setScopedAttribute("collapsible", collapsible);
 	}
 
 	public void setId(java.lang.String id) {
 		_id = id;
-
-		setScopedAttribute("id", id);
 	}
 
 	public void setLabel(java.lang.String label) {
 		_label = label;
+	}
 
-		setScopedAttribute("label", label);
+	public void setLocalizeLabel(boolean localizeLabel) {
+		_localizeLabel = localizeLabel;
 	}
 
 	@Override
 	protected void cleanUp() {
+		super.cleanUp();
+
 		_collapsed = false;
 		_collapsible = false;
 		_id = null;
 		_label = null;
+		_localizeLabel = true;
 	}
 
 	@Override
@@ -97,6 +100,7 @@ public class BasePanelTag extends com.liferay.taglib.util.IncludeTag {
 		setNamespacedAttribute(request, "collapsible", _collapsible);
 		setNamespacedAttribute(request, "id", _id);
 		setNamespacedAttribute(request, "label", _label);
+		setNamespacedAttribute(request, "localizeLabel", _localizeLabel);
 	}
 
 	protected static final String _ATTRIBUTE_NAMESPACE = "aui:panel:";
@@ -111,5 +115,6 @@ public class BasePanelTag extends com.liferay.taglib.util.IncludeTag {
 	private boolean _collapsible = false;
 	private java.lang.String _id = null;
 	private java.lang.String _label = null;
+	private boolean _localizeLabel = true;
 
 }

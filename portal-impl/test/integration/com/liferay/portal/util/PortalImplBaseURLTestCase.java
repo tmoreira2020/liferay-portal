@@ -14,17 +14,19 @@
 
 package com.liferay.portal.util;
 
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.Company;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.service.CompanyLocalServiceUtil;
-import com.liferay.portal.service.GroupLocalServiceUtil;
-import com.liferay.portal.service.LayoutLocalServiceUtil;
-import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.util.test.LayoutTestUtil;
 
-import org.junit.After;
 import org.junit.Before;
 
 /**
@@ -45,15 +47,8 @@ public class PortalImplBaseURLTestCase {
 
 		group = GroupTestUtil.addGroup();
 
-		privateLayout = LayoutTestUtil.addLayout(
-			group.getGroupId(), ServiceTestUtil.randomString(), true);
-		publicLayout = LayoutTestUtil.addLayout(
-			group.getGroupId(), ServiceTestUtil.randomString());
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		GroupLocalServiceUtil.deleteGroup(group);
+		privateLayout = LayoutTestUtil.addLayout(group, true);
+		publicLayout = LayoutTestUtil.addLayout(group);
 	}
 
 	protected ThemeDisplay initThemeDisplay(
@@ -95,7 +90,10 @@ public class PortalImplBaseURLTestCase {
 
 	protected Company company;
 	protected Layout controlPanelLayout;
+
+	@DeleteAfterTestRun
 	protected Group group;
+
 	protected Layout privateLayout;
 	protected Layout publicLayout;
 

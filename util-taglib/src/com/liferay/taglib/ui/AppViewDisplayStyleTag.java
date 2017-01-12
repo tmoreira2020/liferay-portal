@@ -18,11 +18,16 @@ import com.liferay.taglib.util.IncludeTag;
 
 import java.util.Map;
 
+import javax.portlet.PortletURL;
+
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * @author Sergio González
+ * @author     Sergio González
+ * @deprecated As of 7.0.0, replaced by {@link
+ *             com.liferay.taglib.aui.NavItemTag}
  */
+@Deprecated
 public class AppViewDisplayStyleTag extends IncludeTag {
 
 	@Override
@@ -38,6 +43,10 @@ public class AppViewDisplayStyleTag extends IncludeTag {
 		_displayStyles = displayStyles;
 	}
 
+	public void setDisplayStyleURL(PortletURL displayStyleURL) {
+		_displayStyleURL = displayStyleURL;
+	}
+
 	public void setEventName(String eventName) {
 		_eventName = eventName;
 	}
@@ -50,6 +59,7 @@ public class AppViewDisplayStyleTag extends IncludeTag {
 	protected void cleanUp() {
 		_displayStyle = null;
 		_displayStyles = null;
+		_displayStyleURL = null;
 		_eventName = null;
 		_requestParams = null;
 	}
@@ -71,6 +81,9 @@ public class AppViewDisplayStyleTag extends IncludeTag {
 		request.setAttribute(
 			"liferay-ui:app-view-display-style:displayStyles", _displayStyles);
 		request.setAttribute(
+			"liferay-ui:app-view-display-style:displayStyleURL",
+			_displayStyleURL);
+		request.setAttribute(
 			"liferay-ui:app-view-display-style:eventName", _eventName);
 		request.setAttribute(
 			"liferay-ui:app-view-display-style:requestParams", _requestParams);
@@ -83,6 +96,7 @@ public class AppViewDisplayStyleTag extends IncludeTag {
 
 	private String _displayStyle;
 	private String[] _displayStyles;
+	private PortletURL _displayStyleURL;
 	private String _eventName;
 	private Map<String, String> _requestParams;
 

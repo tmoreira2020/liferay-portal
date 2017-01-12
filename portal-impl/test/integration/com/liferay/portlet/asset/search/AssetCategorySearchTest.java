@@ -14,101 +14,128 @@
 
 package com.liferay.portlet.asset.search;
 
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.model.BaseModel;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.search.BaseSearchTestCase;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.MainServletExecutionTestListener;
-import com.liferay.portal.test.Sync;
-import com.liferay.portal.test.SynchronousDestinationExecutionTestListener;
-import com.liferay.portlet.asset.model.AssetCategory;
-import com.liferay.portlet.asset.model.AssetVocabulary;
-import com.liferay.portlet.asset.service.AssetCategoryServiceUtil;
-import com.liferay.portlet.asset.service.AssetVocabularyServiceUtil;
+import com.liferay.asset.kernel.model.AssetCategory;
+import com.liferay.asset.kernel.model.AssetCategoryConstants;
+import com.liferay.asset.kernel.model.AssetVocabulary;
+import com.liferay.asset.kernel.service.AssetCategoryLocalServiceUtil;
+import com.liferay.asset.kernel.service.AssetCategoryServiceUtil;
+import com.liferay.asset.kernel.service.AssetVocabularyServiceUtil;
+import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.Sync;
+import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.search.test.BaseSearchTestCase;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
+import java.util.Locale;
+import java.util.Map;
+
+import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Istvan Andras Dezsi
+ * @author Tibor Lipusz
  */
-@ExecutionTestListeners(
-	listeners = {
-		MainServletExecutionTestListener.class,
-		SynchronousDestinationExecutionTestListener.class
-	})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
 @Sync
 public class AssetCategorySearchTest extends BaseSearchTestCase {
 
-	@Ignore()
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			SynchronousDestinationTestRule.INSTANCE);
+
+	@Ignore
 	@Override
 	@Test
 	public void testSearchAttachments() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
+	@Override
+	@Test
+	public void testSearchBaseModelWithTrash() throws Exception {
+	}
+
+	@Ignore
 	@Override
 	@Test
 	public void testSearchByDDMStructureField() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
 	@Override
 	@Test
 	public void testSearchByKeywordsInsideParentBaseModel() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
 	@Override
 	@Test
 	public void testSearchComments() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
 	@Override
 	@Test
 	public void testSearchExpireAllVersions() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
 	@Override
 	@Test
 	public void testSearchExpireLatestVersion() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
 	@Override
 	@Test
 	public void testSearchMyEntries() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
 	@Override
 	@Test
 	public void testSearchRecentEntries() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
 	@Override
 	@Test
 	public void testSearchStatus() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
 	@Override
 	@Test
 	public void testSearchVersions() throws Exception {
 	}
 
-	@Ignore()
+	@Ignore
 	@Override
 	@Test
 	public void testSearchWithinDDMStructure() throws Exception {
+	}
+
+	@Override
+	protected BaseModel<?> addBaseModelWithWorkflow(
+			BaseModel<?> parentBaseModel, boolean approved,
+			Map<Locale, String> keywordsMap, ServiceContext serviceContext)
+		throws Exception {
+
+		AssetVocabulary vocabulary = (AssetVocabulary)parentBaseModel;
+
+		return AssetCategoryServiceUtil.addCategory(
+			serviceContext.getScopeGroupId(),
+			AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID, keywordsMap,
+			null, vocabulary.getVocabularyId(), null, serviceContext);
 	}
 
 	@Override
@@ -120,7 +147,13 @@ public class AssetCategorySearchTest extends BaseSearchTestCase {
 		AssetVocabulary vocabulary = (AssetVocabulary)parentBaseModel;
 
 		return AssetCategoryServiceUtil.addCategory(
-			keywords, vocabulary.getVocabularyId(), serviceContext);
+			serviceContext.getScopeGroupId(), keywords,
+			vocabulary.getVocabularyId(), serviceContext);
+	}
+
+	@Override
+	protected void deleteBaseModel(long primaryKey) throws Exception {
+		AssetCategoryServiceUtil.deleteCategory(primaryKey);
 	}
 
 	@Override
@@ -134,12 +167,26 @@ public class AssetCategorySearchTest extends BaseSearchTestCase {
 		throws Exception {
 
 		return AssetVocabularyServiceUtil.addVocabulary(
-			ServiceTestUtil.randomString(), serviceContext);
+			serviceContext.getScopeGroupId(), RandomTestUtil.randomString(),
+			serviceContext);
 	}
 
 	@Override
 	protected String getSearchKeywords() {
 		return "Title";
+	}
+
+	@Override
+	protected BaseModel<?> updateBaseModel(
+			BaseModel<?> baseModel, String keywords,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		AssetCategory category = (AssetCategory)baseModel;
+
+		category.setTitle(keywords);
+
+		return AssetCategoryLocalServiceUtil.updateAssetCategory(category);
 	}
 
 }

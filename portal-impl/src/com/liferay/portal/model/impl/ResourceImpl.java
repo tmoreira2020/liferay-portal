@@ -14,7 +14,8 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.model.Resource;
+import com.liferay.portal.kernel.model.Resource;
+import com.liferay.portal.kernel.util.StringBundler;
 
 /**
  * @author Brian Wing Shun Chan
@@ -82,6 +83,23 @@ public class ResourceImpl implements Resource {
 	@Override
 	public void setScope(int scope) {
 		_scope = scope;
+	}
+
+	@Override
+	public String toString() {
+		StringBundler sb = new StringBundler(9);
+
+		sb.append("{companyid=");
+		sb.append(_companyId);
+		sb.append(", name=");
+		sb.append(_name);
+		sb.append(", primKey=");
+		sb.append(_primKey);
+		sb.append(", scope=");
+		sb.append(_scope);
+		sb.append("}");
+
+		return sb.toString();
 	}
 
 	private long _codeId;

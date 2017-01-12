@@ -14,8 +14,14 @@
 
 package com.liferay.portlet.expando.model.impl;
 
+import com.liferay.expando.kernel.exception.ValueDataException;
+import com.liferay.expando.kernel.model.ExpandoColumn;
+import com.liferay.expando.kernel.model.ExpandoColumnConstants;
+import com.liferay.expando.kernel.service.ExpandoColumnLocalServiceUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
@@ -23,10 +29,6 @@ import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portlet.expando.ValueDataException;
-import com.liferay.portlet.expando.model.ExpandoColumn;
-import com.liferay.portlet.expando.model.ExpandoColumnConstants;
-import com.liferay.portlet.expando.service.ExpandoColumnLocalServiceUtil;
 
 import java.io.Serializable;
 
@@ -44,18 +46,13 @@ import java.util.Map;
  */
 public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 
-	public ExpandoValueImpl() {
-	}
-
 	@Override
-	public List<Locale> getAvailableLocales()
-		throws PortalException, SystemException {
-
+	public List<Locale> getAvailableLocales() throws PortalException {
 		if (!isColumnLocalized()) {
 			return null;
 		}
 
-		List<Locale> locales = new ArrayList<Locale>();
+		List<Locale> locales = new ArrayList<>();
 
 		for (String languageId :
 				LocalizationUtil.getAvailableLanguageIds(getData())) {
@@ -67,21 +64,21 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public boolean getBoolean() throws PortalException, SystemException {
+	public boolean getBoolean() throws PortalException {
 		validate(ExpandoColumnConstants.BOOLEAN);
 
 		return GetterUtil.getBoolean(getData());
 	}
 
 	@Override
-	public boolean[] getBooleanArray() throws PortalException, SystemException {
+	public boolean[] getBooleanArray() throws PortalException {
 		validate(ExpandoColumnConstants.BOOLEAN_ARRAY);
 
 		return GetterUtil.getBooleanValues(StringUtil.split(getData()));
 	}
 
 	@Override
-	public ExpandoColumn getColumn() throws PortalException, SystemException {
+	public ExpandoColumn getColumn() throws PortalException {
 		if (_column != null) {
 			return _column;
 		}
@@ -96,14 +93,14 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public Date getDate() throws PortalException, SystemException {
+	public Date getDate() throws PortalException {
 		validate(ExpandoColumnConstants.DATE);
 
 		return new Date(GetterUtil.getLong(getData()));
 	}
 
 	@Override
-	public Date[] getDateArray() throws PortalException, SystemException {
+	public Date[] getDateArray() throws PortalException {
 		validate(ExpandoColumnConstants.DATE_ARRAY);
 
 		String[] data = StringUtil.split(getData());
@@ -118,7 +115,7 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public Locale getDefaultLocale() throws PortalException, SystemException {
+	public Locale getDefaultLocale() throws PortalException {
 		if (!isColumnLocalized()) {
 			return null;
 		}
@@ -130,79 +127,84 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public double getDouble() throws PortalException, SystemException {
+	public double getDouble() throws PortalException {
 		validate(ExpandoColumnConstants.DOUBLE);
 
 		return GetterUtil.getDouble(getData());
 	}
 
 	@Override
-	public double[] getDoubleArray() throws PortalException, SystemException {
+	public double[] getDoubleArray() throws PortalException {
 		validate(ExpandoColumnConstants.DOUBLE_ARRAY);
 
 		return GetterUtil.getDoubleValues(StringUtil.split(getData()));
 	}
 
 	@Override
-	public float getFloat() throws PortalException, SystemException {
+	public float getFloat() throws PortalException {
 		validate(ExpandoColumnConstants.FLOAT);
 
 		return GetterUtil.getFloat(getData());
 	}
 
 	@Override
-	public float[] getFloatArray() throws PortalException, SystemException {
+	public float[] getFloatArray() throws PortalException {
 		validate(ExpandoColumnConstants.FLOAT_ARRAY);
 
 		return GetterUtil.getFloatValues(StringUtil.split(getData()));
 	}
 
 	@Override
-	public int getInteger() throws PortalException, SystemException {
+	public JSONObject getGeolocationJSONObject() throws PortalException {
+		validate(ExpandoColumnConstants.GEOLOCATION);
+
+		return JSONFactoryUtil.createJSONObject(getData());
+	}
+
+	@Override
+	public int getInteger() throws PortalException {
 		validate(ExpandoColumnConstants.INTEGER);
 
 		return GetterUtil.getInteger(getData());
 	}
 
 	@Override
-	public int[] getIntegerArray() throws PortalException, SystemException {
+	public int[] getIntegerArray() throws PortalException {
 		validate(ExpandoColumnConstants.INTEGER_ARRAY);
 
 		return GetterUtil.getIntegerValues(StringUtil.split(getData()));
 	}
 
 	@Override
-	public long getLong() throws PortalException, SystemException {
+	public long getLong() throws PortalException {
 		validate(ExpandoColumnConstants.LONG);
 
 		return GetterUtil.getLong(getData());
 	}
 
 	@Override
-	public long[] getLongArray() throws PortalException, SystemException {
+	public long[] getLongArray() throws PortalException {
 		validate(ExpandoColumnConstants.LONG_ARRAY);
 
 		return GetterUtil.getLongValues(StringUtil.split(getData()));
 	}
 
 	@Override
-	public Number getNumber() throws PortalException, SystemException {
+	public Number getNumber() throws PortalException {
 		validate(ExpandoColumnConstants.NUMBER);
 
 		return GetterUtil.getNumber(getData());
 	}
 
 	@Override
-	public Number[] getNumberArray() throws PortalException, SystemException {
+	public Number[] getNumberArray() throws PortalException {
 		validate(ExpandoColumnConstants.NUMBER_ARRAY);
 
 		return GetterUtil.getNumberValues(StringUtil.split(getData()));
 	}
 
 	@Override
-	public Serializable getSerializable()
-		throws PortalException, SystemException {
-
+	public Serializable getSerializable() throws PortalException {
 		ExpandoColumn column = getColumn();
 
 		int type = column.getType();
@@ -270,30 +272,28 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public short getShort() throws PortalException, SystemException {
+	public short getShort() throws PortalException {
 		validate(ExpandoColumnConstants.SHORT);
 
 		return GetterUtil.getShort(getData());
 	}
 
 	@Override
-	public short[] getShortArray() throws PortalException, SystemException {
+	public short[] getShortArray() throws PortalException {
 		validate(ExpandoColumnConstants.SHORT_ARRAY);
 
 		return GetterUtil.getShortValues(StringUtil.split(getData()));
 	}
 
 	@Override
-	public String getString() throws PortalException, SystemException {
+	public String getString() throws PortalException {
 		validate(ExpandoColumnConstants.STRING);
 
 		return getData();
 	}
 
 	@Override
-	public String getString(Locale locale)
-		throws PortalException, SystemException {
-
+	public String getString(Locale locale) throws PortalException {
 		validate(ExpandoColumnConstants.STRING_LOCALIZED);
 
 		String languageId = LocaleUtil.toLanguageId(locale);
@@ -302,16 +302,14 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public String[] getStringArray() throws PortalException, SystemException {
+	public String[] getStringArray() throws PortalException {
 		validate(ExpandoColumnConstants.STRING_ARRAY);
 
 		return split(getData());
 	}
 
 	@Override
-	public String[] getStringArray(Locale locale)
-		throws PortalException, SystemException {
-
+	public String[] getStringArray(Locale locale) throws PortalException {
 		validate(ExpandoColumnConstants.STRING_ARRAY_LOCALIZED);
 
 		String languageId = LocaleUtil.toLanguageId(locale);
@@ -320,16 +318,13 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public Map<Locale, String[]> getStringArrayMap()
-		throws PortalException, SystemException {
-
+	public Map<Locale, String[]> getStringArrayMap() throws PortalException {
 		validate(ExpandoColumnConstants.STRING_ARRAY_LOCALIZED);
 
 		Map<Locale, String> stringMap = LocalizationUtil.getLocalizationMap(
 			getData());
 
-		Map<Locale, String[]> stringArrayMap = new HashMap<Locale, String[]>(
-			stringMap.size());
+		Map<Locale, String[]> stringArrayMap = new HashMap<>(stringMap.size());
 
 		for (Map.Entry<Locale, String> entry : stringMap.entrySet()) {
 			stringArrayMap.put(entry.getKey(), split(entry.getValue()));
@@ -339,27 +334,21 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public Map<Locale, String> getStringMap()
-		throws PortalException, SystemException {
-
+	public Map<Locale, String> getStringMap() throws PortalException {
 		validate(ExpandoColumnConstants.STRING_LOCALIZED);
 
 		return LocalizationUtil.getLocalizationMap(getData());
 	}
 
 	@Override
-	public void setBoolean(boolean data)
-		throws PortalException, SystemException {
-
+	public void setBoolean(boolean data) throws PortalException {
 		validate(ExpandoColumnConstants.BOOLEAN);
 
 		setData(String.valueOf(data));
 	}
 
 	@Override
-	public void setBooleanArray(boolean[] data)
-		throws PortalException, SystemException {
-
+	public void setBooleanArray(boolean[] data) throws PortalException {
 		validate(ExpandoColumnConstants.BOOLEAN_ARRAY);
 
 		setData(StringUtil.merge(data));
@@ -373,16 +362,14 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public void setDate(Date data) throws PortalException, SystemException {
+	public void setDate(Date data) throws PortalException {
 		validate(ExpandoColumnConstants.DATE);
 
 		setData(String.valueOf(data.getTime()));
 	}
 
 	@Override
-	public void setDateArray(Date[] data)
-		throws PortalException, SystemException {
-
+	public void setDateArray(Date[] data) throws PortalException {
 		validate(ExpandoColumnConstants.DATE_ARRAY);
 
 		if (data.length > 0) {
@@ -403,103 +390,100 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public void setDouble(double data) throws PortalException, SystemException {
+	public void setDouble(double data) throws PortalException {
 		validate(ExpandoColumnConstants.DOUBLE);
 
 		setData(String.valueOf(data));
 	}
 
 	@Override
-	public void setDoubleArray(double[] data)
-		throws PortalException, SystemException {
-
+	public void setDoubleArray(double[] data) throws PortalException {
 		validate(ExpandoColumnConstants.DOUBLE_ARRAY);
 
 		setData(StringUtil.merge(data));
 	}
 
 	@Override
-	public void setFloat(float data) throws PortalException, SystemException {
+	public void setFloat(float data) throws PortalException {
 		validate(ExpandoColumnConstants.FLOAT);
 
 		setData(String.valueOf(data));
 	}
 
 	@Override
-	public void setFloatArray(float[] data)
-		throws PortalException, SystemException {
-
+	public void setFloatArray(float[] data) throws PortalException {
 		validate(ExpandoColumnConstants.FLOAT_ARRAY);
 
 		setData(StringUtil.merge(data));
 	}
 
 	@Override
-	public void setInteger(int data) throws PortalException, SystemException {
+	public void setGeolocationJSONObject(JSONObject data)
+		throws PortalException {
+
+		validate(ExpandoColumnConstants.GEOLOCATION);
+
+		setData(data.toJSONString());
+	}
+
+	@Override
+	public void setInteger(int data) throws PortalException {
 		validate(ExpandoColumnConstants.INTEGER);
 
 		setData(String.valueOf(data));
 	}
 
 	@Override
-	public void setIntegerArray(int[] data)
-		throws PortalException, SystemException {
-
+	public void setIntegerArray(int[] data) throws PortalException {
 		validate(ExpandoColumnConstants.INTEGER_ARRAY);
 
 		setData(StringUtil.merge(data));
 	}
 
 	@Override
-	public void setLong(long data) throws PortalException, SystemException {
+	public void setLong(long data) throws PortalException {
 		validate(ExpandoColumnConstants.LONG);
 
 		setData(String.valueOf(data));
 	}
 
 	@Override
-	public void setLongArray(long[] data)
-		throws PortalException, SystemException {
-
+	public void setLongArray(long[] data) throws PortalException {
 		validate(ExpandoColumnConstants.LONG_ARRAY);
 
 		setData(StringUtil.merge(data));
 	}
 
 	@Override
-	public void setNumber(Number data) throws PortalException, SystemException {
+	public void setNumber(Number data) throws PortalException {
 		validate(ExpandoColumnConstants.NUMBER);
 
 		setData(String.valueOf(data));
 	}
 
 	@Override
-	public void setNumberArray(Number[] data)
-		throws PortalException, SystemException {
-
+	public void setNumberArray(Number[] data) throws PortalException {
 		validate(ExpandoColumnConstants.NUMBER_ARRAY);
 
 		setData(StringUtil.merge(data));
 	}
 
 	@Override
-	public void setShort(short data) throws PortalException, SystemException {
+	public void setShort(short data) throws PortalException {
 		validate(ExpandoColumnConstants.SHORT);
 
 		setData(String.valueOf(data));
 	}
 
 	@Override
-	public void setShortArray(short[] data)
-		throws PortalException, SystemException {
-
+	public void setShortArray(short[] data) throws PortalException {
 		validate(ExpandoColumnConstants.SHORT_ARRAY);
 
 		setData(StringUtil.merge(data));
 	}
 
 	@Override
-	public void setString(String data) throws PortalException, SystemException {
+	public void setString(String data) throws PortalException {
 		validate(ExpandoColumnConstants.STRING);
 
 		setData(data);
@@ -507,7 +491,7 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 
 	@Override
 	public void setString(String data, Locale locale, Locale defaultLocale)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		validate(ExpandoColumnConstants.STRING_LOCALIZED);
 
@@ -515,9 +499,7 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	}
 
 	@Override
-	public void setStringArray(String[] data)
-		throws PortalException, SystemException {
-
+	public void setStringArray(String[] data) throws PortalException {
 		validate(ExpandoColumnConstants.STRING_ARRAY);
 
 		setData(merge(data));
@@ -526,7 +508,7 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	@Override
 	public void setStringArray(
 			String[] data, Locale locale, Locale defaultLocale)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		validate(ExpandoColumnConstants.STRING_ARRAY_LOCALIZED);
 
@@ -536,11 +518,11 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 	@Override
 	public void setStringArrayMap(
 			Map<Locale, String[]> dataMap, Locale defaultLocale)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		validate(ExpandoColumnConstants.STRING_ARRAY_LOCALIZED);
 
-		Map<Locale, String> stringMap = new HashMap<Locale, String>();
+		Map<Locale, String> stringMap = new HashMap<>();
 
 		for (Map.Entry<Locale, String[]> entry : dataMap.entrySet()) {
 			stringMap.put(entry.getKey(), merge(entry.getValue()));
@@ -551,7 +533,7 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 
 	@Override
 	public void setStringMap(Map<Locale, String> dataMap, Locale defaultLocale)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		validate(ExpandoColumnConstants.STRING_LOCALIZED);
 
@@ -593,9 +575,7 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 		return LocalizationUtil.getLocalization(getData(), languageId);
 	}
 
-	protected boolean isColumnLocalized()
-		throws PortalException, SystemException {
-
+	protected boolean isColumnLocalized() throws PortalException {
 		ExpandoColumn column = getColumn();
 
 		if (column == null) {
@@ -616,7 +596,7 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 		if (data != null) {
 			for (int i = 0; i < data.length; i++) {
 				data[i] = StringUtil.replace(
-					data[i], StringPool.COMMA, _EXPANDO_COMMA);
+					data[i], CharPool.COMMA, _EXPANDO_COMMA);
 			}
 		}
 
@@ -634,7 +614,7 @@ public class ExpandoValueImpl extends ExpandoValueBaseImpl {
 		return dataArray;
 	}
 
-	protected void validate(int type) throws PortalException, SystemException {
+	protected void validate(int type) throws PortalException {
 		ExpandoColumn column = getColumn();
 
 		if (column == null) {

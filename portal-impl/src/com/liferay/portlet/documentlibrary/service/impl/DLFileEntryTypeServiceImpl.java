@@ -14,15 +14,14 @@
 
 package com.liferay.portlet.documentlibrary.service.impl;
 
+import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portlet.documentlibrary.model.DLFileEntryType;
 import com.liferay.portlet.documentlibrary.service.base.DLFileEntryTypeServiceBaseImpl;
 import com.liferay.portlet.documentlibrary.service.permission.DLFileEntryTypePermission;
 import com.liferay.portlet.documentlibrary.service.permission.DLPermission;
@@ -46,7 +45,7 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 			long groupId, String fileEntryTypeKey, Map<Locale, String> nameMap,
 			Map<Locale, String> descriptionMap, long[] ddmStructureIds,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		DLPermission.check(
 			getPermissionChecker(), groupId, ActionKeys.ADD_DOCUMENT_TYPE);
@@ -60,13 +59,13 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 	public DLFileEntryType addFileEntryType(
 			long groupId, String name, String description,
 			long[] ddmStructureIds, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
-		Map<Locale, String> nameMap = new HashMap<Locale, String>();
+		Map<Locale, String> nameMap = new HashMap<>();
 
 		nameMap.put(LocaleUtil.getSiteDefault(), name);
 
-		Map<Locale, String> descriptionMap = new HashMap<Locale, String>();
+		Map<Locale, String> descriptionMap = new HashMap<>();
 
 		descriptionMap.put(LocaleUtil.getSiteDefault(), description);
 
@@ -77,7 +76,7 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 
 	@Override
 	public void deleteFileEntryType(long fileEntryTypeId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		DLFileEntryTypePermission.check(
 			getPermissionChecker(), fileEntryTypeId, ActionKeys.DELETE);
@@ -87,7 +86,7 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 
 	@Override
 	public DLFileEntryType getFileEntryType(long fileEntryTypeId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		DLFileEntryTypePermission.check(
 			getPermissionChecker(), fileEntryTypeId, ActionKeys.VIEW);
@@ -96,30 +95,27 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 	}
 
 	@Override
-	public List<DLFileEntryType> getFileEntryTypes(long[] groupIds)
-		throws SystemException {
-
+	public List<DLFileEntryType> getFileEntryTypes(long[] groupIds) {
 		return dlFileEntryTypePersistence.filterFindByGroupId(groupIds);
 	}
 
 	@Override
 	public List<DLFileEntryType> getFileEntryTypes(
-			long[] groupIds, int start, int end)
-		throws SystemException {
+		long[] groupIds, int start, int end) {
 
 		return dlFileEntryTypePersistence.filterFindByGroupId(
 			groupIds, start, end);
 	}
 
 	@Override
-	public int getFileEntryTypesCount(long[] groupIds) throws SystemException {
+	public int getFileEntryTypesCount(long[] groupIds) {
 		return dlFileEntryTypePersistence.filterCountByGroupId(groupIds);
 	}
 
 	@Override
 	public List<DLFileEntryType> getFolderFileEntryTypes(
 			long[] groupIds, long folderId, boolean inherited)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		return filterFileEntryTypes(
 			dlFileEntryTypeLocalService.getFolderFileEntryTypes(
@@ -128,10 +124,9 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 
 	@Override
 	public List<DLFileEntryType> search(
-			long companyId, long[] groupIds, String keywords,
-			boolean includeBasicFileEntryType, int start, int end,
-			OrderByComparator orderByComparator)
-		throws SystemException {
+		long companyId, long[] groupIds, String keywords,
+		boolean includeBasicFileEntryType, int start, int end,
+		OrderByComparator<DLFileEntryType> orderByComparator) {
 
 		return dlFileEntryTypeFinder.filterFindByKeywords(
 			companyId, groupIds, keywords, includeBasicFileEntryType, start,
@@ -140,9 +135,8 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 
 	@Override
 	public int searchCount(
-			long companyId, long[] groupIds, String keywords,
-			boolean includeBasicFileEntryType)
-		throws SystemException {
+		long companyId, long[] groupIds, String keywords,
+		boolean includeBasicFileEntryType) {
 
 		return dlFileEntryTypeFinder.filterCountByKeywords(
 			companyId, groupIds, keywords, includeBasicFileEntryType);
@@ -153,7 +147,7 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 			long fileEntryTypeId, Map<Locale, String> nameMap,
 			Map<Locale, String> descriptionMap, long[] ddmStructureIds,
 			ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		DLFileEntryTypePermission.check(
 			getPermissionChecker(), fileEntryTypeId, ActionKeys.UPDATE);
@@ -167,13 +161,13 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 	public void updateFileEntryType(
 			long fileEntryTypeId, String name, String description,
 			long[] ddmStructureIds, ServiceContext serviceContext)
-		throws PortalException, SystemException {
+		throws PortalException {
 
-		Map<Locale, String> nameMap = new HashMap<Locale, String>();
+		Map<Locale, String> nameMap = new HashMap<>();
 
 		nameMap.put(LocaleUtil.getSiteDefault(), name);
 
-		Map<Locale, String> descriptionMap = new HashMap<Locale, String>();
+		Map<Locale, String> descriptionMap = new HashMap<>();
 
 		descriptionMap.put(LocaleUtil.getSiteDefault(), description);
 

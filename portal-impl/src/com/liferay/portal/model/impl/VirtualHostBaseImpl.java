@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.VirtualHost;
-import com.liferay.portal.service.VirtualHostLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.VirtualHost;
+import com.liferay.portal.kernel.service.VirtualHostLocalServiceUtil;
 
 /**
  * The extended model base implementation for the VirtualHost service. Represents a row in the &quot;VirtualHost&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.VirtualHostLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see VirtualHostImpl
- * @see com.liferay.portal.model.VirtualHost
+ * @see VirtualHost
  * @generated
  */
+@ProviderType
 public abstract class VirtualHostBaseImpl extends VirtualHostModelImpl
 	implements VirtualHost {
 	/*
@@ -38,7 +40,7 @@ public abstract class VirtualHostBaseImpl extends VirtualHostModelImpl
 	 * Never modify or reference this class directly. All methods that expect a virtual host model instance should use the {@link VirtualHost} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			VirtualHostLocalServiceUtil.addVirtualHost(this);
 		}

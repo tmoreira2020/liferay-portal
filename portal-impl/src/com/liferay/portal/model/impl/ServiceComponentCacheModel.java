@@ -14,11 +14,14 @@
 
 package com.liferay.portal.model.impl;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.CacheModel;
+import com.liferay.portal.kernel.model.MVCCModel;
+import com.liferay.portal.kernel.model.ServiceComponent;
+import com.liferay.portal.kernel.util.HashUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.CacheModel;
-import com.liferay.portal.model.MVCCModel;
-import com.liferay.portal.model.ServiceComponent;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -32,8 +35,36 @@ import java.io.ObjectOutput;
  * @see ServiceComponent
  * @generated
  */
+@ProviderType
 public class ServiceComponentCacheModel implements CacheModel<ServiceComponent>,
 	Externalizable, MVCCModel {
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ServiceComponentCacheModel)) {
+			return false;
+		}
+
+		ServiceComponentCacheModel serviceComponentCacheModel = (ServiceComponentCacheModel)obj;
+
+		if ((serviceComponentId == serviceComponentCacheModel.serviceComponentId) &&
+				(mvccVersion == serviceComponentCacheModel.mvccVersion)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		int hashCode = HashUtil.hash(0, serviceComponentId);
+
+		return HashUtil.hash(hashCode, mvccVersion);
+	}
+
 	@Override
 	public long getMvccVersion() {
 		return mvccVersion;
@@ -97,9 +128,12 @@ public class ServiceComponentCacheModel implements CacheModel<ServiceComponent>,
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
 		serviceComponentId = objectInput.readLong();
 		buildNamespace = objectInput.readUTF();
+
 		buildNumber = objectInput.readLong();
+
 		buildDate = objectInput.readLong();
 		data = objectInput.readUTF();
 	}
@@ -108,6 +142,7 @@ public class ServiceComponentCacheModel implements CacheModel<ServiceComponent>,
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
 		objectOutput.writeLong(serviceComponentId);
 
 		if (buildNamespace == null) {
@@ -118,6 +153,7 @@ public class ServiceComponentCacheModel implements CacheModel<ServiceComponent>,
 		}
 
 		objectOutput.writeLong(buildNumber);
+
 		objectOutput.writeLong(buildDate);
 
 		if (data == null) {

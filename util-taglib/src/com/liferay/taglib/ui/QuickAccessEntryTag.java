@@ -15,14 +15,16 @@
 package com.liferay.taglib.ui;
 
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.servlet.taglib.BaseBodyTagSupport;
 import com.liferay.portal.kernel.servlet.taglib.ui.QuickAccessEntry;
 import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.taglib.BaseBodyTagSupport;
+import com.liferay.taglib.util.TagResourceBundleUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
@@ -51,7 +53,10 @@ public class QuickAccessEntryTag extends BaseBodyTagSupport implements BodyTag {
 	}
 
 	public void setLabel(String label) {
-		_label = LanguageUtil.get(pageContext, label);
+		ResourceBundle resourceBundle = TagResourceBundleUtil.getResourceBundle(
+			pageContext);
+
+		_label = LanguageUtil.get(resourceBundle, label);
 	}
 
 	public void setOnClick(String onClick) {
@@ -79,7 +84,7 @@ public class QuickAccessEntryTag extends BaseBodyTagSupport implements BodyTag {
 				WebKeys.PORTLET_QUICK_ACCESS_ENTRIES);
 
 		if (quickAccessEntries == null) {
-			quickAccessEntries = new ArrayList<QuickAccessEntry>();
+			quickAccessEntries = new ArrayList<>();
 
 			request.setAttribute(
 				WebKeys.PORTLET_QUICK_ACCESS_ENTRIES, quickAccessEntries);

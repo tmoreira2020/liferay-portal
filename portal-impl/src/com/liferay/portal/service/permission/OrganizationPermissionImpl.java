@@ -15,14 +15,15 @@
 package com.liferay.portal.service.permission;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.Organization;
+import com.liferay.portal.kernel.model.OrganizationConstants;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.OrganizationLocalServiceUtil;
+import com.liferay.portal.kernel.service.permission.OrganizationPermission;
+import com.liferay.portal.kernel.service.permission.PortalPermissionUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.model.Organization;
-import com.liferay.portal.model.OrganizationConstants;
-import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portal.service.OrganizationLocalServiceUtil;
 
 /**
  * @author Charles May
@@ -35,10 +36,12 @@ public class OrganizationPermissionImpl implements OrganizationPermission {
 	public void check(
 			PermissionChecker permissionChecker, long organizationId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!contains(permissionChecker, organizationId, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, Organization.class.getName(), organizationId,
+				actionId);
 		}
 	}
 
@@ -46,10 +49,12 @@ public class OrganizationPermissionImpl implements OrganizationPermission {
 	public void check(
 			PermissionChecker permissionChecker, Organization organization,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!contains(permissionChecker, organization, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, Organization.class.getName(),
+				organization.getOrganizationId(), actionId);
 		}
 	}
 
@@ -57,7 +62,7 @@ public class OrganizationPermissionImpl implements OrganizationPermission {
 	public boolean contains(
 			PermissionChecker permissionChecker, long organizationId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (organizationId > 0) {
 			Organization organization =
@@ -74,14 +79,16 @@ public class OrganizationPermissionImpl implements OrganizationPermission {
 	public boolean contains(
 			PermissionChecker permissionChecker, long[] organizationIds,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (ArrayUtil.isEmpty(organizationIds)) {
 			return true;
 		}
 
 		for (long organizationId : organizationIds) {
-			check(permissionChecker, organizationId, actionId);
+			if (!contains(permissionChecker, organizationId, actionId)) {
+				return false;
+			}
 		}
 
 		return true;
@@ -91,7 +98,7 @@ public class OrganizationPermissionImpl implements OrganizationPermission {
 	public boolean contains(
 			PermissionChecker permissionChecker, Organization organization,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		long groupId = organization.getGroupId();
 
@@ -121,19 +128,19 @@ public class OrganizationPermissionImpl implements OrganizationPermission {
 	protected boolean contains(
 			PermissionChecker permissionChecker, long groupId,
 			Organization organization, String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		while ((organization != null) &&
 			   (organization.getOrganizationId() !=
-					OrganizationConstants.DEFAULT_PARENT_ORGANIZATION_ID)) {
+				   OrganizationConstants.DEFAULT_PARENT_ORGANIZATION_ID)) {
 
 			if (actionId.equals(ActionKeys.ADD_ORGANIZATION) &&
-				permissionChecker.hasPermission(
+				(permissionChecker.hasPermission(
 					groupId, Organization.class.getName(),
 					organization.getOrganizationId(),
 					ActionKeys.MANAGE_SUBORGANIZATIONS) ||
-				PortalPermissionUtil.contains(
-					permissionChecker, ActionKeys.ADD_ORGANIZATION)) {
+				 PortalPermissionUtil.contains(
+					 permissionChecker, ActionKeys.ADD_ORGANIZATION))) {
 
 				return true;
 			}

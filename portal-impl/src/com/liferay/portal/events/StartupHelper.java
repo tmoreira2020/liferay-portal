@@ -15,23 +15,26 @@
 package com.liferay.portal.events;
 
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
+import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.util.UpgradeProcessUtil;
+import com.liferay.portal.kernel.util.ClassLoaderUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.verify.VerifyException;
 import com.liferay.portal.verify.VerifyProcessUtil;
 
 import java.sql.Connection;
+
+import java.util.List;
 
 /**
  * @author Brian Wing Shun Chan
@@ -39,6 +42,10 @@ import java.sql.Connection;
  * @author Raymond Augé
  */
 public class StartupHelper {
+
+	public boolean isDBNew() {
+		return _dbNew;
+	}
 
 	public boolean isStartupFinished() {
 		return _startupFinished;
@@ -56,6 +63,10 @@ public class StartupHelper {
 		return _verified;
 	}
 
+	public void setDbNew(boolean dbNew) {
+		_dbNew = dbNew;
+	}
+
 	public void setDropIndexes(boolean dropIndexes) {
 		_dropIndexes = dropIndexes;
 	}
@@ -69,7 +80,7 @@ public class StartupHelper {
 	}
 
 	public void updateIndexes(boolean dropIndexes) {
-		DB db = DBFactoryUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
 		Connection connection = null;
 
@@ -145,9 +156,13 @@ public class StartupHelper {
 				}
 			}
 
+			List<UpgradeProcess> upgradeProcesses =
+				UpgradeProcessUtil.initUpgradeProcesses(
+					ClassLoaderUtil.getPortalClassLoader(),
+					upgradeProcessClassNames);
+
 			_upgraded = UpgradeProcessUtil.upgradeProcess(
-				buildNumber, upgradeProcessClassNames,
-				ClassLoaderUtil.getPortalClassLoader());
+				buildNumber, upgradeProcesses);
 		}
 		finally {
 			_upgrading = false;
@@ -175,8 +190,9 @@ public class StartupHelper {
 		return StringUtil.split(GetterUtil.getString(PropsUtil.get(key)));
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(StartupHelper.class);
+	private static final Log _log = LogFactoryUtil.getLog(StartupHelper.class);
 
+	private boolean _dbNew;
 	private boolean _dropIndexes;
 	private boolean _startupFinished;
 	private boolean _upgraded;

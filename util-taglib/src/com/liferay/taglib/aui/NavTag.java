@@ -17,19 +17,26 @@ package com.liferay.taglib.aui;
 import com.liferay.portal.kernel.dao.search.DisplayTerms;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.JavaConstants;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.User;
-import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.aui.base.BaseNavTag;
+import com.liferay.taglib.util.TagResourceBundleUtil;
+
+import java.util.ResourceBundle;
 
 import javax.portlet.PortletResponse;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.tagext.BodyTag;
 
 /**
  * @author Eduardo Lundgren
@@ -37,7 +44,7 @@ import javax.servlet.jsp.JspException;
  * @author Nathan Cavanaugh
  * @author Julio Camarero
  */
-public class NavTag extends BaseNavTag {
+public class NavTag extends BaseNavTag implements BodyTag {
 
 	@Override
 	public int doStartTag() throws JspException {
@@ -49,19 +56,26 @@ public class NavTag extends BaseNavTag {
 
 			setCollapsible(true);
 
-			ThemeDisplay themeDisplay = (ThemeDisplay)pageContext.getAttribute(
-				"themeDisplay");
+			navBarTag.setDataTarget(_getNamespacedId());
+
+			ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 			StringBundler sb = navBarTag.getResponsiveButtonsSB();
 
-			sb.append("<a class=\"btn btn-navbar");
+			sb.append("<a class=\"btn navbar-btn navbar-toggle");
 
 			String cssClass = getCssClass();
 
 			if (Validator.isNotNull(cssClass)) {
-				sb.append(StringPool.SPACE);
-				sb.append(cssClass);
-				sb.append("-btn");
+				String[] cssClassParts = StringUtil.split(
+					cssClass, CharPool.SPACE);
+
+				for (int i = 0; i < cssClassParts.length; i++) {
+					sb.append(StringPool.SPACE);
+					sb.append(cssClassParts[i]);
+					sb.append("-btn");
+				}
 			}
 
 			if (_hasSearchResults()) {
@@ -70,27 +84,30 @@ public class NavTag extends BaseNavTag {
 
 			sb.append("\" id=\"");
 			sb.append(_getNamespacedId());
-			sb.append("NavbarBtn\" ");
-			sb.append("data-navId=\"");
+			sb.append("NavbarBtn\" data-navId=\"");
 			sb.append(_getNamespacedId());
 			sb.append("\" tabindex=\"0\">");
 
 			String icon = getIcon();
 
 			if (Validator.isNull(icon)) {
-				sb.append("<span class=\"icon-bar\"></span>");
-				sb.append("<span class=\"icon-bar\"></span>");
-				sb.append("<span class=\"icon-bar\"></span>");
+				sb.append("<i class=\"icon-reorder\"></i>");
 			}
 			else if (icon.equals("user") && themeDisplay.isSignedIn()) {
 				try {
+					sb.append("<img alt=\"");
+
+					ResourceBundle resourceBundle =
+						TagResourceBundleUtil.getResourceBundle(pageContext);
+
+					sb.append(LanguageUtil.get(resourceBundle, "my-account"));
+
+					sb.append("\" class=\"user-avatar-image\" src=\"");
+
 					User user = themeDisplay.getUser();
 
-					sb.append("<img alt=\"");
-					sb.append(LanguageUtil.get(pageContext, "my-account"));
-					sb.append("\" class=\"user-avatar-image\" ");
-					sb.append("src=\"");
 					sb.append(user.getPortraitURL(themeDisplay));
+
 					sb.append("\">");
 				}
 				catch (Exception e) {
@@ -124,6 +141,33 @@ public class NavTag extends BaseNavTag {
 		_namespacedId = null;
 	}
 
+	protected String getMarkupView() {
+		String markupView = StringPool.BLANK;
+
+		NavBarTag navBarTag = (NavBarTag)findAncestorWithClass(
+			this, NavBarTag.class);
+
+		if (navBarTag != null) {
+			markupView = navBarTag.getMarkupView();
+		}
+
+		return markupView;
+	}
+
+	@Override
+	protected String getPage() {
+		if (Validator.isNotNull(getMarkupView())) {
+			return "/html/taglib/aui/nav/" + getMarkupView() + "/page.jsp";
+		}
+
+		return "/html/taglib/aui/nav/page.jsp";
+	}
+
+	@Override
+	protected int processStartTag() throws Exception {
+		return EVAL_BODY_BUFFERED;
+	}
+
 	@Override
 	protected void setAttributes(HttpServletRequest request) {
 		super.setAttributes(request);
@@ -138,12 +182,13 @@ public class NavTag extends BaseNavTag {
 
 		_namespacedId = getId();
 
-		if (Validator.isNull(_namespacedId)) {
-			_namespacedId = StringUtil.randomId();
-		}
-
 		HttpServletRequest request =
 			(HttpServletRequest)pageContext.getRequest();
+
+		if (Validator.isNull(_namespacedId)) {
+			_namespacedId = PortalUtil.getUniqueElementId(
+				request, StringPool.BLANK, AUIUtil.normalizeId("navTag"));
+		}
 
 		PortletResponse portletResponse = (PortletResponse)request.getAttribute(
 			JavaConstants.JAVAX_PORTLET_RESPONSE);

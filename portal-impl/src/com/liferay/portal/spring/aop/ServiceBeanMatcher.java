@@ -14,6 +14,8 @@
 
 package com.liferay.portal.spring.aop;
 
+import com.liferay.portal.kernel.spring.aop.Skip;
+
 /**
  * @author Shuyang Zhou
  */
@@ -32,8 +34,10 @@ public class ServiceBeanMatcher implements BeanMatcher {
 		if (_counterMatcher) {
 			return beanName.equals(_COUNTER_SERVICE_BEAN_NAME);
 		}
-		else if (!beanName.equals(_COUNTER_SERVICE_BEAN_NAME) &&
-				 beanName.endsWith(_SERVICE_SUFFIX)) {
+
+		if (!beanName.equals(_COUNTER_SERVICE_BEAN_NAME) &&
+			beanName.endsWith(_SERVICE_SUFFIX) &&
+			(beanClass.getAnnotation(Skip.class) == null)) {
 
 			return true;
 		}
@@ -42,10 +46,10 @@ public class ServiceBeanMatcher implements BeanMatcher {
 	}
 
 	private static final String _COUNTER_SERVICE_BEAN_NAME =
-		"com.liferay.counter.service.CounterLocalService";
+		"com.liferay.counter.kernel.service.CounterLocalService";
 
 	private static final String _SERVICE_SUFFIX = "Service";
 
-	private boolean _counterMatcher;
+	private final boolean _counterMatcher;
 
 }

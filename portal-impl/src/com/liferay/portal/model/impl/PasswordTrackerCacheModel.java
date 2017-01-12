@@ -14,11 +14,14 @@
 
 package com.liferay.portal.model.impl;
 
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.CacheModel;
+import com.liferay.portal.kernel.model.MVCCModel;
+import com.liferay.portal.kernel.model.PasswordTracker;
+import com.liferay.portal.kernel.util.HashUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.CacheModel;
-import com.liferay.portal.model.MVCCModel;
-import com.liferay.portal.model.PasswordTracker;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -34,8 +37,36 @@ import java.util.Date;
  * @see PasswordTracker
  * @generated
  */
+@ProviderType
 public class PasswordTrackerCacheModel implements CacheModel<PasswordTracker>,
 	Externalizable, MVCCModel {
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof PasswordTrackerCacheModel)) {
+			return false;
+		}
+
+		PasswordTrackerCacheModel passwordTrackerCacheModel = (PasswordTrackerCacheModel)obj;
+
+		if ((passwordTrackerId == passwordTrackerCacheModel.passwordTrackerId) &&
+				(mvccVersion == passwordTrackerCacheModel.mvccVersion)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		int hashCode = HashUtil.hash(0, passwordTrackerId);
+
+		return HashUtil.hash(hashCode, mvccVersion);
+	}
+
 	@Override
 	public long getMvccVersion() {
 		return mvccVersion;
@@ -48,12 +79,14 @@ public class PasswordTrackerCacheModel implements CacheModel<PasswordTracker>,
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(11);
+		StringBundler sb = new StringBundler(13);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
 		sb.append(", passwordTrackerId=");
 		sb.append(passwordTrackerId);
+		sb.append(", companyId=");
+		sb.append(companyId);
 		sb.append(", userId=");
 		sb.append(userId);
 		sb.append(", createDate=");
@@ -71,6 +104,7 @@ public class PasswordTrackerCacheModel implements CacheModel<PasswordTracker>,
 
 		passwordTrackerImpl.setMvccVersion(mvccVersion);
 		passwordTrackerImpl.setPasswordTrackerId(passwordTrackerId);
+		passwordTrackerImpl.setCompanyId(companyId);
 		passwordTrackerImpl.setUserId(userId);
 
 		if (createDate == Long.MIN_VALUE) {
@@ -95,7 +129,11 @@ public class PasswordTrackerCacheModel implements CacheModel<PasswordTracker>,
 	@Override
 	public void readExternal(ObjectInput objectInput) throws IOException {
 		mvccVersion = objectInput.readLong();
+
 		passwordTrackerId = objectInput.readLong();
+
+		companyId = objectInput.readLong();
+
 		userId = objectInput.readLong();
 		createDate = objectInput.readLong();
 		password = objectInput.readUTF();
@@ -105,7 +143,11 @@ public class PasswordTrackerCacheModel implements CacheModel<PasswordTracker>,
 	public void writeExternal(ObjectOutput objectOutput)
 		throws IOException {
 		objectOutput.writeLong(mvccVersion);
+
 		objectOutput.writeLong(passwordTrackerId);
+
+		objectOutput.writeLong(companyId);
+
 		objectOutput.writeLong(userId);
 		objectOutput.writeLong(createDate);
 
@@ -119,6 +161,7 @@ public class PasswordTrackerCacheModel implements CacheModel<PasswordTracker>,
 
 	public long mvccVersion;
 	public long passwordTrackerId;
+	public long companyId;
 	public long userId;
 	public long createDate;
 	public String password;

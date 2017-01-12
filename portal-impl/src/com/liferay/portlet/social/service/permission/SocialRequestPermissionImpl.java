@@ -15,12 +15,12 @@
 package com.liferay.portlet.social.service.permission;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portlet.social.model.SocialRequest;
-import com.liferay.portlet.social.service.SocialRequestLocalServiceUtil;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.social.kernel.model.SocialRequest;
+import com.liferay.social.kernel.service.SocialRequestLocalServiceUtil;
+import com.liferay.social.kernel.service.permission.SocialRequestPermission;
 
 /**
  * @author Shinn Lok
@@ -31,10 +31,12 @@ public class SocialRequestPermissionImpl implements SocialRequestPermission {
 	public void check(
 			PermissionChecker permissionChecker, long requestId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!contains(permissionChecker, requestId, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, SocialRequest.class.getName(), requestId,
+				actionId);
 		}
 	}
 
@@ -42,7 +44,7 @@ public class SocialRequestPermissionImpl implements SocialRequestPermission {
 	public boolean contains(
 			PermissionChecker permissionChecker, long requestId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (permissionChecker.isOmniadmin()) {
 			return true;

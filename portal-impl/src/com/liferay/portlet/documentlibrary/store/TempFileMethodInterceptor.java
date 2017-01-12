@@ -27,7 +27,9 @@ import org.aopalliance.intercept.MethodInvocation;
 
 /**
  * @author Shuyang Zhou
+ * @deprecated As of 7.0.0, with no direct replacement
  */
+@Deprecated
 public class TempFileMethodInterceptor implements MethodInterceptor {
 
 	@Override
@@ -43,7 +45,8 @@ public class TempFileMethodInterceptor implements MethodInterceptor {
 
 			FinalizeManager.register(
 				result,
-				new DeleteFileFinalizeAction(tempFile.getAbsolutePath()));
+				new DeleteFileFinalizeAction(tempFile.getAbsolutePath()),
+				FinalizeManager.PHANTOM_REFERENCE_FACTORY);
 		}
 
 		return result;

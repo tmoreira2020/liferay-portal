@@ -14,12 +14,11 @@
 
 package com.liferay.portlet.asset.service.permission;
 
+import com.liferay.asset.kernel.model.AssetVocabulary;
+import com.liferay.asset.kernel.service.AssetVocabularyLocalServiceUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portlet.asset.model.AssetVocabulary;
-import com.liferay.portlet.asset.service.AssetVocabularyLocalServiceUtil;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 
 /**
  * @author Eduardo Lundgren
@@ -33,17 +32,21 @@ public class AssetVocabularyPermission {
 		throws PortalException {
 
 		if (!contains(permissionChecker, vocabulary, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, AssetVocabulary.class.getName(),
+				vocabulary.getVocabularyId(), actionId);
 		}
 	}
 
 	public static void check(
 			PermissionChecker permissionChecker, long vocabularyId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!contains(permissionChecker, vocabularyId, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, AssetVocabulary.class.getName(),
+				vocabularyId, actionId);
 		}
 	}
 
@@ -67,7 +70,7 @@ public class AssetVocabularyPermission {
 	public static boolean contains(
 			PermissionChecker permissionChecker, long vocabularyId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		AssetVocabulary vocabulary =
 			AssetVocabularyLocalServiceUtil.getVocabulary(vocabularyId);

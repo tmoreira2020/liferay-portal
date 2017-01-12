@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.Team;
-import com.liferay.portal.service.TeamLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.Team;
+import com.liferay.portal.kernel.service.TeamLocalServiceUtil;
 
 /**
  * The extended model base implementation for the Team service. Represents a row in the &quot;Team&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.TeamLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see TeamImpl
- * @see com.liferay.portal.model.Team
+ * @see Team
  * @generated
  */
+@ProviderType
 public abstract class TeamBaseImpl extends TeamModelImpl implements Team {
 	/*
 	 * NOTE FOR DEVELOPERS:
@@ -37,7 +39,7 @@ public abstract class TeamBaseImpl extends TeamModelImpl implements Team {
 	 * Never modify or reference this class directly. All methods that expect a team model instance should use the {@link Team} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			TeamLocalServiceUtil.addTeam(this);
 		}

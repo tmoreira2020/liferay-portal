@@ -39,6 +39,9 @@ public class XMLMergerRunner {
 		if (Validator.isNotNull(descriptorClassName)) {
 			_descriptorClassName = descriptorClassName;
 		}
+		else {
+			_descriptorClassName = _AUTO_DESCRIPTOR;
+		}
 	}
 
 	public void mergeAndSave(File masterFile, File slaveFile, File mergedFile)
@@ -100,6 +103,7 @@ public class XMLMergerRunner {
 		if (pos >= 0) {
 			masterDoctype = masterXml.substring(
 				pos, masterXml.indexOf(">", pos) + 1);
+
 			masterXml = StringUtil.replace(masterXml, masterDoctype, "");
 		}
 
@@ -110,6 +114,7 @@ public class XMLMergerRunner {
 		if (pos >= 0) {
 			slaveDoctype = slaveXml.substring(
 				pos, slaveXml.indexOf(">", pos) + 1);
+
 			slaveXml = StringUtil.replace(slaveXml, slaveDoctype, "");
 		}
 
@@ -147,6 +152,6 @@ public class XMLMergerRunner {
 
 	private static final String _AUTO_DESCRIPTOR = "auto";
 
-	private String _descriptorClassName = _AUTO_DESCRIPTOR;
+	private final String _descriptorClassName;
 
 }

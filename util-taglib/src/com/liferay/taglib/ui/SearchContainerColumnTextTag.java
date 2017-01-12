@@ -17,14 +17,16 @@ package com.liferay.taglib.ui;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
 import com.liferay.portal.kernel.dao.search.ResultRow;
 import com.liferay.portal.kernel.dao.search.SearchEntry;
-import com.liferay.portal.kernel.dao.search.TextSearchEntry;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.taglib.search.TextSearchEntry;
+import com.liferay.taglib.util.TagResourceBundleUtil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import javax.portlet.PortletURL;
 
@@ -71,7 +73,10 @@ public class SearchContainerColumnTextTag<R>
 			}
 
 			if (_translate) {
-				_value = LanguageUtil.get(pageContext, _value);
+				ResourceBundle resourceBundle =
+					TagResourceBundleUtil.getResourceBundle(pageContext);
+
+				_value = LanguageUtil.get(resourceBundle, _value);
 			}
 
 			if (index <= -1) {
@@ -89,10 +94,11 @@ public class SearchContainerColumnTextTag<R>
 			textSearchEntry.setAlign(getAlign());
 			textSearchEntry.setColspan(getColspan());
 			textSearchEntry.setCssClass(getCssClass());
-			textSearchEntry.setHref((String)getHref());
+			textSearchEntry.setHref(String.valueOf(getHref()));
 			textSearchEntry.setName(getValue());
 			textSearchEntry.setTarget(getTarget());
 			textSearchEntry.setTitle(getTitle());
+			textSearchEntry.setTruncate(getTruncate());
 			textSearchEntry.setValign(getValign());
 
 			resultRow.addSearchEntry(index, textSearchEntry);

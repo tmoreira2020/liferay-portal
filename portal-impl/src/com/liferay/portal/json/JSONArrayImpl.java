@@ -21,7 +21,14 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Writer;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Brian Wing Shun Chan
@@ -47,6 +54,11 @@ public class JSONArrayImpl implements JSONArray {
 		catch (Exception e) {
 			throw new JSONException(e);
 		}
+	}
+
+	@Override
+	public Object get(int index) {
+		return _jsonArray.opt(index);
 	}
 
 	@Override
@@ -103,6 +115,17 @@ public class JSONArrayImpl implements JSONArray {
 	@Override
 	public boolean isNull(int index) {
 		return _jsonArray.isNull(index);
+	}
+
+	@Override
+	public Iterator<Object> iterator() {
+		List<Object> list = new ArrayList<>();
+
+		for (int i = 0; i < length(); i++) {
+			list.add(get(i));
+		}
+
+		return list.iterator();
 	}
 
 	@Override
@@ -164,6 +187,13 @@ public class JSONArrayImpl implements JSONArray {
 
 	@Override
 	public JSONArray put(long value) {
+		_jsonArray.put(String.valueOf(value));
+
+		return this;
+	}
+
+	@Override
+	public JSONArray put(Object value) {
 		_jsonArray.put(value);
 
 		return this;
@@ -174,6 +204,22 @@ public class JSONArrayImpl implements JSONArray {
 		_jsonArray.put(value);
 
 		return this;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		try {
+			_jsonArray = new org.json.JSONArray(
+				(String)objectInput.readObject());
+		}
+		catch (Exception e) {
+			throw new IOException(e);
+		}
+	}
+
+	@Override
+	public String toJSONString() {
+		return toString();
 	}
 
 	@Override
@@ -201,9 +247,14 @@ public class JSONArrayImpl implements JSONArray {
 		}
 	}
 
+	@Override
+	public void writeExternal(ObjectOutput objectOutput) throws IOException {
+		objectOutput.writeObject(toString());
+	}
+
 	private static final String _NULL_JSON = "[]";
 
-	private static Log _log = LogFactoryUtil.getLog(JSONArrayImpl.class);
+	private static final Log _log = LogFactoryUtil.getLog(JSONArrayImpl.class);
 
 	private org.json.JSONArray _jsonArray;
 

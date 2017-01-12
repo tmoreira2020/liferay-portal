@@ -15,11 +15,11 @@
 package com.liferay.portal.service.permission;
 
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.LayoutSetBranch;
-import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portal.service.LayoutSetBranchLocalServiceUtil;
+import com.liferay.portal.kernel.model.LayoutSetBranch;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.LayoutSetBranchLocalServiceUtil;
+import com.liferay.portal.kernel.service.permission.LayoutSetBranchPermission;
 
 /**
  * @author Brian Wing Shun Chan
@@ -34,7 +34,9 @@ public class LayoutSetBranchPermissionImpl
 		throws PortalException {
 
 		if (!contains(permissionChecker, layoutSetBranch, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, LayoutSetBranch.class.getName(),
+				layoutSetBranch.getLayoutSetBranchId(), actionId);
 		}
 	}
 
@@ -42,10 +44,12 @@ public class LayoutSetBranchPermissionImpl
 	public void check(
 			PermissionChecker permissionChecker, long layoutSetBranchId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!contains(permissionChecker, layoutSetBranchId, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, LayoutSetBranch.class.getName(),
+				layoutSetBranchId, actionId);
 		}
 	}
 
@@ -63,7 +67,7 @@ public class LayoutSetBranchPermissionImpl
 	public boolean contains(
 			PermissionChecker permissionChecker, long layoutSetBranchId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		LayoutSetBranch layoutSetBranch =
 			LayoutSetBranchLocalServiceUtil.getLayoutSetBranch(

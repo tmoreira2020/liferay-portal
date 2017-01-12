@@ -15,40 +15,38 @@
 package com.liferay.portal.events;
 
 import com.liferay.portal.deploy.RequiredPluginsUtil;
-import com.liferay.portal.im.AIMConnector;
-import com.liferay.portal.im.ICQConnector;
-import com.liferay.portal.im.MSNConnector;
-import com.liferay.portal.im.YMConnector;
-import com.liferay.portal.jcr.JCRFactoryUtil;
+import com.liferay.portal.fabric.server.FabricServerUtil;
 import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBFactoryUtil;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.deploy.auto.AutoDeployDir;
 import com.liferay.portal.kernel.deploy.auto.AutoDeployUtil;
 import com.liferay.portal.kernel.deploy.hot.HotDeployUtil;
-import com.liferay.portal.kernel.deploy.sandbox.SandboxDeployDir;
-import com.liferay.portal.kernel.deploy.sandbox.SandboxDeployUtil;
 import com.liferay.portal.kernel.events.SimpleAction;
 import com.liferay.portal.kernel.executor.PortalExecutorManagerUtil;
 import com.liferay.portal.kernel.javadoc.JavadocManagerUtil;
 import com.liferay.portal.kernel.log.Jdk14LogFactoryImpl;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.messaging.MessageBusUtil;
 import com.liferay.portal.kernel.resiliency.mpi.MPIHelperUtil;
-import com.liferay.portal.kernel.scheduler.SchedulerEngineHelperUtil;
-import com.liferay.portal.kernel.template.TemplateManagerUtil;
-import com.liferay.portal.kernel.template.TemplateResourceLoaderUtil;
 import com.liferay.portal.kernel.util.CentralizedThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.search.lucene.LuceneHelperUtil;
+import com.liferay.portal.struts.AuthPublicPathRegistry;
 import com.liferay.portal.util.PropsUtil;
+import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.zip.TrueZIPHelperUtil;
 import com.liferay.portlet.documentlibrary.util.DocumentConversionUtil;
 import com.liferay.util.ThirdPartyThreadLocalRegistry;
 
 import java.sql.Connection;
 import java.sql.Statement;
+
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Brian Wing Shun Chan
@@ -58,89 +56,53 @@ public class GlobalShutdownAction extends SimpleAction {
 	@Override
 	public void run(String[] ids) {
 
-		// Portal Resiliency
+		// Lower shutdown levels have dependences on higher levels, therefore
+		// lower ones need to shutdown before higher ones. Components within the
+		// same shutdown level should not depend on each other.
 
-		MPIHelperUtil.shutdown();
+		shutdownLevel1();
+		shutdownLevel2();
+		shutdownLevel3();
+		shutdownLevel4();
+		shutdownLevel5();
+		shutdownLevel6();
+		shutdownLevel7();
+	}
 
-		// Auto deploy
+	protected ThreadGroup getThreadGroup() {
+		Thread currentThread = Thread.currentThread();
 
-		AutoDeployUtil.unregisterDir(AutoDeployDir.DEFAULT_NAME);
+		ThreadGroup threadGroup = currentThread.getThreadGroup();
 
-		// Hot deploy
-
-		HotDeployUtil.unregisterListeners();
-
-		// Sandbox deploy
-
-		SandboxDeployUtil.unregisterDir(SandboxDeployDir.DEFAULT_NAME);
-
-		// Instant messenger AIM
-
-		try {
-			if (_log.isDebugEnabled()) {
-				_log.debug("Shutting down AIM");
+		for (int i = 0; i < 10; i++) {
+			if (threadGroup.getParent() == null) {
+				break;
 			}
-
-			AIMConnector.disconnect();
-		}
-		catch (Exception e) {
-		}
-
-		// Instant messenger ICQ
-
-		try {
-			if (_log.isDebugEnabled()) {
-				_log.debug("Shutting down ICQ");
+			else {
+				threadGroup = threadGroup.getParent();
 			}
-
-			ICQConnector.disconnect();
-		}
-		catch (Exception e) {
 		}
 
-		// Instant messenger MSN
+		return threadGroup;
+	}
 
-		try {
-			if (_log.isDebugEnabled()) {
-				_log.debug("Shutting down MSN");
-			}
+	protected Thread[] getThreads(ThreadGroup threadGroup) {
+		Thread[] threads = new Thread[threadGroup.activeCount() * 2];
 
-			MSNConnector.disconnect();
-		}
-		catch (Exception e) {
-		}
+		threadGroup.enumerate(threads);
 
-		// Instant messenger YM
+		return threads;
+	}
 
-		try {
-			if (_log.isDebugEnabled()) {
-				_log.debug("Shutting down YM");
-			}
+	protected void shutdownLevel1() {
 
-			YMConnector.disconnect();
-		}
-		catch (Exception e) {
-		}
+		// Authentication
+
+		AuthPublicPathRegistry.unregister(PropsValues.AUTH_PUBLIC_PATHS);
 
 		// Javadoc
 
 		JavadocManagerUtil.unload(StringPool.BLANK);
-
-		// JCR
-
-		try {
-			if (_log.isDebugEnabled()) {
-				_log.debug("Shutting down JCR");
-			}
-
-			JCRFactoryUtil.shutdown();
-		}
-		catch (Exception e) {
-		}
-
-		// Lucene
-
-		LuceneHelperUtil.shutdown();
 
 		// OpenOffice
 
@@ -149,19 +111,48 @@ public class GlobalShutdownAction extends SimpleAction {
 		// Plugins
 
 		RequiredPluginsUtil.stopCheckingRequiredPlugins();
+	}
 
-		// Thread local registry
+	protected void shutdownLevel2() {
 
-		ThirdPartyThreadLocalRegistry.resetThreadLocals();
-		CentralizedThreadLocal.clearShortLivedThreadLocals();
+		// Auto deploy
+
+		AutoDeployUtil.unregisterDir(AutoDeployDir.DEFAULT_NAME);
+
+		// Hot deploy
+
+		HotDeployUtil.unregisterListeners();
+	}
+
+	protected void shutdownLevel3() {
+
+		// Messaging
+
+		MessageBusUtil.shutdown(true);
+
+		// Portal fabric
+
+		if (PropsValues.PORTAL_FABRIC_ENABLED) {
+			try {
+				Future<?> future = FabricServerUtil.stop();
+
+				future.get(
+					PropsValues.PORTAL_FABRIC_SHUTDOWN_TIMEOUT,
+					TimeUnit.MILLISECONDS);
+			}
+			catch (Exception e) {
+				_log.error("Unable to stop fabric server", e);
+			}
+		}
+	}
+
+	protected void shutdownLevel4() {
 
 		// Hypersonic
 
-		DB db = DBFactoryUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
-		String dbType = db.getType();
-
-		if (dbType.equals(DB.TYPE_HYPERSONIC)) {
+		if (db.getDBType() == DBType.HYPERSONIC) {
 			Connection connection = null;
 			Statement statement = null;
 
@@ -180,6 +171,24 @@ public class GlobalShutdownAction extends SimpleAction {
 			}
 		}
 
+		// Portal Resiliency
+
+		MPIHelperUtil.shutdown();
+	}
+
+	protected void shutdownLevel5() {
+
+		// Portal executors
+
+		PortalExecutorManagerUtil.shutdown(true);
+
+		// TrueZip
+
+		TrueZIPHelperUtil.shutdown();
+	}
+
+	protected void shutdownLevel6() {
+
 		// Reset log to default JDK 1.4 logger. This will allow WARs dependent
 		// on the portal to still log events after the portal WAR has been
 		// destroyed.
@@ -190,42 +199,13 @@ public class GlobalShutdownAction extends SimpleAction {
 		catch (Exception e) {
 		}
 
-		// Scheduler engine
+		// Thread local registry
 
-		try {
-			SchedulerEngineHelperUtil.shutdown();
-		}
-		catch (Exception e) {
-		}
+		ThirdPartyThreadLocalRegistry.resetThreadLocals();
+		CentralizedThreadLocal.clearShortLivedThreadLocals();
+	}
 
-		// Wait 1 second so Quartz threads can cleanly shutdown
-
-		try {
-			Thread.sleep(1000);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		// Template manager
-
-		try {
-			TemplateManagerUtil.destroy();
-		}
-		catch (Exception e) {
-		}
-
-		// Template resource loader
-
-		try {
-			TemplateResourceLoaderUtil.destroy();
-		}
-		catch (Exception e) {
-		}
-
-		// Portal executors
-
-		PortalExecutorManagerUtil.shutdown(true);
+	protected void shutdownLevel7() {
 
 		// Programmatically exit
 
@@ -254,31 +234,7 @@ public class GlobalShutdownAction extends SimpleAction {
 		}
 	}
 
-	protected ThreadGroup getThreadGroup() {
-		Thread currentThread = Thread.currentThread();
-
-		ThreadGroup threadGroup = currentThread.getThreadGroup();
-
-		for (int i = 0; i < 10; i++) {
-			if (threadGroup.getParent() == null) {
-				break;
-			}
-			else {
-				threadGroup = threadGroup.getParent();
-			}
-		}
-
-		return threadGroup;
-	}
-
-	protected Thread[] getThreads(ThreadGroup threadGroup) {
-		Thread[] threads = new Thread[threadGroup.activeCount() * 2];
-
-		threadGroup.enumerate(threads);
-
-		return threads;
-	}
-
-	private static Log _log = LogFactoryUtil.getLog(GlobalShutdownAction.class);
+	private static final Log _log = LogFactoryUtil.getLog(
+		GlobalShutdownAction.class);
 
 }

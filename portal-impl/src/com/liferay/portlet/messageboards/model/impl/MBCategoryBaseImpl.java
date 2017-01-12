@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.messageboards.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.messageboards.model.MBCategory;
-import com.liferay.portlet.messageboards.service.MBCategoryLocalServiceUtil;
+import com.liferay.message.boards.kernel.model.MBCategory;
+import com.liferay.message.boards.kernel.service.MBCategoryLocalServiceUtil;
 
 /**
  * The extended model base implementation for the MBCategory service. Represents a row in the &quot;MBCategory&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.messageboards.service.MBCategoryLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see MBCategoryImpl
- * @see com.liferay.portlet.messageboards.model.MBCategory
+ * @see MBCategory
  * @generated
  */
+@ProviderType
 public abstract class MBCategoryBaseImpl extends MBCategoryModelImpl
 	implements MBCategory {
 	/*
@@ -39,7 +40,7 @@ public abstract class MBCategoryBaseImpl extends MBCategoryModelImpl
 	 * Never modify or reference this class directly. All methods that expect a message boards category model instance should use the {@link MBCategory} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			MBCategoryLocalServiceUtil.addMBCategory(this);
 		}

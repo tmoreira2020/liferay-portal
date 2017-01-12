@@ -14,15 +14,14 @@
 
 package com.liferay.portlet.asset.service.permission;
 
+import com.liferay.asset.kernel.model.AssetCategory;
+import com.liferay.asset.kernel.model.AssetCategoryConstants;
+import com.liferay.asset.kernel.service.AssetCategoryLocalServiceUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.asset.model.AssetCategory;
-import com.liferay.portlet.asset.model.AssetCategoryConstants;
-import com.liferay.portlet.asset.service.AssetCategoryLocalServiceUtil;
 
 /**
  * @author Eduardo Lundgren
@@ -32,37 +31,43 @@ public class AssetCategoryPermission {
 	public static void check(
 			PermissionChecker permissionChecker, AssetCategory category,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!contains(permissionChecker, category, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, AssetCategory.class.getName(),
+				category.getCategoryId(), actionId);
 		}
 	}
 
 	public static void check(
 			PermissionChecker permissionChecker, long groupId, long categoryId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!contains(permissionChecker, groupId, categoryId, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, AssetCategory.class.getName(), categoryId,
+				actionId);
 		}
 	}
 
 	public static void check(
 			PermissionChecker permissionChecker, long categoryId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (!contains(permissionChecker, categoryId, actionId)) {
-			throw new PrincipalException();
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, AssetCategory.class.getName(), categoryId,
+				actionId);
 		}
 	}
 
 	public static boolean contains(
 			PermissionChecker permissionChecker, AssetCategory category,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (actionId.equals(ActionKeys.VIEW) &&
 			!AssetVocabularyPermission.contains(
@@ -100,7 +105,7 @@ public class AssetCategoryPermission {
 	public static boolean contains(
 			PermissionChecker permissionChecker, long groupId, long categoryId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		if (categoryId == AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
 			return AssetPermission.contains(
@@ -114,7 +119,7 @@ public class AssetCategoryPermission {
 	public static boolean contains(
 			PermissionChecker permissionChecker, long categoryId,
 			String actionId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		AssetCategory category = AssetCategoryLocalServiceUtil.getCategory(
 			categoryId);

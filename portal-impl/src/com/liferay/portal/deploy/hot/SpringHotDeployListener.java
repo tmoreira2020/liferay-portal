@@ -17,8 +17,8 @@ package com.liferay.portal.deploy.hot;
 import com.liferay.portal.kernel.deploy.hot.BaseHotDeployListener;
 import com.liferay.portal.kernel.deploy.hot.HotDeployEvent;
 import com.liferay.portal.kernel.deploy.hot.HotDeployException;
+import com.liferay.portal.kernel.util.ClassLoaderUtil;
 import com.liferay.portal.spring.context.PortletContextLoaderListener;
-import com.liferay.portal.util.ClassLoaderUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,10 +42,7 @@ public class SpringHotDeployListener extends BaseHotDeployListener {
 		}
 		catch (Throwable t) {
 			throwHotDeployException(
-				hotDeployEvent,
-				"Error initializing Spring for " +
-					hotDeployEvent.getServletContextName(),
-				t);
+				hotDeployEvent, "Error initializing Spring for ", t);
 		}
 	}
 
@@ -58,10 +55,7 @@ public class SpringHotDeployListener extends BaseHotDeployListener {
 		}
 		catch (Throwable t) {
 			throwHotDeployException(
-				hotDeployEvent,
-				"Error uninitializing Spring for " +
-					hotDeployEvent.getServletContextName(),
-				t);
+				hotDeployEvent, "Error uninitializing Spring for ", t);
 		}
 	}
 
@@ -121,7 +115,7 @@ public class SpringHotDeployListener extends BaseHotDeployListener {
 		}
 	}
 
-	private static Map<String, ContextLoaderListener> _contextLoaderListeners =
-		new HashMap<String, ContextLoaderListener>();
+	private static final Map<String, ContextLoaderListener>
+		_contextLoaderListeners = new HashMap<>();
 
 }

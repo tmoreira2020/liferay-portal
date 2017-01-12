@@ -14,8 +14,10 @@
 
 package com.liferay.portal.util;
 
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.service.http.HttpPrincipalTestUtil;
 
 import java.io.IOException;
 
@@ -94,8 +96,8 @@ public class BaseJsonClientTestCase {
 
 	public String executeRequest(HttpRequest request) throws Exception {
 		return executeRequest(
-			TestPropsValues.getLogin(false), TestPropsValues.USER_PASSWORD,
-			request);
+			HttpPrincipalTestUtil.getLogin(false),
+			TestPropsValues.USER_PASSWORD, request);
 	}
 
 	public String executeRequest(
@@ -198,7 +200,7 @@ public class BaseJsonClientTestCase {
 		return responseContent.substring(beginIndex, endIndex);
 	}
 
-	private class StringHandler implements ResponseHandler<String> {
+	private static class StringHandler implements ResponseHandler<String> {
 
 		@Override
 		public String handleResponse(HttpResponse response)

@@ -14,12 +14,12 @@
 
 package com.liferay.taglib.ui;
 
-import com.liferay.portal.kernel.servlet.PortalIncludeUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.taglib.util.PortalIncludeUtil;
 
 import java.util.List;
 
@@ -49,7 +49,7 @@ public class TableIteratorTag extends TagSupport {
 				pageContext.setAttribute(
 					"tableIteratorObj", _list.get(_listPos));
 				pageContext.setAttribute(
-					"tableIteratorPos", new Integer(_listPos));
+					"tableIteratorPos", Integer.valueOf(_listPos));
 
 				return EVAL_BODY_AGAIN;
 			}
@@ -98,14 +98,14 @@ public class TableIteratorTag extends TagSupport {
 
 				request.setAttribute("liferay-ui:table-iterator:list", _list);
 				request.setAttribute(
+					"liferay-ui:table-iterator:rowBreak", _rowBreak);
+				request.setAttribute(
 					"liferay-ui:table-iterator:rowLength",
 					String.valueOf(_rowLength));
 				request.setAttribute(
 					"liferay-ui:table-iterator:rowPadding", _rowPadding);
 				request.setAttribute(
 					"liferay-ui:table-iterator:rowValign", _rowValign);
-				request.setAttribute(
-					"liferay-ui:table-iterator:rowBreak", _rowBreak);
 				request.setAttribute("liferay-ui:table-iterator:width", _width);
 
 				PortalIncludeUtil.include(pageContext, getStartPage());
@@ -113,7 +113,7 @@ public class TableIteratorTag extends TagSupport {
 				pageContext.setAttribute(
 					"tableIteratorObj", _list.get(_listPos));
 				pageContext.setAttribute(
-					"tableIteratorPos", new Integer(_listPos));
+					"tableIteratorPos", Integer.valueOf(_listPos));
 
 				return EVAL_BODY_INCLUDE;
 			}

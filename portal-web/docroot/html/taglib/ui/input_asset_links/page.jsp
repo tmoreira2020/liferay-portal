@@ -16,215 +16,48 @@
 
 <%@ include file="/html/taglib/ui/input_asset_links/init.jsp" %>
 
-<%
-String randomNamespace = PortalUtil.generateRandomKey(request, "taglib_ui_input_asset_links_page") + StringPool.UNDERLINE;
-
-String eventName = randomNamespace + "selectAsset";
-
-long assetEntryId = GetterUtil.getLong((String)request.getAttribute("liferay-ui:input-asset-links:assetEntryId"));
-String className = (String)request.getAttribute("liferay-ui:input-asset-links:className");
-
-List<AssetLink> assetLinks = new ArrayList<AssetLink>();
-
-String assetLinksSearchContainerPrimaryKeys = ParamUtil.getString(request, "assetLinksSearchContainerPrimaryKeys");
-
-if (Validator.isNull(assetLinksSearchContainerPrimaryKeys) && SessionErrors.isEmpty(portletRequest) && (assetEntryId > 0)) {
-	List<AssetLink> directAssetLinks = AssetLinkLocalServiceUtil.getDirectLinks(assetEntryId);
-
-	for (AssetLink assetLink : directAssetLinks) {
-		AssetEntry assetLinkEntry = null;
-
-		if ((assetEntryId > 0) || (assetLink.getEntryId1() == assetEntryId)) {
-			assetLinkEntry = AssetEntryLocalServiceUtil.getEntry(assetLink.getEntryId2());
-		}
-		else {
-			assetLinkEntry = AssetEntryLocalServiceUtil.getEntry(assetLink.getEntryId1());
-		}
-
-		AssetRendererFactory assetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(assetLinkEntry.getClassName());
-
-		if (assetRendererFactory.isActive(company.getCompanyId())) {
-			assetLinks.add(assetLink);
-		}
-	}
-}
-else {
-	String[] assetEntriesPrimaryKeys = StringUtil.split(assetLinksSearchContainerPrimaryKeys);
-
-	for (String assetEntryPrimaryKey : assetEntriesPrimaryKeys) {
-		long assetEntryPrimaryKeyLong = GetterUtil.getLong(assetEntryPrimaryKey);
-
-		AssetEntry assetEntry = AssetEntryServiceUtil.getEntry(assetEntryPrimaryKeyLong);
-
-		AssetLink assetLink = AssetLinkLocalServiceUtil.createAssetLink(0);
-
-		if (assetEntryId > 0) {
-			assetLink.setEntryId1(assetEntryId);
-		}
-		else {
-			assetLink.setEntryId1(0);
-		}
-
-		assetLink.setEntryId2(assetEntry.getEntryId());
-
-		assetLinks.add(assetLink);
-	}
-}
-
-long controlPanelPlid = PortalUtil.getControlPanelPlid(company.getCompanyId());
-
-Group scopeGroup = GroupLocalServiceUtil.getGroup(scopeGroupId);
-
-boolean stagedLocally = scopeGroup.isStaged() && !scopeGroup.isStagedRemotely();
-boolean stagedReferrerPortlet = false;
-
-if (stagedLocally) {
-	AssetRendererFactory referrerAssetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(className);
-
-	stagedReferrerPortlet = scopeGroup.isStagedPortlet(referrerAssetRendererFactory.getPortletId());
-}
-
-PortletURL assetBrowserURL = PortletURLFactoryUtil.create(request, PortletKeys.ASSET_BROWSER, controlPanelPlid, PortletRequest.RENDER_PHASE);
-
-assetBrowserURL.setParameter("struts_action", "/asset_browser/view");
-assetBrowserURL.setParameter("eventName", eventName);
-assetBrowserURL.setPortletMode(PortletMode.VIEW);
-assetBrowserURL.setWindowState(LiferayWindowState.POP_UP);
-%>
-
-<liferay-ui:icon-menu cssClass="select-existing-selector" icon='<%= themeDisplay.getPathThemeImages() + "/common/search.png" %>' id='<%= randomNamespace + "inputAssetLinks" %>' message="select" showWhenSingleIcon="<%= true %>">
-
-	<%
-	for (AssetRendererFactory assetRendererFactory : AssetRendererFactoryRegistryUtil.getAssetRendererFactories(company.getCompanyId())) {
-		if (assetRendererFactory.isLinkable() && assetRendererFactory.isSelectable()) {
-			if (assetEntryId > 0) {
-				assetBrowserURL.setParameter("refererAssetEntryId", String.valueOf(assetEntryId));
-			}
-
-			long groupId = scopeGroupId;
-
-			if (stagedLocally) {
-				boolean stagedReferencePortlet = scopeGroup.isStagedPortlet(assetRendererFactory.getPortletId());
-
-				if (stagedReferrerPortlet && !stagedReferencePortlet) {
-					groupId = scopeGroup.getLiveGroupId();
-				}
-			}
-
-			assetBrowserURL.setParameter("groupId", String.valueOf(groupId));
-			assetBrowserURL.setParameter("selectedGroupIds", StringUtil.merge(PortalUtil.getSharedContentSiteGroupIds(company.getCompanyId(), groupId, user.getUserId())));
-			assetBrowserURL.setParameter("typeSelection", assetRendererFactory.getClassName());
-
-			Map<String, Object> data = new HashMap<String, Object>();
-
-			if (!assetRendererFactory.isSupportsClassTypes()) {
-				data.put("href", assetBrowserURL.toString());
-
-				String type = assetRendererFactory.getTypeName(locale);
-
-				data.put("title", LanguageUtil.format(pageContext, "select-x", type, false));
-				data.put("type", type);
-	%>
-
-				<liferay-ui:icon
-					cssClass="asset-selector"
-					data="<%= data %>"
-					id="<%= FriendlyURLNormalizerUtil.normalize(type) %>"
-					message="<%= type %>"
-					src="<%= assetRendererFactory.getIconPath(portletRequest) %>"
-					url="javascript:;"
-				/>
-
-	<%
-			}
-			else {
-				Map<Long, String> assetAvailableClassTypes = assetRendererFactory.getClassTypes(PortalUtil.getCurrentAndAncestorSiteGroupIds(groupId), locale);
-
-				for (Map.Entry<Long, String> assetAvailableClassType : assetAvailableClassTypes.entrySet()) {
-					assetBrowserURL.setParameter("subtypeSelectionId", String.valueOf(assetAvailableClassType.getKey()));
-
-					data.put("href", assetBrowserURL.toString());
-
-					String type = assetAvailableClassType.getValue();
-
-					data.put("title", LanguageUtil.format(pageContext, "select-x", type, false));
-					data.put("type", type);
-	%>
-
-					<liferay-ui:icon
-						cssClass="asset-selector"
-						data="<%= data %>"
-						id="<%= groupId + FriendlyURLNormalizerUtil.normalize(type) %>"
-						message="<%= type %>"
-						src="<%= assetRendererFactory.getIconPath(portletRequest) %>"
-						url="javascript:;"
-					/>
-
-	<%
-				}
-			}
-		}
-	}
-	%>
-
-</liferay-ui:icon-menu>
-
-<br />
-
-<div class="separator"><!-- --></div>
-
 <liferay-util:buffer var="removeLinkIcon">
 	<liferay-ui:icon
-		image="unlink"
-		label="<%= true %>"
+		icon="times"
+		markupView="lexicon"
 		message="remove"
 	/>
 </liferay-util:buffer>
 
 <liferay-ui:search-container
+	compactEmptyResultsMessage="<%= true %>"
+	emptyResultsMessage="none"
 	headerNames="type,title,scope,null"
+	total="<%= inputAssetLinksDisplayContext.getAssetLinksCount() %>"
 >
 	<liferay-ui:search-container-results
-		results="<%= assetLinks %>"
-		total="<%= assetLinks.size() %>"
+		results="<%= inputAssetLinksDisplayContext.getAssetLinks() %>"
 	/>
 
 	<liferay-ui:search-container-row
-		className="com.liferay.portlet.asset.model.AssetLink"
+		className="com.liferay.asset.kernel.model.AssetLink"
 		keyProperty="entryId2"
 		modelVar="assetLink"
 	>
 
 		<%
-		AssetEntry assetLinkEntry = null;
-
-		if ((assetEntryId > 0) || (assetLink.getEntryId1() == assetEntryId)) {
-			assetLinkEntry = AssetEntryLocalServiceUtil.getEntry(assetLink.getEntryId2());
-		}
-		else {
-			assetLinkEntry = AssetEntryLocalServiceUtil.getEntry(assetLink.getEntryId1());
-		}
-
-		assetLinkEntry = assetLinkEntry.toEscapedModel();
-
-		AssetRendererFactory assetRendererFactory = assetLinkEntry.getAssetRendererFactory();
-
-		Group assetLinkEntryGroup = GroupLocalServiceUtil.getGroup(assetLinkEntry.getGroupId());
+		AssetEntry assetLinkEntry = inputAssetLinksDisplayContext.getAssetLinkEntry(assetLink);
 		%>
 
 		<liferay-ui:search-container-column-text
 			name="type"
-			value="<%= assetRendererFactory.getTypeName(locale) %>"
+			value="<%= inputAssetLinksDisplayContext.getAssetType(assetLinkEntry) %>"
 		/>
 
 		<liferay-ui:search-container-column-text
 			name="title"
-			value="<%= assetLinkEntry.getTitle(locale) %>"
+			truncate="<%= true %>"
+			value="<%= HtmlUtil.escape(assetLinkEntry.getTitle(locale)) %>"
 		/>
 
 		<liferay-ui:search-container-column-text
 			name="scope"
-			value="<%= HtmlUtil.escape(assetLinkEntryGroup.getDescriptiveName(locale)) %>"
+			value="<%= HtmlUtil.escape(inputAssetLinksDisplayContext.getGroupDescriptiveName(assetLinkEntry)) %>"
 		/>
 
 		<liferay-ui:search-container-column-text>
@@ -232,16 +65,56 @@ assetBrowserURL.setWindowState(LiferayWindowState.POP_UP);
 		</liferay-ui:search-container-column-text>
 	</liferay-ui:search-container-row>
 
-	<liferay-ui:search-iterator paginate="<%= false %>" />
+	<liferay-ui:search-iterator markupView="lexicon" paginate="<%= false %>" />
 </liferay-ui:search-container>
+
+<liferay-ui:icon-menu
+	cssClass="select-existing-selector"
+	direction="right"
+	id='<%= inputAssetLinksDisplayContext.getRandomNamespace() + "inputAssetLinks" %>'
+	message="select"
+	showArrow="<%= false %>"
+	showWhenSingleIcon="<%= true %>"
+>
+
+	<%
+	for (Map<String, Object> selectorEntry : inputAssetLinksDisplayContext.getSelectorEntries()) {
+	%>
+
+		<liferay-ui:icon
+			cssClass="asset-selector"
+			data='<%= (Map<String, Object>)selectorEntry.get("data") %>'
+			id='<%= (String)selectorEntry.get("id") %>'
+			message='<%= HtmlUtil.escape((String)selectorEntry.get("message")) %>'
+			url="javascript:;"
+		/>
+
+	<%
+	}
+	%>
+
+</liferay-ui:icon-menu>
 
 <aui:input name="assetLinkEntryIds" type="hidden" />
 
 <aui:script use="aui-base,escape,liferay-search-container">
-	A.getBody().delegate(
+	var assetSelectorHandle = A.getBody().delegate(
 		'click',
 		function(event) {
 			event.preventDefault();
+
+			var searchContainerName = '<portlet:namespace/>assetLinksSearchContainer';
+
+			var searchContainer = Liferay.SearchContainer.get(searchContainerName);
+
+			var searchContainerData = searchContainer.getData();
+
+			if (searchContainerData) {
+				searchContainerData = searchContainerData.split(',');
+			}
+			else {
+				searchContainerData = [];
+			}
 
 			Liferay.Util.selectEntity(
 				{
@@ -249,19 +122,18 @@ assetBrowserURL.setWindowState(LiferayWindowState.POP_UP);
 						constrain: true,
 						modal: true
 					},
-					eventName: '<%= eventName %>',
-					id: '<%= eventName %>' + event.currentTarget.attr('id'),
+					eventName: '<%= inputAssetLinksDisplayContext.getEventName() %>',
+					id: '<%= inputAssetLinksDisplayContext.getEventName() %>' + event.currentTarget.attr('id'),
+					selectedData: searchContainerData,
 					title: event.currentTarget.attr('data-title'),
 					uri: event.currentTarget.attr('data-href')
 				},
 				function(event) {
-					var searchContainerName = '<%= portletResponse.getNamespace() %>assetLinksSearchContainer';
+					var entityId = event.entityid;
 
-					searchContainer = Liferay.SearchContainer.get(searchContainerName);
+					var entryLink = '<a class="modify-link" data-rowId="' + entityId + '" href="javascript:;"><%= UnicodeFormatter.toString(removeLinkIcon) %></a>';
 
-					var entryLink = '<a class="modify-link" data-rowId="' + event.assetentryid + '" href="javascript:;"><%= UnicodeFormatter.toString(removeLinkIcon) %></a>';
-
-					searchContainer.addRow([event.assettype, A.Escape.html(event.assettitle), A.Escape.html(event.groupdescriptivename), entryLink], event.assetentryid);
+					searchContainer.addRow([event.assettype, A.Escape.html(event.assettitle), A.Escape.html(event.groupdescriptivename), entryLink], entityId);
 
 					searchContainer.updateDataStore();
 				}
@@ -269,10 +141,20 @@ assetBrowserURL.setWindowState(LiferayWindowState.POP_UP);
 		},
 		'.asset-selector a'
 	);
+
+	var clearAssetSelectorHandle = function(event) {
+		if (event.portletId === '<%= portletDisplay.getId() %>') {
+			assetSelectorHandle.detach();
+
+			Liferay.detach('destroyPortlet', clearAssetSelectorHandle);
+		}
+	};
+
+	Liferay.on('destroyPortlet', clearAssetSelectorHandle);
 </aui:script>
 
 <aui:script use="liferay-search-container">
-	var searchContainer = Liferay.SearchContainer.get('<%= portletResponse.getNamespace() %>assetLinksSearchContainer');
+	var searchContainer = Liferay.SearchContainer.get('<portlet:namespace/>assetLinksSearchContainer');
 
 	searchContainer.get('contentBox').delegate(
 		'click',

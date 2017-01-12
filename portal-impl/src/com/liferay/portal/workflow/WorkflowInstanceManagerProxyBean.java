@@ -15,6 +15,7 @@
 package com.liferay.portal.workflow;
 
 import com.liferay.portal.kernel.messaging.proxy.BaseProxyBean;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManager;
@@ -27,6 +28,9 @@ import java.util.Map;
 /**
  * @author Micha Kiener
  */
+@OSGiBeanProperties(
+	property = "proxy.bean=true", service = WorkflowInstanceManager.class
+)
 public class WorkflowInstanceManagerProxyBean
 	extends BaseProxyBean implements WorkflowInstanceManager {
 
@@ -79,7 +83,7 @@ public class WorkflowInstanceManagerProxyBean
 	public List<WorkflowInstance> getWorkflowInstances(
 		long companyId, Long userId, String assetClassName, Long assetClassPK,
 		Boolean completed, int start, int end,
-		OrderByComparator orderByComparator) {
+		OrderByComparator<WorkflowInstance> orderByComparator) {
 
 		throw new UnsupportedOperationException();
 	}
@@ -88,7 +92,7 @@ public class WorkflowInstanceManagerProxyBean
 	public List<WorkflowInstance> getWorkflowInstances(
 		long companyId, Long userId, String[] assetClassNames,
 		Boolean completed, int start, int end,
-		OrderByComparator orderByComparator) {
+		OrderByComparator<WorkflowInstance> orderByComparator) {
 
 		throw new UnsupportedOperationException();
 	}
@@ -97,7 +101,24 @@ public class WorkflowInstanceManagerProxyBean
 	public List<WorkflowInstance> getWorkflowInstances(
 		long companyId, String workflowDefinitionName,
 		Integer workflowDefinitionVersion, Boolean completed, int start,
-		int end, OrderByComparator orderByComparator) {
+		int end, OrderByComparator<WorkflowInstance> orderByComparator) {
+
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<WorkflowInstance> search(
+		long companyId, Long userId, String assetType, String nodeName,
+		String kaleoDefinitionName, Boolean completed, int start, int end,
+		OrderByComparator<WorkflowInstance> orderByComparator) {
+
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int searchCount(
+		long companyId, Long userId, String assetType, String nodeName,
+		String kaleoDefinitionName, Boolean completed) {
 
 		throw new UnsupportedOperationException();
 	}

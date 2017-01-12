@@ -20,8 +20,10 @@ import com.liferay.portal.jsonwebservice.action.JSONWebServiceInvokerAction;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceAction;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceActionsManagerUtil;
+import com.liferay.portal.kernel.jsonwebservice.NoSuchJSONWebServiceException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.upload.UploadException;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.ClassUtil;
@@ -29,7 +31,9 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.util.WebKeys;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.util.PropsValues;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -58,10 +62,9 @@ public class JSONWebServiceServiceAction extends JSONServiceAction {
 			return JSONFactoryUtil.serializeThrowable(uploadException);
 		}
 
-		JSONWebServiceAction jsonWebServiceAction = null;
-
 		try {
-			jsonWebServiceAction = getJSONWebServiceAction(request);
+			JSONWebServiceAction jsonWebServiceAction = getJSONWebServiceAction(
+				request);
 
 			Object returnObj = jsonWebServiceAction.invoke();
 
@@ -72,21 +75,53 @@ public class JSONWebServiceServiceAction extends JSONServiceAction {
 				return JSONFactoryUtil.getNullJSON();
 			}
 		}
-		catch (InvocationTargetException ite) {
-			Throwable throwable = ite.getCause();
-
-			if (throwable instanceof SecurityException) {
-				throw (SecurityException)throwable;
-			}
-
-			_log.error(throwable, throwable);
-
-			return JSONFactoryUtil.serializeThrowable(throwable);
-		}
 		catch (Exception e) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(e, e);
+			int status = 0;
+
+			if (e instanceof InvocationTargetException) {
+				Throwable throwable = e.getCause();
+
+				if (throwable instanceof PrincipalException ||
+					throwable instanceof SecurityException) {
+
+					status = HttpServletResponse.SC_FORBIDDEN;
+				}
+				else {
+					status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+				}
+
+				if (_log.isDebugEnabled()) {
+					_log.debug(getThrowableMessage(throwable), throwable);
+				}
+				else {
+					_log.error(getThrowableMessage(throwable));
+				}
+
+				response.setStatus(status);
+
+				return JSONFactoryUtil.serializeThrowable(throwable);
 			}
+
+			if (e instanceof NoSuchJSONWebServiceException) {
+				status = HttpServletResponse.SC_NOT_FOUND;
+			}
+			else if (e instanceof PrincipalException ||
+					 e instanceof SecurityException) {
+
+				status = HttpServletResponse.SC_FORBIDDEN;
+			}
+			else {
+				status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+			}
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(getThrowableMessage(e), e);
+			}
+			else {
+				_log.error(getThrowableMessage(e));
+			}
+
+			response.setStatus(status);
 
 			return JSONFactoryUtil.serializeThrowable(e);
 		}
@@ -133,7 +168,8 @@ public class JSONWebServiceServiceAction extends JSONServiceAction {
 	}
 
 	protected JSONWebServiceAction getJSONWebServiceAction(
-		HttpServletRequest request) {
+			HttpServletRequest request)
+		throws NoSuchJSONWebServiceException {
 
 		String path = GetterUtil.getString(request.getPathInfo());
 
@@ -141,7 +177,9 @@ public class JSONWebServiceServiceAction extends JSONServiceAction {
 			return new JSONWebServiceInvokerAction(request);
 		}
 
-		if (request.getParameter("discover") != null) {
+		if (PropsValues.JSONWS_WEB_SERVICE_API_DISCOVERABLE &&
+			(request.getParameter("discover") != null)) {
+
 			return new JSONWebServiceDiscoverAction(request);
 		}
 
@@ -154,9 +192,19 @@ public class JSONWebServiceServiceAction extends JSONServiceAction {
 		return _REROUTE_PATH;
 	}
 
+	protected String getThrowableMessage(Throwable throwable) {
+		String message = throwable.getMessage();
+
+		if (Validator.isNotNull(message)) {
+			return message;
+		}
+
+		return throwable.toString();
+	}
+
 	private static final String _REROUTE_PATH = "/jsonws";
 
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		JSONWebServiceServiceAction.class);
 
 }

@@ -15,6 +15,7 @@
 package com.liferay.portal.workflow;
 
 import com.liferay.portal.kernel.messaging.proxy.BaseProxyBean;
+import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.WorkflowDefinition;
 import com.liferay.portal.kernel.workflow.WorkflowDefinitionManager;
@@ -28,6 +29,9 @@ import java.util.List;
  * @author Marcellus Tavares
  * @author Eduardo Lundgren
  */
+@OSGiBeanProperties(
+	property = "proxy.bean=true", service = WorkflowDefinitionManager.class
+)
 public class WorkflowDefinitionManagerProxyBean
 	extends BaseProxyBean implements WorkflowDefinitionManager {
 
@@ -51,7 +55,7 @@ public class WorkflowDefinitionManagerProxyBean
 	@Override
 	public List<WorkflowDefinition> getActiveWorkflowDefinitions(
 		long companyId, int start, int end,
-		OrderByComparator orderByComparator) {
+		OrderByComparator<WorkflowDefinition> orderByComparator) {
 
 		throw new UnsupportedOperationException();
 	}
@@ -59,7 +63,7 @@ public class WorkflowDefinitionManagerProxyBean
 	@Override
 	public List<WorkflowDefinition> getActiveWorkflowDefinitions(
 		long companyId, String name, int start, int end,
-		OrderByComparator orderByComparator) {
+		OrderByComparator<WorkflowDefinition> orderByComparator) {
 
 		throw new UnsupportedOperationException();
 	}
@@ -91,7 +95,7 @@ public class WorkflowDefinitionManagerProxyBean
 	@Override
 	public List<WorkflowDefinition> getWorkflowDefinitions(
 		long companyId, int start, int end,
-		OrderByComparator orderByComparator) {
+		OrderByComparator<WorkflowDefinition> orderByComparator) {
 
 		throw new UnsupportedOperationException();
 	}
@@ -99,7 +103,7 @@ public class WorkflowDefinitionManagerProxyBean
 	@Override
 	public List<WorkflowDefinition> getWorkflowDefinitions(
 		long companyId, String name, int start, int end,
-		OrderByComparator orderByComparator) {
+		OrderByComparator<WorkflowDefinition> orderByComparator) {
 
 		throw new UnsupportedOperationException();
 	}

@@ -14,36 +14,40 @@
 
 package com.liferay.portlet.passwordpoliciesadmin.lar;
 
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.lar.BaseStagedModelDataHandlerTestCase;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.PasswordPolicy;
-import com.liferay.portal.model.StagedModel;
-import com.liferay.portal.service.PasswordPolicyLocalServiceUtil;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.MainServletExecutionTestListener;
-import com.liferay.portal.test.TransactionalExecutionTestListener;
-import com.liferay.portal.util.TestPropsValues;
-import com.liferay.portlet.passwordpoliciesadmin.util.PasswordPolicyTestUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.PasswordPolicy;
+import com.liferay.portal.kernel.model.StagedModel;
+import com.liferay.portal.kernel.service.PasswordPolicyLocalServiceUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.Sync;
+import com.liferay.portal.kernel.test.rule.SynchronousDestinationTestRule;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.lar.test.BaseStagedModelDataHandlerTestCase;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portlet.passwordpoliciesadmin.util.test.PasswordPolicyTestUtil;
 
 import java.util.List;
 import java.util.Map;
 
-import org.junit.runner.RunWith;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 
 /**
  * @author Daniela Zapata Riesco
  */
-@ExecutionTestListeners(
-	listeners = {
-		MainServletExecutionTestListener.class,
-		TransactionalExecutionTestListener.class
-	})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
+@Sync
 public class PasswordPolicyStagedModelDataHandlerTest
 	extends BaseStagedModelDataHandlerTestCase {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			SynchronousDestinationTestRule.INSTANCE);
 
 	@Override
 	protected StagedModel addStagedModel(
@@ -51,8 +55,9 @@ public class PasswordPolicyStagedModelDataHandlerTest
 			Map<String, List<StagedModel>> dependentStagedModelsMap)
 		throws Exception {
 
-		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
-			group.getGroupId(), TestPropsValues.getUserId());
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				group.getGroupId(), TestPropsValues.getUserId());
 
 		return PasswordPolicyTestUtil.addPasswordPolicy(serviceContext);
 	}
@@ -72,6 +77,94 @@ public class PasswordPolicyStagedModelDataHandlerTest
 	@Override
 	protected Class<? extends StagedModel> getStagedModelClass() {
 		return PasswordPolicy.class;
+	}
+
+	@Override
+	protected void validateImportedStagedModel(
+			StagedModel stagedModel, StagedModel importedStagedModel)
+		throws Exception {
+
+		super.validateImportedStagedModel(stagedModel, importedStagedModel);
+
+		PasswordPolicy passwordPolicy = (PasswordPolicy)stagedModel;
+		PasswordPolicy importedPasswordPolicy =
+			(PasswordPolicy)importedStagedModel;
+
+		Assert.assertEquals(
+			passwordPolicy.isDefaultPolicy(),
+			importedPasswordPolicy.isDefaultPolicy());
+		Assert.assertEquals(
+			passwordPolicy.getName(), importedPasswordPolicy.getName());
+		Assert.assertEquals(
+			passwordPolicy.getDescription(),
+			importedPasswordPolicy.getDescription());
+		Assert.assertEquals(
+			passwordPolicy.isChangeable(),
+			importedPasswordPolicy.isChangeable());
+		Assert.assertEquals(
+			passwordPolicy.isChangeRequired(),
+			importedPasswordPolicy.isChangeRequired());
+		Assert.assertEquals(
+			passwordPolicy.getMinAge(), importedPasswordPolicy.getMinAge());
+		Assert.assertEquals(
+			passwordPolicy.isCheckSyntax(),
+			importedPasswordPolicy.isCheckSyntax());
+		Assert.assertEquals(
+			passwordPolicy.isAllowDictionaryWords(),
+			importedPasswordPolicy.isAllowDictionaryWords());
+		Assert.assertEquals(
+			passwordPolicy.getMinAlphanumeric(),
+			importedPasswordPolicy.getMinAlphanumeric());
+		Assert.assertEquals(
+			passwordPolicy.getMinLength(),
+			importedPasswordPolicy.getMinLength());
+		Assert.assertEquals(
+			passwordPolicy.getMinLowerCase(),
+			importedPasswordPolicy.getMinLowerCase());
+		Assert.assertEquals(
+			passwordPolicy.getMinNumbers(),
+			importedPasswordPolicy.getMinNumbers());
+		Assert.assertEquals(
+			passwordPolicy.getMinSymbols(),
+			importedPasswordPolicy.getMinSymbols());
+		Assert.assertEquals(
+			passwordPolicy.getMinUpperCase(),
+			importedPasswordPolicy.getMinUpperCase());
+		Assert.assertEquals(
+			passwordPolicy.getRegex(), importedPasswordPolicy.getRegex());
+		Assert.assertEquals(
+			passwordPolicy.isHistory(), importedPasswordPolicy.isHistory());
+		Assert.assertEquals(
+			passwordPolicy.getHistoryCount(),
+			importedPasswordPolicy.getHistoryCount());
+		Assert.assertEquals(
+			passwordPolicy.isExpireable(),
+			importedPasswordPolicy.isExpireable());
+		Assert.assertEquals(
+			passwordPolicy.getMaxAge(), importedPasswordPolicy.getMaxAge());
+		Assert.assertEquals(
+			passwordPolicy.getWarningTime(),
+			importedPasswordPolicy.getWarningTime());
+		Assert.assertEquals(
+			passwordPolicy.getGraceLimit(),
+			importedPasswordPolicy.getGraceLimit());
+		Assert.assertEquals(
+			passwordPolicy.isLockout(), importedPasswordPolicy.isLockout());
+		Assert.assertEquals(
+			passwordPolicy.getMaxFailure(),
+			importedPasswordPolicy.getMaxFailure());
+		Assert.assertEquals(
+			passwordPolicy.getLockoutDuration(),
+			importedPasswordPolicy.getLockoutDuration());
+		Assert.assertEquals(
+			passwordPolicy.isRequireUnlock(),
+			importedPasswordPolicy.isRequireUnlock());
+		Assert.assertEquals(
+			passwordPolicy.getResetFailureCount(),
+			importedPasswordPolicy.getResetFailureCount());
+		Assert.assertEquals(
+			passwordPolicy.getResetTicketMaxAge(),
+			importedPasswordPolicy.getResetTicketMaxAge());
 	}
 
 }

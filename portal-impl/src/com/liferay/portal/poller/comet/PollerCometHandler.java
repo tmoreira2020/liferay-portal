@@ -49,6 +49,12 @@ public class PollerCometHandler extends BaseCometHandler {
 					_companyId, _userId, _channelListener);
 			}
 			catch (UnknownChannelException uce) {
+
+				// LPS-52675
+
+				if (_log.isDebugEnabled()) {
+					_log.debug(uce, uce);
+				}
 			}
 		}
 	}
@@ -78,7 +84,8 @@ public class PollerCometHandler extends BaseCometHandler {
 				if (_log.isDebugEnabled()) {
 					_log.debug(
 						"Terminating request for " + _userId +
-							" because user session ended");
+							" because user session ended",
+						uce);
 				}
 
 				cometSession.close();
@@ -89,7 +96,8 @@ public class PollerCometHandler extends BaseCometHandler {
 		}
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(PollerCometHandler.class);
+	private static final Log _log = LogFactoryUtil.getLog(
+		PollerCometHandler.class);
 
 	private ChannelListener _channelListener;
 	private long _companyId;

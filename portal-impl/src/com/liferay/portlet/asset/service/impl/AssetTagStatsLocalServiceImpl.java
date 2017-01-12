@@ -14,12 +14,12 @@
 
 package com.liferay.portlet.asset.service.impl;
 
+import com.liferay.asset.kernel.model.AssetTag;
+import com.liferay.asset.kernel.model.AssetTagStats;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portlet.asset.model.AssetTag;
-import com.liferay.portlet.asset.model.AssetTagStats;
 import com.liferay.portlet.asset.service.base.AssetTagStatsLocalServiceBaseImpl;
 
 import java.util.List;
@@ -39,12 +39,9 @@ public class AssetTagStatsLocalServiceImpl
 	 * @param  tagId the primary key of the tag
 	 * @param  classNameId the asset entry's class name ID
 	 * @return the asset tag statistics instance
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public AssetTagStats addTagStats(long tagId, long classNameId)
-		throws SystemException {
-
+	public AssetTagStats addTagStats(long tagId, long classNameId) {
 		long tagStatsId = counterLocalService.increment();
 
 		AssetTagStats tagStats = assetTagStatsPersistence.create(tagStatsId);
@@ -76,26 +73,20 @@ public class AssetTagStatsLocalServiceImpl
 	/**
 	 * Deletes the asset tag statistics instance.
 	 *
-	 * @param  tagStats the asset tag statistics instance
-	 * @throws SystemException if a system exception occurred
+	 * @param tagStats the asset tag statistics instance
 	 */
 	@Override
-	public void deleteTagStats(AssetTagStats tagStats) throws SystemException {
+	public void deleteTagStats(AssetTagStats tagStats) {
 		assetTagStatsPersistence.remove(tagStats);
 	}
 
 	/**
 	 * Deletes the asset tag statistics instance matching the tag statistics ID.
 	 *
-	 * @param  tagStatsId the primary key of the asset tag statistics instance
-	 * @throws PortalException if the assetTagStats with the primary key could
-	 *         not be found
-	 * @throws SystemException if a system exception occurred
+	 * @param tagStatsId the primary key of the asset tag statistics instance
 	 */
 	@Override
-	public void deleteTagStats(long tagStatsId)
-		throws PortalException, SystemException {
-
+	public void deleteTagStats(long tagStatsId) throws PortalException {
 		AssetTagStats tagStats = assetTagStatsPersistence.findByPrimaryKey(
 			tagStatsId);
 
@@ -106,13 +97,10 @@ public class AssetTagStatsLocalServiceImpl
 	 * Deletes all asset tag statistics instances associated with the asset
 	 * entry matching the class name ID.
 	 *
-	 * @param  classNameId the asset entry's class name ID
-	 * @throws SystemException if a system exception occurred
+	 * @param classNameId the asset entry's class name ID
 	 */
 	@Override
-	public void deleteTagStatsByClassNameId(long classNameId)
-		throws SystemException {
-
+	public void deleteTagStatsByClassNameId(long classNameId) {
 		List<AssetTagStats> tagStatsList =
 			assetTagStatsPersistence.findByClassNameId(classNameId);
 
@@ -124,11 +112,10 @@ public class AssetTagStatsLocalServiceImpl
 	/**
 	 * Deletes all asset tag statistics instances associated with the tag.
 	 *
-	 * @param  tagId the primary key of the tag
-	 * @throws SystemException if a system exception occurred
+	 * @param tagId the primary key of the tag
 	 */
 	@Override
-	public void deleteTagStatsByTagId(long tagId) throws SystemException {
+	public void deleteTagStatsByTagId(long tagId) {
 		List<AssetTagStats> tagStatsList = assetTagStatsPersistence.findByTagId(
 			tagId);
 
@@ -156,11 +143,10 @@ public class AssetTagStatsLocalServiceImpl
 	 * @param  end the upper bound of the range of results (not inclusive)
 	 * @return the range of asset tag statistics associated with the asset entry
 	 *         matching the class name ID
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public List<AssetTagStats> getTagStats(long classNameId, int start, int end)
-		throws SystemException {
+	public List<AssetTagStats> getTagStats(
+		long classNameId, int start, int end) {
 
 		return assetTagStatsPersistence.findByClassNameId(
 			classNameId, start, end);
@@ -174,12 +160,9 @@ public class AssetTagStatsLocalServiceImpl
 	 * @param  classNameId the asset entry's class name ID
 	 * @return Returns the asset tag statistics instance with the tag and asset
 	 *         entry  matching the class name ID
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
-	public AssetTagStats getTagStats(long tagId, long classNameId)
-		throws SystemException {
-
+	public AssetTagStats getTagStats(long tagId, long classNameId) {
 		AssetTagStats tagStats = assetTagStatsPersistence.fetchByT_C(
 			tagId, classNameId);
 
@@ -197,13 +180,10 @@ public class AssetTagStatsLocalServiceImpl
 	 * @param  tagId the primary key of the tag
 	 * @param  classNameId the asset entry's class name ID
 	 * @return the updated asset tag statistics instance
-	 * @throws PortalException if an asset tag with the tag ID could not be
-	 *         found
-	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public AssetTagStats updateTagStats(long tagId, long classNameId)
-		throws PortalException, SystemException {
+		throws PortalException {
 
 		AssetTag tag = assetTagPersistence.findByPrimaryKey(tagId);
 
@@ -219,7 +199,7 @@ public class AssetTagStatsLocalServiceImpl
 		return tagStats;
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(
+	private static final Log _log = LogFactoryUtil.getLog(
 		AssetTagStatsLocalServiceImpl.class);
 
 }

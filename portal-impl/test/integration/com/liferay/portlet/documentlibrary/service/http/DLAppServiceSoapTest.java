@@ -19,27 +19,30 @@ import com.liferay.client.soap.portal.kernel.repository.model.FolderSoap;
 import com.liferay.client.soap.portal.service.ServiceContext;
 import com.liferay.client.soap.portlet.documentlibrary.service.http.DLAppServiceSoap;
 import com.liferay.client.soap.portlet.documentlibrary.service.http.DLAppServiceSoapServiceLocator;
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.test.EnvironmentExecutionTestListener;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.util.GroupTestUtil;
-import com.liferay.portal.util.TestPropsValues;
-import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
+import com.liferay.portal.service.http.HttpPrincipalTestUtil;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Alexander Chow
  */
-@ExecutionTestListeners(listeners = {EnvironmentExecutionTestListener.class})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
 public class DLAppServiceSoapTest {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Before
 	public void setUp() throws Exception {
@@ -120,7 +123,7 @@ public class DLAppServiceSoapTest {
 			new DLAppServiceSoapServiceLocator();
 
 		return dlAppServiceSoapServiceLocator.getPortlet_DL_DLAppService(
-			TestPropsValues.getSoapURL(
+			HttpPrincipalTestUtil.getSoapURL(
 				dlAppServiceSoapServiceLocator.
 					getPortlet_DL_DLAppServiceWSDDServiceName()));
 	}

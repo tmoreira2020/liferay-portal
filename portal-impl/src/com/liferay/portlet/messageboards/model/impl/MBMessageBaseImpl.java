@@ -14,10 +14,10 @@
 
 package com.liferay.portlet.messageboards.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
+import aQute.bnd.annotation.ProviderType;
 
-import com.liferay.portlet.messageboards.model.MBMessage;
-import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
+import com.liferay.message.boards.kernel.model.MBMessage;
+import com.liferay.message.boards.kernel.service.MBMessageLocalServiceUtil;
 
 /**
  * The extended model base implementation for the MBMessage service. Represents a row in the &quot;MBMessage&quot; database table, with each column mapped to a property of this class.
@@ -28,9 +28,10 @@ import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see MBMessageImpl
- * @see com.liferay.portlet.messageboards.model.MBMessage
+ * @see MBMessage
  * @generated
  */
+@ProviderType
 public abstract class MBMessageBaseImpl extends MBMessageModelImpl
 	implements MBMessage {
 	/*
@@ -39,7 +40,7 @@ public abstract class MBMessageBaseImpl extends MBMessageModelImpl
 	 * Never modify or reference this class directly. All methods that expect a message-boards message model instance should use the {@link MBMessage} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			MBMessageLocalServiceUtil.addMBMessage(this);
 		}

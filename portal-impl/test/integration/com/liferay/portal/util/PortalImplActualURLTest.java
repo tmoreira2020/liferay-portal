@@ -14,73 +14,65 @@
 
 package com.liferay.portal.util;
 
-import com.liferay.portal.NoSuchLayoutException;
-import com.liferay.portal.kernel.test.ExecutionTestListeners;
-import com.liferay.portal.kernel.transaction.Transactional;
-import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.exception.NoSuchLayoutException;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.model.UserGroup;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserGroupLocalServiceUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.webdav.methods.Method;
-import com.liferay.portal.model.Group;
-import com.liferay.portal.model.GroupConstants;
-import com.liferay.portal.model.Layout;
-import com.liferay.portal.model.LayoutConstants;
-import com.liferay.portal.model.LayoutTypePortlet;
-import com.liferay.portal.model.LayoutTypePortletConstants;
-import com.liferay.portal.model.UserGroup;
-import com.liferay.portal.service.GroupLocalServiceUtil;
-import com.liferay.portal.service.LayoutLocalServiceUtil;
-import com.liferay.portal.service.LayoutServiceUtil;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portal.service.ServiceTestUtil;
-import com.liferay.portal.service.UserGroupLocalServiceUtil;
-import com.liferay.portal.test.EnvironmentExecutionTestListener;
-import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
-import com.liferay.portal.test.TransactionalExecutionTestListener;
-import com.liferay.portlet.journal.model.JournalArticleConstants;
-import com.liferay.portlet.journal.model.JournalFolderConstants;
-import com.liferay.portlet.journal.util.JournalTestUtil;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 
 /**
  * @author Vilmos Papp
  */
-@ExecutionTestListeners(
-	listeners = {
-		EnvironmentExecutionTestListener.class,
-		TransactionalExecutionTestListener.class
-	})
-@RunWith(LiferayIntegrationJUnitTestRunner.class)
-@Transactional
 public class PortalImplActualURLTest {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Test
 	public void testChildLayoutFriendlyURL() throws Exception {
-		ServiceContext serviceContext = ServiceTestUtil.getServiceContext();
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext();
 
 		UserGroup userGroup = UserGroupLocalServiceUtil.addUserGroup(
 			TestPropsValues.getUserId(), TestPropsValues.getCompanyId(),
-			"Test " + ServiceTestUtil.nextInt(), StringPool.BLANK,
+			"Test " + RandomTestUtil.nextInt(), StringPool.BLANK,
 			serviceContext);
 
-		Group group = userGroup.getGroup();
+		_group = userGroup.getGroup();
 
 		Layout homeLayout = LayoutLocalServiceUtil.addLayout(
-			serviceContext.getUserId(), group.getGroupId(), true,
+			serviceContext.getUserId(), _group.getGroupId(), true,
 			LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, "Home", StringPool.BLANK,
 			StringPool.BLANK, LayoutConstants.TYPE_PORTLET, false,
 			StringPool.BLANK, serviceContext);
 
 		LayoutLocalServiceUtil.addLayout(
-			serviceContext.getUserId(), group.getGroupId(), true,
+			serviceContext.getUserId(), _group.getGroupId(), true,
 			homeLayout.getLayoutId(), "Child Layout", StringPool.BLANK,
 			StringPool.BLANK, LayoutConstants.TYPE_PORTLET, false,
 			StringPool.BLANK, serviceContext);
@@ -103,87 +95,10 @@ public class PortalImplActualURLTest {
 		}
 		catch (NoSuchLayoutException nsle) {
 		}
-
-		UserGroupLocalServiceUtil.deleteUserGroup(userGroup);
-	}
-
-	@Test
-	public void testJournalArticleFriendlyURL() throws Exception {
-		ServiceContext serviceContext = ServiceTestUtil.getServiceContext();
-
-		Group group = GroupLocalServiceUtil.addGroup(
-			TestPropsValues.getUserId(), GroupConstants.DEFAULT_PARENT_GROUP_ID,
-			StringPool.BLANK, 0, GroupConstants.DEFAULT_LIVE_GROUP_ID,
-			"Test " + ServiceTestUtil.nextInt(), StringPool.BLANK,
-			GroupConstants.TYPE_SITE_OPEN, true,
-			GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION, StringPool.BLANK,
-			true, true, serviceContext);
-
-		LayoutLocalServiceUtil.addLayout(
-			TestPropsValues.getUserId(), group.getGroupId(), false,
-			LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, "Home", StringPool.BLANK,
-			StringPool.BLANK, LayoutConstants.TYPE_PORTLET, false,
-			StringPool.BLANK, serviceContext);
-
-		Layout layout = LayoutLocalServiceUtil.addLayout(
-			TestPropsValues.getUserId(), group.getGroupId(), false,
-			LayoutConstants.DEFAULT_PARENT_LAYOUT_ID,
-			"Test " + ServiceTestUtil.nextInt(), StringPool.BLANK,
-			StringPool.BLANK, LayoutConstants.TYPE_PORTLET, false,
-			StringPool.BLANK, serviceContext);
-
-		LayoutTypePortlet layoutTypePortlet =
-			(LayoutTypePortlet)layout.getLayoutType();
-
-		String portletId = layoutTypePortlet.addPortletId(
-			TestPropsValues.getUserId(), PortletKeys.ASSET_PUBLISHER,
-			"column-1", 0);
-
-		layoutTypePortlet.setTypeSettingsProperty(
-			LayoutTypePortletConstants.DEFAULT_ASSET_PUBLISHER_PORTLET_ID,
-			portletId);
-
-		layout = LayoutServiceUtil.updateLayout(
-			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
-			layout.getTypeSettings());
-
-		Map<Locale, String> titleMap = new HashMap<Locale, String>();
-
-		titleMap.put(LocaleUtil.US, "Test Journal Article");
-
-		Map<Locale, String> contentMap = new HashMap<Locale, String>();
-
-		contentMap.put(LocaleUtil.US, "This test content is in English.");
-
-		JournalTestUtil.addArticle(
-			group.getGroupId(), JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-			JournalArticleConstants.CLASSNAME_ID_DEFAULT, titleMap, titleMap,
-			contentMap, layout.getUuid(), LocaleUtil.US, null, false, false,
-			serviceContext);
-
-		String actualURL = PortalUtil.getActualURL(
-			group.getGroupId(), false, Portal.PATH_MAIN,
-			"/-/test-journal-article", new HashMap<String, String[]>(),
-			getRequestContext());
-
-		Assert.assertNotNull(actualURL);
-
-		try {
-			PortalUtil.getActualURL(
-				group.getGroupId(), false, Portal.PATH_MAIN,
-				"/-/non-existing-test-journal-article",
-				new HashMap<String, String[]>(), getRequestContext());
-
-			Assert.fail();
-		}
-		catch (NoSuchLayoutException nsle) {
-		}
-
-		GroupLocalServiceUtil.deleteGroup(group);
 	}
 
 	protected Map<String, Object> getRequestContext() {
-		Map<String, Object> requestContext = new HashMap<String, Object>();
+		Map<String, Object> requestContext = new HashMap<>();
 
 		MockHttpServletRequest mockHttpServletRequest =
 			new MockHttpServletRequest(Method.GET, "/");
@@ -192,5 +107,8 @@ public class PortalImplActualURLTest {
 
 		return requestContext;
 	}
+
+	@DeleteAfterTestRun
+	private Group _group;
 
 }

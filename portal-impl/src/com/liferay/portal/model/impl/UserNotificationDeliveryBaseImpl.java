@@ -14,9 +14,10 @@
 
 package com.liferay.portal.model.impl;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.UserNotificationDelivery;
-import com.liferay.portal.service.UserNotificationDeliveryLocalServiceUtil;
+import aQute.bnd.annotation.ProviderType;
+
+import com.liferay.portal.kernel.model.UserNotificationDelivery;
+import com.liferay.portal.kernel.service.UserNotificationDeliveryLocalServiceUtil;
 
 /**
  * The extended model base implementation for the UserNotificationDelivery service. Represents a row in the &quot;UserNotificationDelivery&quot; database table, with each column mapped to a property of this class.
@@ -27,9 +28,10 @@ import com.liferay.portal.service.UserNotificationDeliveryLocalServiceUtil;
  *
  * @author Brian Wing Shun Chan
  * @see UserNotificationDeliveryImpl
- * @see com.liferay.portal.model.UserNotificationDelivery
+ * @see UserNotificationDelivery
  * @generated
  */
+@ProviderType
 public abstract class UserNotificationDeliveryBaseImpl
 	extends UserNotificationDeliveryModelImpl
 	implements UserNotificationDelivery {
@@ -39,7 +41,7 @@ public abstract class UserNotificationDeliveryBaseImpl
 	 * Never modify or reference this class directly. All methods that expect a user notification delivery model instance should use the {@link UserNotificationDelivery} interface instead.
 	 */
 	@Override
-	public void persist() throws SystemException {
+	public void persist() {
 		if (this.isNew()) {
 			UserNotificationDeliveryLocalServiceUtil.addUserNotificationDelivery(this);
 		}
