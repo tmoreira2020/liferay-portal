@@ -145,6 +145,8 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 					admin.getEmailAddress()));
 
 			_userLocalService.updateUser(defaultAdminUser);
+			_userLocalService.sendPasswordByEmailAddress(
+				company.getCompanyId(), admin.getEmailAddress());
 		}
 
 		try (SafeCloseable safeCloseable =
